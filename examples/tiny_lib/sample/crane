@@ -1,0 +1,19 @@
+# vim: ft=toml
+
+[[shell]]
+name = "shell"
+deps = [":lib"]
+
+[[library]]
+name = "lib"
+deps = ["//utils:helpers"]
+
+[[test]]
+name = "sample_test"
+file = "sample_test.erl"
+deps = [ ":lib" ]
+
+[[test]]
+name = "extra_test"
+file = "extra_test.erl"
+deps = [ ":lib" ]

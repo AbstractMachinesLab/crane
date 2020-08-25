@@ -1,0 +1,10 @@
+# vim: ft=toml
+
+[workspace]
+name = "tiny_lib"
+
+[toolchains]
+erlang = "22"
+elixir = "1.10"
+
+[dependencies]

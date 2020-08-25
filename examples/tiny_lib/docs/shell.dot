@@ -1,0 +1,8 @@
+digraph {
+    0 [ label = "Library(Library { name: Label { name: \"//utils:helpers\" }, files: [\"utils/another.erl\", \"utils/helpers.erl\"], dependencies: [], outputs: [], has_changed: false })" label = "//utils:helpers"]
+    1 [ label = "Library(Library { name: Label { name: \"//sample:lib\" }, files: [\"sample/extra.erl\", \"sample/sample.erl\"], dependencies: [Label { name: \"//utils:helpers\" }], outputs: [], has_changed: false })" label = "//sample:lib"]
+    2 [ label = "Library(Library { name: Label { name: \"//sample:shell\" }, files: [\"sample/extra.erl\", \"sample/sample.erl\"], dependencies: [Label { name: \"//sample:lib\" }], outputs: [], has_changed: false })" label = "//sample:shell"]
+    1 -> 0 [ ]
+    2 -> 1 [ ]
+}
+
