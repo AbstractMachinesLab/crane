@@ -10,6 +10,7 @@ publish = false
 [dependencies]
 anyhow = "1.0"
 chrono = "0.4"
+rust-crypto = "0.2"
 fern = { version = "0.6", features = [ "colored" ] }
 glob = "0.3"
 log = "0.4"

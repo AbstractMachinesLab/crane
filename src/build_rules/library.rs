@@ -55,10 +55,14 @@ impl Library {
         self.dependencies.clone()
     }
 
+    pub fn inputs(&self) -> Vec<PathBuf> {
+        self.files.clone()
+    }
+
     pub fn outputs(&self, ctx: &BuildContext) -> Vec<PathBuf> {
         self.files
             .iter()
-            .map(|file| ctx.path_in_context(file.with_extension("beam")))
+            .map(|file| ctx.output_path().join(file.with_extension("beam")))
             .collect()
     }
 
@@ -66,26 +70,17 @@ impl Library {
         self.has_changed
     }
 
-    pub fn declare_outputs(&self) -> Library {
-        let outputs = self
-            .files
-            .iter()
-            .map(|file| file.with_extension("beam"))
-            .collect();
-        Library {
-            outputs,
-            ..self.clone()
-        }
-    }
-
-    pub fn execute(&self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
+    pub fn build(&self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
         let beam_files: Vec<PathBuf> = self
             .files
             .iter()
             .cloned()
             .map(|f| ctx.declare_output(f.with_extension("beam")))
             .collect();
-        ctx.toolchain().compile(&self.files, &beam_files[0]);
+        ctx.toolchain().compile(&self.files, &beam_files[0])
+    }
+
+    pub fn run(&self) -> Result<(), anyhow::Error> {
         Ok(())
     }
 }

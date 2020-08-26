@@ -90,7 +90,15 @@ struct BuildOpt {
     )]
     print_graph: bool,
 
-    #[structopt(default_value = "//...")]
+    #[structopt(help = r"The target to build.
+
+A path to a directory with a crane file, followed by a colon
+and the name of the label to be built.
+
+Example: //my/library:lib
+
+Use //... to build the entire project.
+")]
     target: String,
 }
 
@@ -114,7 +122,7 @@ impl BuildOpt {
             info!("Printed {} in {}ms", target.to_string(), t1);
         } else {
             info!("Building target: {}", &target.to_string());
-            let artifacts = build_plan.execute()?;
+            let artifacts = build_plan.build()?;
             let t1 = t0.elapsed().as_millis();
             info!("Built {} artifacts in {}ms", artifacts, t1);
         }
@@ -125,7 +133,16 @@ impl BuildOpt {
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "run", about = "executes a runnable target")]
 struct RunOpt {
-    #[structopt(default_value = "//...")]
+    #[structopt(help = r"The target to run.
+
+A path to a directory with a crane file, followed by a colon
+and the name of the label to be built.
+
+Example: //my/library:shell
+
+NOTE: not all targets are runnable. Non-runnable targets will
+build their dependencies and exit.
+")]
     target: String,
 }
 
@@ -134,20 +151,25 @@ impl RunOpt {
         let t0 = std::time::Instant::now();
         let workspace = Workspace::new().context("Could not create a workspace.")?;
         let target: Label = self.target.into();
+
+        if target.is_all() {
+            error!("You must specify a single target to run.");
+            return Ok(());
+        }
+
         info!("Workspace: {}", &workspace.name());
         info!("Target: {}", &target.to_string());
-
-        let toolchain = workspace.toolchain().clone();
 
         info!("Planning build...");
         let mut build_plan = BuildPlan::for_workspace(workspace)
             .plan()?
             .scoped(target.clone())?;
-
-        info!("Building target: {}", &target.to_string());
-        let artifacts = build_plan.execute()?;
+        info!("Building target and dependencies: {}", &target.to_string());
+        let artifacts = build_plan.build()?;
         let t1 = t0.elapsed().as_millis();
         info!("Built {} artifacts in {}ms", artifacts, t1);
+        info!("Running target:");
+        let _ = build_plan.run()?;
 
         Ok(())
     }

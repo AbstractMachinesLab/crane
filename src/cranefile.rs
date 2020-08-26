@@ -5,7 +5,6 @@ use crate::build_rules::test::Test;
 use crate::model::target::Label;
 use anyhow::{anyhow, Context, Error};
 use glob::glob;
-use log::{error, info};
 use std::fs;
 use std::path::PathBuf;
 use std::vec::Vec;
@@ -149,12 +148,13 @@ fn parse_tests(path: &PathBuf, libs: &toml::Value) -> Result<Vec<BuildRule>, any
                     return Err(anyhow!("Test names should always end with _test"));
                 }
 
-                let file = lib
-                    .get("file")
-                    .context("Test rule does not have a file")?
-                    .as_str()
-                    .context("Test rule should have a single file as a string")?
-                    .to_string();
+                let file = PathBuf::from(
+                    lib.get("file")
+                        .context("Test rule does not have a file")?
+                        .as_str()
+                        .context("Test rule should have a single file as a string")?
+                        .to_string(),
+                );
 
                 let dependencies = match &lib.get("deps").unwrap_or(&Value::Array(vec![])) {
                     Value::Array(deps) => deps

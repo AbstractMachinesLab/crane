@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Context};
-use log::{debug, trace};
+use anyhow::Context;
+use log::debug;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -58,11 +58,7 @@ impl Toolchain {
         Ok(())
     }
 
-    pub fn compile(
-        self,
-        srcs: &Vec<PathBuf>,
-        dst: &PathBuf,
-    ) -> Result<std::process::Output, std::io::Error> {
+    pub fn compile(self, srcs: &Vec<PathBuf>, dst: &PathBuf) -> Result<(), anyhow::Error> {
         let paths: Vec<&str> = srcs.iter().map(|src| src.to_str().unwrap()).collect();
 
         let mut cmd = Command::new("erlc");
@@ -71,6 +67,6 @@ impl Toolchain {
             .args(&["-o", dst.parent().unwrap().to_str().unwrap()])
             .args(paths.as_slice());
         debug!("Calling {:?}", &cmd);
-        cmd.output()
+        cmd.output().map(|_| ()).context("Error running erlc")
     }
 }

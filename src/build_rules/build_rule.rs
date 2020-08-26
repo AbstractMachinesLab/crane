@@ -27,14 +27,33 @@ impl Default for BuildRule {
 }
 
 impl BuildRule {
-    pub fn execute(&self, build_ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
+    pub fn run(&self, build_ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
         match self {
             BuildRule::Noop => Ok(()),
-            BuildRule::Library(library) => library.execute(build_ctx),
-            BuildRule::Shell(shell) => shell.execute(build_ctx),
-            BuildRule::Test(test) => test.execute(),
+            BuildRule::Library(library) => library.run(),
+            BuildRule::Shell(shell) => shell.run(build_ctx),
+            BuildRule::Test(test) => test.run(),
         }
     }
+
+    pub fn build(&self, build_ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
+        match self {
+            BuildRule::Noop => Ok(()),
+            BuildRule::Library(library) => library.build(build_ctx),
+            BuildRule::Shell(shell) => shell.build(),
+            BuildRule::Test(test) => test.build(),
+        }
+    }
+
+    pub fn inputs(&self) -> Vec<PathBuf> {
+        match self {
+            BuildRule::Noop => vec![],
+            BuildRule::Library(library) => library.inputs(),
+            BuildRule::Shell(shell) => shell.inputs(),
+            BuildRule::Test(test) => test.inputs(),
+        }
+    }
+
     pub fn outputs(&self, ctx: &BuildContext) -> Vec<PathBuf> {
         match self {
             BuildRule::Noop => vec![],

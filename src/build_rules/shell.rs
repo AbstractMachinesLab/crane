@@ -1,7 +1,6 @@
 use crate::build_plan::BuildContext;
 use crate::build_rules::build_rule::BuildRule;
 use crate::model::target::Label;
-use log::{debug, info};
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -41,11 +40,15 @@ impl Shell {
         self.dependencies.clone()
     }
 
-    pub fn outputs(&self, ctx: &BuildContext) -> Vec<PathBuf> {
+    pub fn inputs(&self) -> Vec<PathBuf> {
         vec![]
     }
 
-    pub fn execute(&self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
+    pub fn outputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
+        vec![]
+    }
+
+    pub fn run(&self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
         let wrapped = BuildRule::Shell(self.clone());
         let code_paths: HashSet<PathBuf> = ctx
             .transitive_dependencies(&wrapped)
@@ -55,5 +58,9 @@ impl Shell {
             .collect();
 
         ctx.toolchain().shell(&code_paths.into_iter().collect())
+    }
+
+    pub fn build(&self) -> Result<(), anyhow::Error> {
+        Ok(())
     }
 }
