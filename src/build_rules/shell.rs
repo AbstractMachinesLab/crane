@@ -1,4 +1,5 @@
-use crate::build_plan::BuildContext;
+use crate::build_artifact::Artifact;
+use crate::build_context::BuildContext;
 use crate::build_rules::build_rule::BuildRule;
 use crate::model::target::Label;
 use std::collections::HashSet;
@@ -44,7 +45,7 @@ impl Shell {
         vec![]
     }
 
-    pub fn outputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
+    pub fn outputs(&self, _ctx: &BuildContext) -> Vec<Artifact> {
         vec![]
     }
 
@@ -54,7 +55,9 @@ impl Shell {
             .transitive_dependencies(&wrapped)
             .iter()
             .flat_map(|dep| dep.outputs(&ctx))
+            .flat_map(|artifact| artifact.outputs)
             .map(|path| path.parent().unwrap().to_path_buf())
+            .map(|path| ctx.output_path().join(path))
             .collect();
 
         ctx.toolchain().shell(&code_paths.into_iter().collect())

@@ -1,3 +1,4 @@
+use crate::build_artifact::Artifact;
 use crate::model::target::Label;
 use std::path::PathBuf;
 
@@ -17,7 +18,7 @@ impl Test {
         Ok(())
     }
 
-    pub fn outputs(&self) -> Vec<PathBuf> {
+    pub fn outputs(&self) -> Vec<Artifact> {
         vec![]
     }
 

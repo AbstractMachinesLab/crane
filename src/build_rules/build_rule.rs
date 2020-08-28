@@ -1,4 +1,5 @@
-use crate::build_plan::BuildContext;
+use crate::build_artifact::Artifact;
+use crate::build_context::BuildContext;
 use crate::build_rules::library::Library;
 use crate::build_rules::shell::Shell;
 use crate::build_rules::test::Test;
@@ -54,7 +55,7 @@ impl BuildRule {
         }
     }
 
-    pub fn outputs(&self, ctx: &BuildContext) -> Vec<PathBuf> {
+    pub fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
         match self {
             BuildRule::Noop => vec![],
             BuildRule::Library(library) => library.outputs(ctx),
