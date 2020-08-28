@@ -1,6 +1,7 @@
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use log::debug;
-use std::io::{BufRead, BufReader};
+use std::collections::HashSet;
+use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -58,15 +59,40 @@ impl Toolchain {
         Ok(())
     }
 
-    pub fn compile(self, srcs: &Vec<PathBuf>, dst: &PathBuf) -> Result<(), anyhow::Error> {
+    pub fn compile(
+        self,
+        srcs: &Vec<PathBuf>,
+        includes: &Vec<PathBuf>,
+        dst: &PathBuf,
+    ) -> Result<(), anyhow::Error> {
         let paths: Vec<&str> = srcs.iter().map(|src| src.to_str().unwrap()).collect();
+
+        let include_paths: HashSet<&str> = includes
+            .iter()
+            .map(|hrl| hrl.parent().unwrap().to_str().unwrap())
+            .collect();
+        let includes: Vec<&str> = include_paths
+            .iter()
+            .cloned()
+            .flat_map(|dir| vec!["-I", dir])
+            .collect();
 
         let mut cmd = Command::new("erlc");
         let cmd = cmd
-            .args(&["-b", "beam"])
+            .args(&["-b", "beam", "-Wall", "-Werror"])
+            .args(includes.as_slice())
             .args(&["-o", dst.parent().unwrap().to_str().unwrap()])
             .args(paths.as_slice());
-        debug!("Calling {:?}", &cmd);
-        cmd.output().map(|_| ()).context("Error running erlc")
+
+        debug!("Calling {:#?}", &cmd);
+        let output = cmd.output()?;
+
+        if output.status.success() {
+            Ok(())
+        } else {
+            std::io::stdout().write_all(&output.stdout).unwrap();
+            std::io::stderr().write_all(&output.stderr).unwrap();
+            Err(anyhow!("Error running erlc"))
+        }
     }
 }

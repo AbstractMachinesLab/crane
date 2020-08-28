@@ -85,11 +85,28 @@ fn parse_libraries(path: &PathBuf, libs: &toml::Value) -> Result<Vec<BuildRule>,
                 let name: Label = name.into();
                 let name = name.canonicalize(&path);
 
-                let files = match &lib
-                    .get("files")
+                let headers = match &lib
+                    .get("headers")
+                    .unwrap_or(&Value::Array(vec![Value::String("*.hrl".to_string())]))
+                {
+                    Value::Array(headers) => headers
+                        .iter()
+                        .flat_map(|f| match f {
+                            Value::String(name) => glob(path.join(name).to_str().unwrap())
+                                .expect("Could not read glob")
+                                .filter_map(Result::ok)
+                                .collect(),
+                            _ => vec![],
+                        })
+                        .collect(),
+                    _ => vec![],
+                };
+
+                let sources = match &lib
+                    .get("sources")
                     .unwrap_or(&Value::Array(vec![Value::String("*.erl".to_string())]))
                 {
-                    Value::Array(files) => files
+                    Value::Array(sources) => sources
                         .iter()
                         .flat_map(|f| match f {
                             Value::String(name) => glob(path.join(name).to_str().unwrap())
@@ -117,7 +134,8 @@ fn parse_libraries(path: &PathBuf, libs: &toml::Value) -> Result<Vec<BuildRule>,
                 }?;
 
                 let lib = Library::new(name)
-                    .set_files(files)
+                    .set_sources(sources)
+                    .set_headers(headers)
                     .set_dependencies(dependencies);
 
                 Ok(BuildRule::Library(lib))

@@ -90,7 +90,8 @@ struct BuildOpt {
     )]
     print_graph: bool,
 
-    #[structopt(help = r"The target to build.
+    #[structopt(
+        help = r"The target to build.
 
 A path to a directory with a crane file, followed by a colon
 and the name of the label to be built.
@@ -98,7 +99,9 @@ and the name of the label to be built.
 Example: //my/library:lib
 
 Use //... to build the entire project.
-")]
+",
+        default_value = "//..."
+    )]
     target: String,
 }
 
