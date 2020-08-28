@@ -8,6 +8,7 @@ use anyhow::Context;
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
 use log::debug;
+use std::collections::HashSet;
 use std::fs;
 use std::os::unix::fs::symlink;
 use std::path::PathBuf;
@@ -134,8 +135,8 @@ impl BuildContext {
 
                 let cache_path = self.cache_path().join(hash);
                 fs::create_dir_all(&cache_path)
-                    .map(|_| ())
                     .context(format!("Could not create cache file for {:?} at {:?}", path, cache_path))
+                    .map(|_| ())
             })
             .collect::<Result<(), anyhow::Error>>()?;
 
@@ -146,31 +147,43 @@ impl BuildContext {
                 debug!("Caching build artifact: {:?}", &artifact);
                 let hash = &artifact.compute_hash();
                 let cache_path = self.cache_path().join(hash);
+                debug!("Creating cache path: {:?}", &cache_path);
                 fs::create_dir_all(&cache_path)
-                    .map(|_| ())
                     .context(format!(
                         "Could not create cache file for {:?} at {:?}",
                         artifact, cache_path
-                    ))?;
+                    ))
+                    .map(|_| ())?;
 
-                for output in &artifact.outputs {
+                let unique_outputs: HashSet<PathBuf> = artifact.outputs.iter().cloned().collect();
+
+                for output in unique_outputs.iter() {
                     let workspace_file = self.output_path().join(output);
                     let cached_file = cache_path.join(output);
                     let cached_dir = &cached_file.parent().unwrap();
+                    debug!("Creating artifact cache path: {:?}", &cached_dir);
                     fs::create_dir_all(&cached_dir)
-                        .map(|_| ())
                         .context(format!(
                             "Could not prepare directory for artifact {:?} into cache path: {:?}",
                             &output, &cached_dir
-                        ))?;
+                        ))
+                        .map(|_| ())?;
+                    debug!("Moving artifact to cache: {:?}", &workspace_file);
                     fs::rename(&workspace_file, &cached_file)
-                        .map(|_| ())
                         .context(format!(
                             "Could not copy artifact {:?} into cache path: {:?}",
                             output, cached_file
-                        ))?;
+                        ))
+                        .map(|_| ())?;
                     let abs_path = fs::canonicalize(&cached_file)?;
-                    symlink(&abs_path, &workspace_file)?
+                    debug!(
+                        "Symlinking cached artifact to workspace: {:?} -> {:?}",
+                        &abs_path, &workspace_file
+                    );
+                    symlink(&abs_path, &workspace_file).context(format!(
+                        "Could not symlink {:#?} to {:#?}",
+                        &abs_path, &workspace_file
+                    ))?
                 }
 
                 Ok(())

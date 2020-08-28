@@ -63,6 +63,7 @@ impl Toolchain {
         self,
         srcs: &Vec<PathBuf>,
         includes: &Vec<PathBuf>,
+        extra_libs: &Vec<PathBuf>,
         dst: &PathBuf,
     ) -> Result<(), anyhow::Error> {
         let paths: Vec<&str> = srcs.iter().map(|src| src.to_str().unwrap()).collect();
@@ -77,11 +78,24 @@ impl Toolchain {
             .flat_map(|dir| vec!["-I", dir])
             .collect();
 
+        let extra_lib_paths: HashSet<&str> = extra_libs
+            .iter()
+            .map(|beam| beam.parent().unwrap().to_str().unwrap())
+            .collect();
+        let extra_libs: Vec<&str> = extra_lib_paths
+            .iter()
+            .cloned()
+            .flat_map(|dir| vec!["-pa", dir])
+            .collect();
+
         let mut cmd = Command::new("erlc");
         let cmd = cmd
-            .args(&["-b", "beam", "-Wall", "-Werror"])
+            // TODO(@ostera): consider enabling `-server`
+            .args(&["-server", "-b", "beam", "-Wall", "-Werror"])
             .args(includes.as_slice())
+            .args(extra_libs.as_slice())
             .args(&["-o", dst.parent().unwrap().to_str().unwrap()])
+            .args(&["--"])
             .args(paths.as_slice());
 
         debug!("Calling {:#?}", &cmd);

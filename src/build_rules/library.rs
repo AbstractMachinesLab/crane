@@ -79,7 +79,7 @@ impl Library {
             .collect()
     }
 
-    pub fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
+    pub fn outputs(&self, _ctx: &BuildContext) -> Vec<Artifact> {
         vec![Artifact {
             inputs: self.inputs(),
             outputs: self
@@ -97,8 +97,9 @@ impl Library {
 
     pub fn build(&self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
         let wrapped = BuildRule::Library(self.clone());
-        let transitive_headers: HashSet<PathBuf> = ctx
-            .transitive_dependencies(&wrapped)
+        let transitive_deps = ctx.transitive_dependencies(&wrapped);
+
+        let transitive_headers: HashSet<PathBuf> = transitive_deps
             .iter()
             .flat_map(|dep| dep.outputs(&ctx))
             .flat_map(|artifact| artifact.inputs)
@@ -110,10 +111,24 @@ impl Library {
             .iter()
             .cloned()
             .map(|f| ctx.declare_output(f))
+            .chain(transitive_headers)
             .collect();
 
-        ctx.copy(&self.headers).and_then(|_| {
+        let files: Vec<PathBuf> = self.headers.iter().cloned().collect();
+
+        files.iter().cloned().for_each(|f| {
+            ctx.declare_output(f);
+        });
+
+        ctx.copy(&files).and_then(|_| {
             if self.sources.len() > 0 {
+                let transitive_beam_files: HashSet<PathBuf> = transitive_deps
+                    .iter()
+                    .flat_map(|dep| dep.outputs(&ctx))
+                    .flat_map(|artifact| artifact.outputs)
+                    .map(|path| ctx.output_path().join(path))
+                    .collect();
+
                 let beam_files: Vec<PathBuf> = self
                     .sources
                     .iter()
@@ -121,11 +136,16 @@ impl Library {
                     .map(|f| ctx.declare_output(f.with_extension("beam")))
                     .collect();
 
-                ctx.toolchain().compile(
-                    &self.sources,
-                    &headers.iter().cloned().chain(transitive_headers).collect(),
-                    &beam_files[0],
-                )
+                let beam_files: Vec<PathBuf> = beam_files
+                    .iter()
+                    .chain(transitive_beam_files.iter())
+                    .cloned()
+                    .collect();
+
+                let dest = beam_files[0].clone();
+
+                ctx.toolchain()
+                    .compile(&self.sources, &headers, &beam_files, &dest)
             } else {
                 Ok(())
             }

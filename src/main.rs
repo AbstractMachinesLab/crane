@@ -3,7 +3,7 @@ use crane::build_plan::BuildPlan;
 use crane::model::target::Label;
 use crane::model::workspace::Workspace;
 use fern::colors::{Color, ColoredLevelConfig};
-use log::{error, info};
+use log::{debug, error, info};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug, Clone)]
@@ -110,8 +110,8 @@ impl BuildOpt {
         let t0 = std::time::Instant::now();
         let workspace = Workspace::new().context("Could not create a workspace.")?;
         let target: Label = self.target.into();
-        info!("Workspace: {}", &workspace.name());
-        info!("Target: {}", &target.to_string());
+        debug!("Workspace: {}", &workspace.name());
+        debug!("Target: {}", &target.to_string());
 
         info!("Planning build...");
         let mut build_plan = BuildPlan::for_workspace(workspace)
