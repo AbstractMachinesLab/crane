@@ -108,7 +108,7 @@ impl BuildPlan {
             "{:?}",
             dot::Dot::with_attr_getters(
                 &self.build_graph,
-                &[dot::Config::EdgeNoLabel],
+                &[dot::Config::EdgeNoLabel, dot::Config::NodeNoLabel],
                 &|_graph, _edge| "".to_string(),
                 &|_graph, (_idx, rule)| format!("label = \"{}\"", rule.label().to_string())
             )
