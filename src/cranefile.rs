@@ -85,10 +85,10 @@ fn parse_libraries(path: &PathBuf, libs: &toml::Value) -> Result<Vec<BuildRule>,
                 let name: Label = name.into();
                 let name = name.canonicalize(&path);
 
-                let headers = match &lib
-                    .get("headers")
-                    .unwrap_or(&Value::Array(vec![Value::String("*.hrl".to_string())]))
-                {
+                let headers = match &lib.get("headers").unwrap_or(&Value::Array(vec![
+                    Value::String("*.hrl".to_string()),
+                    Value::String("include/*.hrl".to_string()),
+                ])) {
                     Value::Array(headers) => headers
                         .iter()
                         .flat_map(|f| match f {
@@ -102,10 +102,10 @@ fn parse_libraries(path: &PathBuf, libs: &toml::Value) -> Result<Vec<BuildRule>,
                     _ => vec![],
                 };
 
-                let sources = match &lib
-                    .get("sources")
-                    .unwrap_or(&Value::Array(vec![Value::String("*.erl".to_string())]))
-                {
+                let sources = match &lib.get("sources").unwrap_or(&Value::Array(vec![
+                    Value::String("*.erl".to_string()),
+                    Value::String("src/*.erl".to_string()),
+                ])) {
                     Value::Array(sources) => sources
                         .iter()
                         .flat_map(|f| match f {
