@@ -1,0 +1,42 @@
+# vim: ft=toml
+
+[[erlang_library]]
+name = "erlang"
+deps = []
+erlc_opts = []
+
+[[gleam_library]]
+name = "gleam"
+deps = []
+gleam_opts = []
+
+[[clojure_library]]
+name = "clojerl"
+deps = []
+clojerl_opts = []
+
+[[hamler_library]]
+name = "hamler"
+deps = []
+hamler_opts = []
+
+[[elixir_library]]
+name = "elixir"
+deps = []
+elixirc_opts = []
+
+[[luerl_library]]
+name = "luerl"
+deps = []
+luac_opts = []
+
+[[erlang_shell]]
+name = "shell"
+deps = [
+  ":erlang",
+  ":clojerl",
+  ":gleam",
+  ":elixir",
+  # ":hamler",
+  # ":luerl",
+]

@@ -1,0 +1,3 @@
+(ns div)
+
+(def add (fn [x] (+ x 1)))

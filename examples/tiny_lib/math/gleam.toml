@@ -1,0 +1,5 @@
+name = "math"
+
+public_modules = [
+  "add"
+]
