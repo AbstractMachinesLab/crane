@@ -1,10 +1,7 @@
-use crate::build_rules::build_rule::BuildRule;
-use crate::build_rules::library::Library;
-use crate::build_rules::shell::Shell;
-use crate::build_rules::test::Test;
-use crate::model::target::Label;
-use anyhow::{anyhow, Context, Error};
-use glob::glob;
+use crate::build::{BuildRule, Rule};
+use crate::rules::{ClojureLibrary, ElixirLibrary, ErlangLibrary, ErlangShell, GleamLibrary};
+use anyhow::Error;
+use std::convert::TryFrom;
 use std::fs;
 use std::path::PathBuf;
 use std::vec::Vec;
@@ -35,29 +32,89 @@ impl Cranefile {
 
         let parent = &path.parent().unwrap().to_path_buf();
 
-        let shells = &contents
-            .get("shell")
+        let erlang_shells: Result<Vec<BuildRule>, anyhow::Error> = contents
+            .get("erlang_shell")
             .unwrap_or(&Value::Array(vec![]))
-            .clone();
-        let shells = parse_shells(&parent, shells)?;
-
-        let libraries = &contents
-            .get("library")
-            .unwrap_or(&Value::Array(vec![]))
-            .clone();
-        let libraries = parse_libraries(&parent, libraries)?;
-
-        let tests = &contents
-            .get("test")
-            .unwrap_or(&Value::Array(vec![]))
-            .clone();
-        let tests = parse_tests(&parent, tests)?;
-
-        let rules: Vec<BuildRule> = vec![libraries, tests, shells]
+            .as_array()
+            .unwrap_or(&vec![])
             .iter()
-            .flatten()
             .cloned()
+            .map(|x| ErlangShell::try_from((x, parent)).map(Rule::as_rule))
             .collect();
+        let erlang_shells = erlang_shells?;
+
+        let erlang_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
+            .get("erlang_library")
+            .unwrap_or(&Value::Array(vec![]))
+            .as_array()
+            .unwrap_or(&vec![])
+            .iter()
+            .cloned()
+            .map(|x| ErlangLibrary::try_from((x, parent)).map(Rule::as_rule))
+            .collect();
+        let erlang_libraries = erlang_libraries?;
+
+        let clojure_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
+            .get("clojure_library")
+            .unwrap_or(&Value::Array(vec![]))
+            .as_array()
+            .unwrap_or(&vec![])
+            .iter()
+            .cloned()
+            .map(|x| ClojureLibrary::try_from((x, parent)).map(Rule::as_rule))
+            .collect();
+        let clojure_libraries = clojure_libraries?;
+
+        let elixir_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
+            .get("elixir_library")
+            .unwrap_or(&Value::Array(vec![]))
+            .as_array()
+            .unwrap_or(&vec![])
+            .iter()
+            .cloned()
+            .map(|x| ElixirLibrary::try_from((x, parent)).map(Rule::as_rule))
+            .collect();
+        let elixir_libraries = elixir_libraries?;
+
+        let gleam_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
+            .get("gleam_library")
+            .unwrap_or(&Value::Array(vec![]))
+            .as_array()
+            .unwrap_or(&vec![])
+            .iter()
+            .cloned()
+            .map(|x| GleamLibrary::try_from((x, parent)).map(Rule::as_rule))
+            .collect();
+        let gleam_libraries = gleam_libraries?;
+        /*
+        &contents
+        .get("gleam_library")
+        .unwrap_or(&Value::Array(vec![]))
+        .into::<GleamLibrary>()
+        .as_rule(),
+        &contents
+        .get("hamler_library")
+        .unwrap_or(&Value::Array(vec![]))
+        .into::<HamlerLibrary>()
+        .as_rule(),
+        &contents
+        .get("luerl_library")
+        .unwrap_or(&Value::Array(vec![]))
+        .into::<LuaLibrary>()
+        .as_rule(),
+        */
+
+        let rules: Vec<BuildRule> = vec![
+            clojure_libraries,
+            elixir_libraries,
+            erlang_libraries,
+            erlang_shells,
+            gleam_libraries,
+        ]
+        .iter()
+        .flatten()
+        .cloned()
+        .collect();
 
         Ok(Cranefile {
             path,
@@ -66,178 +123,7 @@ impl Cranefile {
         })
     }
 
-    pub fn rules(self) -> Vec<BuildRule> {
-        self.rules
-    }
-}
-
-fn parse_libraries(path: &PathBuf, libs: &toml::Value) -> Result<Vec<BuildRule>, anyhow::Error> {
-    match libs {
-        Value::Array(libs) => libs
-            .iter()
-            .map(|lib| {
-                let name = lib
-                    .get("name")
-                    .context("Rule does not have a valid name")?
-                    .as_str()
-                    .context("Names should always be strings")?
-                    .to_string();
-                let name: Label = name.into();
-                let name = name.canonicalize(&path);
-
-                let headers = match &lib.get("headers").unwrap_or(&Value::Array(vec![
-                    Value::String("*.hrl".to_string()),
-                    Value::String("include/*.hrl".to_string()),
-                ])) {
-                    Value::Array(headers) => headers
-                        .iter()
-                        .flat_map(|f| match f {
-                            Value::String(name) => glob(path.join(name).to_str().unwrap())
-                                .expect("Could not read glob")
-                                .filter_map(Result::ok)
-                                .collect(),
-                            _ => vec![],
-                        })
-                        .collect(),
-                    _ => vec![],
-                };
-
-                let sources = match &lib.get("sources").unwrap_or(&Value::Array(vec![
-                    Value::String("*.erl".to_string()),
-                    Value::String("src/*.erl".to_string()),
-                ])) {
-                    Value::Array(sources) => sources
-                        .iter()
-                        .flat_map(|f| match f {
-                            Value::String(name) => glob(path.join(name).to_str().unwrap())
-                                .expect("Could not read glob")
-                                .filter_map(Result::ok)
-                                .collect(),
-                            _ => vec![],
-                        })
-                        .collect(),
-                    _ => vec![],
-                };
-
-                let dependencies = match &lib.get("deps").unwrap_or(&Value::Array(vec![])) {
-                    Value::Array(deps) => deps
-                        .iter()
-                        .map(|x| {
-                            let label: Label = x.to_string().into();
-                            Ok(label.canonicalize(&path))
-                        })
-                        .collect(),
-                    e => Err(anyhow!(
-                        "We expected an array of dependencies, but instead we got: {:?}",
-                        e
-                    )),
-                }?;
-
-                let lib = Library::new(name)
-                    .set_sources(sources)
-                    .set_headers(headers)
-                    .set_dependencies(dependencies);
-
-                Ok(BuildRule::Library(lib))
-            })
-            .collect(),
-        x => Err(anyhow!(
-            "We expected an array of libraries, but instead got: {:?}",
-            x
-        )),
-    }
-}
-
-fn parse_tests(path: &PathBuf, libs: &toml::Value) -> Result<Vec<BuildRule>, anyhow::Error> {
-    match libs {
-        Value::Array(libs) => libs
-            .iter()
-            .map(|lib| {
-                let name = lib
-                    .get("name")
-                    .context("Rule does not have a valid name")?
-                    .as_str()
-                    .context("Names should always be strings")?
-                    .to_string();
-                let name: Label = name.into();
-                let name = name.canonicalize(&path);
-
-                if !name.ends_with("_test") {
-                    return Err(anyhow!("Test names should always end with _test"));
-                }
-
-                let file = PathBuf::from(
-                    lib.get("file")
-                        .context("Test rule does not have a file")?
-                        .as_str()
-                        .context("Test rule should have a single file as a string")?
-                        .to_string(),
-                );
-
-                let dependencies = match &lib.get("deps").unwrap_or(&Value::Array(vec![])) {
-                    Value::Array(deps) => deps
-                        .iter()
-                        .map(|x| {
-                            let label: Label = x.to_string().into();
-                            Ok(label.canonicalize(&path))
-                        })
-                        .collect(),
-                    e => Err(anyhow!(
-                        "We expected an array of dependencies, but instead we got: {:?}",
-                        e
-                    )),
-                }?;
-
-                Ok(BuildRule::Test(Test {
-                    name,
-                    file,
-                    dependencies,
-                }))
-            })
-            .collect(),
-        x => Err(anyhow!(
-            "We expected an array of tests, but instead got: {:?}",
-            x
-        )),
-    }
-}
-
-fn parse_shells(path: &PathBuf, libs: &toml::Value) -> Result<Vec<BuildRule>, anyhow::Error> {
-    match libs {
-        Value::Array(libs) => libs
-            .iter()
-            .map(|lib| {
-                let name = lib
-                    .get("name")
-                    .context("Rule does not have a valid name")?
-                    .as_str()
-                    .context("Names should always be strings")?
-                    .to_string();
-                let name: Label = name.into();
-                let name = name.canonicalize(&path);
-
-                let dependencies = match &lib.get("deps").unwrap_or(&Value::Array(vec![])) {
-                    Value::Array(deps) => deps
-                        .iter()
-                        .map(|x| {
-                            let label: Label = x.to_string().into();
-                            Ok(label.canonicalize(&path))
-                        })
-                        .collect(),
-                    e => Err(anyhow!(
-                        "We expected an array of dependencies, but instead we got: {:?}",
-                        e
-                    )),
-                }?;
-
-                Ok(BuildRule::Shell(
-                    Shell::new(name).set_dependencies(dependencies),
-                ))
-            })
-            .collect(),
-        x => Err(anyhow!(
-            "We expected an array of tests, but instead got: {:?}",
-            x
-        )),
+    pub fn rules(&self) -> Vec<BuildRule> {
+        self.rules.clone()
     }
 }

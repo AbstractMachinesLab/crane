@@ -1,7 +1,7 @@
 use anyhow::Context;
-use crane::build_plan::BuildPlan;
-use crane::model::target::Label;
-use crane::model::workspace::Workspace;
+use crane::build::BuildPlan;
+use crane::label::Label;
+use crane::workspace::Workspace;
 use fern::colors::{Color, ColoredLevelConfig};
 use log::{debug, error, info};
 use structopt::StructOpt;
