@@ -1,9 +1,7 @@
-use crate::build_artifact::Artifact;
-use crate::build_plan::BuildPlan;
-use crate::build_rules::build_rule::BuildRule;
-use crate::model::target::Label;
-use crate::model::workspace::Workspace;
-use crate::toolchains::erlang::Toolchain;
+use super::{Artifact, BuildPlan, BuildRule};
+use crate::label::Label;
+use crate::toolchains::Toolchain;
+use crate::workspace::Workspace;
 use anyhow::Context;
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;

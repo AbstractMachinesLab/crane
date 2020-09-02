@@ -1,7 +1,6 @@
-use crate::build_context::BuildContext;
-use crate::build_rules::build_rule::BuildRule;
-use crate::model::target::Label;
-use crate::model::workspace::Workspace;
+use crate::build::{BuildContext, BuildRule};
+use crate::label::Label;
+use crate::workspace::Workspace;
 use log::debug;
 use petgraph::dot;
 use petgraph::graph::{Graph, NodeIndex};
@@ -51,7 +50,7 @@ impl BuildPlan {
 
         debug!("Building temporary table of labels to node indices...");
         for rule in rules {
-            let label = rule.label().clone();
+            let label = rule.name().clone();
             let node = build_graph.add_node(rule);
             debug!("{:?} -> {:?}", &label, &node);
             nodes.insert(label, node);
@@ -62,7 +61,7 @@ impl BuildPlan {
         debug!("Building dependency adjacency matrix...");
         for node in nodes.values() {
             let rule = build_graph.node_weight(*node).unwrap();
-            debug!("{:?} depends on:", &rule.label());
+            debug!("{:?} depends on:", &rule.name());
             for label in rule.dependencies().iter().cloned() {
                 let dep = nodes.get(&label);
                 debug!("\t-> {:?} ({:?})", &label, &dep);
@@ -73,7 +72,7 @@ impl BuildPlan {
                     panic!(
                         "Could not resolve dependency {:?} for target {:?}",
                         &label.to_string(),
-                        rule.label()
+                        rule.name()
                     );
                 }
             }
@@ -110,7 +109,7 @@ impl BuildPlan {
                 &self.build_graph,
                 &[dot::Config::EdgeNoLabel, dot::Config::NodeNoLabel],
                 &|_graph, _edge| "".to_string(),
-                &|_graph, (_idx, rule)| format!("label = \"{}\"", rule.label().to_string())
+                &|_graph, (_idx, rule)| format!("label = \"{}\"", rule.name().to_string())
             )
         )
     }
@@ -127,8 +126,8 @@ impl BuildPlan {
         let mut walker = Topo::new(&self.build_graph);
         let mut artifacts = 0;
         while let Some(node) = walker.next(&self.build_graph) {
-            let node = &self.build_graph[node];
-            &node.run(&mut ctx)?;
+            let node = &mut self.build_graph[node];
+            node.run(&mut ctx)?;
             artifacts = artifacts + 1;
         }
         Ok(artifacts)
@@ -140,18 +139,18 @@ impl BuildPlan {
         let mut walker = Topo::new(&self.build_graph);
         let mut artifacts = 0;
         while let Some(node) = walker.next(&self.build_graph) {
-            let node = &self.build_graph[node];
-            let inputs = &node.inputs();
-            let outputs = &node.outputs(&ctx);
-            let label = &node.label();
+            let node = &mut self.build_graph[node];
+            let inputs = &node.inputs(&mut ctx);
+            let outputs = &node.outputs(&mut ctx);
+            let name = &node.name();
             if let Some(changes) = &ctx.changed_inputs(inputs) {
                 debug!("Changed inputs: {:?}...", &changes);
-                debug!("Building {}...", &label.to_string());
+                debug!("Building {}...", &name.to_string());
                 &node.build(&mut ctx)?;
                 artifacts = artifacts + 1;
                 &ctx.update_cache(inputs, outputs)?;
             } else {
-                debug!("Skipping {}. Nothing to do.", &label.to_string());
+                debug!("Skipping {}. Nothing to do.", &name.to_string());
             }
         }
         Ok(artifacts)
