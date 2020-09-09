@@ -212,5 +212,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Sep 09 19:32:14 CEST 2020 by ostera
+\* Last modified Wed Sep 09 19:38:13 CEST 2020 by ostera
 \* Created Wed Sep 09 12:07:17 CEST 2020 by ostera
