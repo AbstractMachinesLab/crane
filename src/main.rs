@@ -10,7 +10,7 @@ use structopt::StructOpt;
 #[structopt(
     name = "crane",
     setting = structopt::clap::AppSettings::ColoredHelp,
-    about = " "
+    about = "A multilanguage, incremental, scalable build system for the BEAM"
 )]
 struct Crane {
     #[structopt(short = "v", long = "verbose", help = "turn on verbosity")]
@@ -19,7 +19,7 @@ struct Crane {
     #[structopt(short = "q", long = "quiet", help = "turn off all logs")]
     quiet: bool,
 
-    #[structopt(subcommand)]
+    #[structopt(subcommand, help = "the command to run")]
     cmd: Goal,
 }
 
@@ -81,7 +81,11 @@ impl Goal {
 }
 
 #[derive(StructOpt, Debug, Clone)]
-#[structopt(name = "build", about = "build this project")]
+#[structopt(
+    name = "build",
+    setting = structopt::clap::AppSettings::ColoredHelp,
+    about = "Build a target in this Workspace",
+)]
 struct BuildOpt {
     #[structopt(
         short = "p",
@@ -134,7 +138,11 @@ impl BuildOpt {
 }
 
 #[derive(StructOpt, Debug, Clone)]
-#[structopt(name = "run", about = "executes a runnable target")]
+#[structopt(
+    name = "run",
+    setting = structopt::clap::AppSettings::ColoredHelp,
+    about = "Executes a runnable target"
+)]
 struct RunOpt {
     #[structopt(help = r"The target to run.
 
