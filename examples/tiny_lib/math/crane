@@ -15,20 +15,10 @@ name = "clojerl"
 deps = []
 clojerl_opts = []
 
-[[hamler_library]]
-name = "hamler"
-deps = []
-hamler_opts = []
-
 [[elixir_library]]
 name = "elixir"
 deps = []
 elixirc_opts = []
-
-[[luerl_library]]
-name = "luerl"
-deps = []
-luac_opts = []
 
 [[erlang_shell]]
 name = "shell"
@@ -37,6 +27,4 @@ deps = [
   ":clojerl",
   ":gleam",
   ":elixir",
-  # ":hamler",
-  # ":luerl",
 ]
