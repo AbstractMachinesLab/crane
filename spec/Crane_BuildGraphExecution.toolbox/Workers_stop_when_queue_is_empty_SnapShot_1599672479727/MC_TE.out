@@ -1,0 +1,554 @@
+@!@!@STARTMSG 2262:0 @!@!@
+TLC2 Version 2.15 of Day Month 20?? (rev: eb3ff99)
+@!@!@ENDMSG 2262 @!@!@
+@!@!@STARTMSG 2187:0 @!@!@
+Running breadth-first search Model-Checking with fp 83 and seed 3542450303567929305 with 45 workers on 64 cores with 15259MB heap and 34317MB offheap memory [pid: 1959326] (Linux 5.4.0-42-generic amd64, AdoptOpenJDK 14.0.1 x86_64, OffHeapDiskFPSet, DiskStateQueue).
+@!@!@ENDMSG 2187 @!@!@
+@!@!@STARTMSG 2220:0 @!@!@
+Starting SANY...
+@!@!@ENDMSG 2220 @!@!@
+Parsing file /home/ostera/repos/github.com/AbstractMachinesLab/crane/spec/Crane_BuildGraphExecution.toolbox/Workers_stop_when_queue_is_empty/MC.tla
+Parsing file /home/ostera/repos/github.com/AbstractMachinesLab/crane/spec/Crane_BuildGraphExecution.toolbox/Workers_stop_when_queue_is_empty/Crane_BuildGraphExecution.tla
+!! WARNING: Either the PlusCal or its TLA+ translation has changed in the specification for Crane_BuildGraphExecution since the last time translation was performed.
+Parsing file /home/ostera/Downloads/TLA/toolbox/plugins/org.lamport.tlatools_1.0.0.202004251858/tla2sany/StandardModules/TLC.tla
+Parsing file /home/ostera/Downloads/TLA/toolbox/plugins/org.lamport.tlatools_1.0.0.202004251858/tla2sany/StandardModules/Naturals.tla
+Parsing file /home/ostera/Downloads/TLA/toolbox/plugins/org.lamport.tlatools_1.0.0.202004251858/tla2sany/StandardModules/Integers.tla
+Parsing file /home/ostera/Downloads/TLA/toolbox/plugins/org.lamport.tlatools_1.0.0.202004251858/tla2sany/StandardModules/Sequences.tla
+Parsing file /home/ostera/Downloads/TLA/toolbox/plugins/org.lamport.tlatools_1.0.0.202004251858/tla2sany/StandardModules/FiniteSets.tla
+Semantic processing of module Naturals
+Semantic processing of module Integers
+Semantic processing of module Sequences
+Semantic processing of module Crane_BuildGraphExecution
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module MC
+@!@!@STARTMSG 2219:0 @!@!@
+SANY finished.
+@!@!@ENDMSG 2219 @!@!@
+@!@!@STARTMSG 2185:0 @!@!@
+Starting... (2020-09-09 19:27:41)
+@!@!@ENDMSG 2185 @!@!@
+@!@!@STARTMSG 2212:0 @!@!@
+Implied-temporal checking--satisfiability problem has 2 branches.
+@!@!@ENDMSG 2212 @!@!@
+@!@!@STARTMSG 2189:0 @!@!@
+Computing initial states...
+@!@!@ENDMSG 2189 @!@!@
+@!@!@STARTMSG 2190:0 @!@!@
+Finished computing initial states: 1 distinct state generated at 2020-09-09 19:27:43.
+@!@!@ENDMSG 2190 @!@!@
+@!@!@STARTMSG 2192:0 @!@!@
+Checking 2 branches of temporal properties for the current state space with 188134 total distinct states at (2020-09-09 19:27:46)
+@!@!@ENDMSG 2192 @!@!@
+@!@!@STARTMSG 2267:0 @!@!@
+Finished checking temporal properties in 00s at 2020-09-09 19:27:47
+@!@!@ENDMSG 2267 @!@!@
+@!@!@STARTMSG 2200:0 @!@!@
+Progress(17) at 2020-09-09 19:27:47: 303,997 states generated (303,997 s/min), 112,473 distinct states found (112,473 ds/min), 36,656 states left on queue.
+@!@!@ENDMSG 2200 @!@!@
+@!@!@STARTMSG 2200:0 @!@!@
+Progress(24) at 2020-09-09 19:27:53: 1,377,931 states generated, 475,828 distinct states found, 0 states left on queue.
+@!@!@ENDMSG 2200 @!@!@
+@!@!@STARTMSG 2192:0 @!@!@
+Checking 2 branches of temporal properties for the complete state space with 951656 total distinct states at (2020-09-09 19:27:53)
+@!@!@ENDMSG 2192 @!@!@
+@!@!@STARTMSG 2116:1 @!@!@
+Temporal properties were violated.
+
+@!@!@ENDMSG 2116 @!@!@
+@!@!@STARTMSG 2264:1 @!@!@
+The following behavior constitutes a counter-example:
+
+@!@!@ENDMSG 2264 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+1: <Initial predicate>
+/\ work_done = {}
+/\ abort = FALSE
+/\ current_job = <<-1, -1, -1>>
+/\ pc = <<"Loop", "Loop", "Loop">>
+/\ queue = 5
+/\ nodes = <<"waiting", "waiting", "waiting", "waiting", "waiting">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+2: <Loop line 126, col 15 to line 134, col 49 of module Crane_BuildGraphExecution>
+/\ work_done = {}
+/\ abort = FALSE
+/\ current_job = <<5, -1, -1>>
+/\ pc = <<"Work", "Loop", "Loop">>
+/\ queue = 4
+/\ nodes = <<"waiting", "waiting", "waiting", "waiting", "building">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+3: <Loop line 126, col 15 to line 134, col 49 of module Crane_BuildGraphExecution>
+/\ work_done = {}
+/\ abort = FALSE
+/\ current_job = <<5, 4, -1>>
+/\ pc = <<"Work", "Work", "Loop">>
+/\ queue = 3
+/\ nodes = <<"waiting", "waiting", "waiting", "building", "building">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+4: <Work line 136, col 15 to line 140, col 76 of module Crane_BuildGraphExecution>
+/\ work_done = {}
+/\ abort = FALSE
+/\ current_job = <<5, 4, -1>>
+/\ pc = <<"Work", "BuildNode", "Loop">>
+/\ queue = 3
+/\ nodes = <<"waiting", "waiting", "waiting", "building", "building">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+5: <Loop line 126, col 15 to line 134, col 49 of module Crane_BuildGraphExecution>
+/\ work_done = {}
+/\ abort = FALSE
+/\ current_job = <<5, 4, 3>>
+/\ pc = <<"Work", "BuildNode", "Work">>
+/\ queue = 2
+/\ nodes = <<"waiting", "waiting", "building", "building", "building">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+6: <Work line 136, col 15 to line 140, col 76 of module Crane_BuildGraphExecution>
+/\ work_done = {}
+/\ abort = FALSE
+/\ current_job = <<5, 4, 3>>
+/\ pc = <<"BuildNode", "BuildNode", "Work">>
+/\ queue = 2
+/\ nodes = <<"waiting", "waiting", "building", "building", "building">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+7: <BuildNode line 159, col 20 to line 163, col 81 of module Crane_BuildGraphExecution>
+/\ work_done = {}
+/\ abort = FALSE
+/\ current_job = <<5, 4, 3>>
+/\ pc = <<"BuildNode", "WorkSucceeds", "Work">>
+/\ queue = 2
+/\ nodes = <<"waiting", "waiting", "building", "building", "building">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+8: <BuildNode line 159, col 20 to line 163, col 81 of module Crane_BuildGraphExecution>
+/\ work_done = {}
+/\ abort = FALSE
+/\ current_job = <<5, 4, 3>>
+/\ pc = <<"WorkSucceeds", "WorkSucceeds", "Work">>
+/\ queue = 2
+/\ nodes = <<"waiting", "waiting", "building", "building", "building">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+9: <WorkSucceeds line 165, col 23 to line 169, col 66 of module Crane_BuildGraphExecution>
+/\ work_done = {5}
+/\ abort = FALSE
+/\ current_job = <<5, 4, 3>>
+/\ pc = <<"Loop", "WorkSucceeds", "Work">>
+/\ queue = 2
+/\ nodes = <<"waiting", "waiting", "building", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+10: <Work line 136, col 15 to line 140, col 76 of module Crane_BuildGraphExecution>
+/\ work_done = {5}
+/\ abort = FALSE
+/\ current_job = <<5, 4, 3>>
+/\ pc = <<"Loop", "WorkSucceeds", "BuildNode">>
+/\ queue = 2
+/\ nodes = <<"waiting", "waiting", "building", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+11: <BuildNode line 159, col 20 to line 163, col 81 of module Crane_BuildGraphExecution>
+/\ work_done = {5}
+/\ abort = FALSE
+/\ current_job = <<5, 4, 3>>
+/\ pc = <<"Loop", "WorkSucceeds", "WorkSucceeds">>
+/\ queue = 2
+/\ nodes = <<"waiting", "waiting", "building", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+12: <Loop line 126, col 15 to line 134, col 49 of module Crane_BuildGraphExecution>
+/\ work_done = {5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 3>>
+/\ pc = <<"Work", "WorkSucceeds", "WorkSucceeds">>
+/\ queue = 1
+/\ nodes = <<"waiting", "building", "building", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+13: <WorkSucceeds line 165, col 23 to line 169, col 66 of module Crane_BuildGraphExecution>
+/\ work_done = {3, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 3>>
+/\ pc = <<"Work", "WorkSucceeds", "Loop">>
+/\ queue = 1
+/\ nodes = <<"waiting", "building", "built", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+14: <Work line 136, col 15 to line 140, col 76 of module Crane_BuildGraphExecution>
+/\ work_done = {3, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 3>>
+/\ pc = <<"BuildNode", "WorkSucceeds", "Loop">>
+/\ queue = 1
+/\ nodes = <<"waiting", "building", "built", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+15: <Loop line 126, col 15 to line 134, col 49 of module Crane_BuildGraphExecution>
+/\ work_done = {3, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"BuildNode", "WorkSucceeds", "Work">>
+/\ queue = 0
+/\ nodes = <<"building", "building", "built", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+16: <BuildNode line 159, col 20 to line 163, col 81 of module Crane_BuildGraphExecution>
+/\ work_done = {3, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"CacheHit", "WorkSucceeds", "Work">>
+/\ queue = 0
+/\ nodes = <<"building", "building", "built", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+17: <CacheHit line 171, col 19 to line 175, col 62 of module Crane_BuildGraphExecution>
+/\ work_done = {2, 3, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"Loop", "WorkSucceeds", "Work">>
+/\ queue = 0
+/\ nodes = <<"building", "cached", "built", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+18: <Work line 136, col 15 to line 140, col 76 of module Crane_BuildGraphExecution>
+/\ work_done = {2, 3, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"Loop", "WorkSucceeds", "BuildNode">>
+/\ queue = 0
+/\ nodes = <<"building", "cached", "built", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+19: <Loop line 126, col 15 to line 134, col 49 of module Crane_BuildGraphExecution>
+/\ work_done = {2, 3, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"Done", "WorkSucceeds", "BuildNode">>
+/\ queue = 0
+/\ nodes = <<"building", "cached", "built", "building", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+20: <WorkSucceeds line 165, col 23 to line 169, col 66 of module Crane_BuildGraphExecution>
+/\ work_done = {2, 3, 4, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"Done", "Loop", "BuildNode">>
+/\ queue = 0
+/\ nodes = <<"building", "cached", "built", "built", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+21: <Loop line 126, col 15 to line 134, col 49 of module Crane_BuildGraphExecution>
+/\ work_done = {2, 3, 4, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"Done", "Done", "BuildNode">>
+/\ queue = 0
+/\ nodes = <<"building", "cached", "built", "built", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+22: <BuildNode line 159, col 20 to line 163, col 81 of module Crane_BuildGraphExecution>
+/\ work_done = {2, 3, 4, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"Done", "Done", "CacheHit">>
+/\ queue = 0
+/\ nodes = <<"building", "cached", "built", "built", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+23: <CacheHit line 171, col 19 to line 175, col 62 of module Crane_BuildGraphExecution>
+/\ work_done = {1, 2, 3, 4, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"Done", "Done", "Loop">>
+/\ queue = 0
+/\ nodes = <<"cached", "cached", "built", "built", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+24: <Loop line 126, col 15 to line 134, col 49 of module Crane_BuildGraphExecution>
+/\ work_done = {1, 2, 3, 4, 5}
+/\ abort = FALSE
+/\ current_job = <<2, 4, 1>>
+/\ pc = <<"Done", "Done", "Done">>
+/\ queue = 0
+/\ nodes = <<"cached", "cached", "built", "built", "built">>
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2218:4 @!@!@
+25: Stuttering
+@!@!@ENDMSG 2218 @!@!@
+@!@!@STARTMSG 2267:0 @!@!@
+Finished checking temporal properties in 03s at 2020-09-09 19:27:57
+@!@!@ENDMSG 2267 @!@!@
+@!@!@STARTMSG 2201:0 @!@!@
+The coverage statistics at 2020-09-09 19:27:57
+@!@!@ENDMSG 2201 @!@!@
+@!@!@STARTMSG 2773:0 @!@!@
+<Init line 117, col 1 to line 117, col 4 of module Crane_BuildGraphExecution>: 2:2
+@!@!@ENDMSG 2773 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 118, col 9 to line 124, col 45 of module Crane_BuildGraphExecution: 2
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2772:0 @!@!@
+<Loop line 126, col 1 to line 126, col 10 of module Crane_BuildGraphExecution>: 150243:371068
+@!@!@ENDMSG 2772 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 126, col 18 to line 126, col 34 of module Crane_BuildGraphExecution: 1798694
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 126, col 18 to line 126, col 25 of module Crane_BuildGraphExecution: 1427626
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 127, col 21 to line 127, col 38 of module Crane_BuildGraphExecution: 371068
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 127, col 21 to line 127, col 25 of module Crane_BuildGraphExecution: 371068
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 127, col 30 to line 127, col 38 of module Crane_BuildGraphExecution: 173773
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 128, col 29 to line 128, col 62 of module Crane_BuildGraphExecution: 338947
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 129, col 29 to line 129, col 69 of module Crane_BuildGraphExecution: 338947
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 130, col 26 to line 133, col 62 of module Crane_BuildGraphExecution: 32121
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 134, col 18 to line 134, col 49 of module Crane_BuildGraphExecution: 371068
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2772:0 @!@!@
+<Work line 136, col 1 to line 136, col 10 of module Crane_BuildGraphExecution>: 62459:203164
+@!@!@ENDMSG 2772 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 136, col 18 to line 136, col 34 of module Crane_BuildGraphExecution: 1529200
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 136, col 18 to line 136, col 25 of module Crane_BuildGraphExecution: 1427618
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 137, col 18 to line 137, col 40 of module Crane_BuildGraphExecution: 203164
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 137, col 18 to line 137, col 34 of module Crane_BuildGraphExecution: 101582
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 137, col 39 to line 137, col 40 of module Crane_BuildGraphExecution: 101582
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 138, col 18 to line 139, col 62 of module Crane_BuildGraphExecution: 101582
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 140, col 18 to line 140, col 76 of module Crane_BuildGraphExecution: 203164
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2772:0 @!@!@
+<CheckOnDependencies line 142, col 1 to line 142, col 25 of module Crane_BuildGraphExecution>: 14521:101555
+@!@!@ENDMSG 2772 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 142, col 33 to line 142, col 64 of module Crane_BuildGraphExecution: 1529168
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 142, col 33 to line 142, col 40 of module Crane_BuildGraphExecution: 1427613
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 143, col 36 to line 143, col 143 of module Crane_BuildGraphExecution: 101555
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 143, col 36 to line 143, col 60 of module Crane_BuildGraphExecution: 101555
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 143, col 66 to line 143, col 142 of module Crane_BuildGraphExecution: 84316
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  ||line 143, col 66 to line 143, col 101 of module Crane_BuildGraphExecution: 84316
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  ||line 143, col 106 to line 143, col 142 of module Crane_BuildGraphExecution: 54415
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 144, col 41 to line 144, col 82 of module Crane_BuildGraphExecution: 59802
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 145, col 41 to line 145, col 90 of module Crane_BuildGraphExecution: 41753
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 146, col 33 to line 147, col 59 of module Crane_BuildGraphExecution: 101555
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2772:0 @!@!@
+<WaitForDependency line 149, col 1 to line 149, col 23 of module Crane_BuildGraphExecution>: 12950:82741
+@!@!@ENDMSG 2772 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 149, col 31 to line 149, col 60 of module Crane_BuildGraphExecution: 1510354
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 149, col 31 to line 149, col 38 of module Crane_BuildGraphExecution: 1427613
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 150, col 34 to line 150, col 113 of module Crane_BuildGraphExecution: 82741
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 150, col 34 to line 150, col 68 of module Crane_BuildGraphExecution: 82741
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  ||line 150, col 34 to line 150, col 39 of module Crane_BuildGraphExecution: 82741
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  ||line 150, col 44 to line 150, col 68 of module Crane_BuildGraphExecution: 57229
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 150, col 73 to line 150, col 113 of module Crane_BuildGraphExecution: 45415
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 151, col 39 to line 152, col 88 of module Crane_BuildGraphExecution: 15415
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 153, col 45 to line 153, col 50 of module Crane_BuildGraphExecution: 67326
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 154, col 50 to line 154, col 91 of module Crane_BuildGraphExecution: 41814
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 155, col 50 to line 155, col 86 of module Crane_BuildGraphExecution: 25512
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 156, col 31 to line 157, col 57 of module Crane_BuildGraphExecution: 82741
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2772:0 @!@!@
+<BuildNode line 159, col 1 to line 159, col 15 of module Crane_BuildGraphExecution>: 110963:304689
+@!@!@ENDMSG 2772 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 159, col 23 to line 159, col 44 of module Crane_BuildGraphExecution: 1529176
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 159, col 23 to line 159, col 30 of module Crane_BuildGraphExecution: 1427613
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 160, col 23 to line 162, col 68 of module Crane_BuildGraphExecution: 101563
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 163, col 23 to line 163, col 81 of module Crane_BuildGraphExecution: 304689
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2772:0 @!@!@
+<WorkSucceeds line 165, col 1 to line 165, col 18 of module Crane_BuildGraphExecution>: 40344:101557
+@!@!@ENDMSG 2772 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 165, col 26 to line 165, col 50 of module Crane_BuildGraphExecution: 1529165
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 165, col 26 to line 165, col 33 of module Crane_BuildGraphExecution: 1427608
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 166, col 26 to line 166, col 79 of module Crane_BuildGraphExecution: 101557
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 167, col 26 to line 167, col 76 of module Crane_BuildGraphExecution: 101557
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 168, col 26 to line 168, col 59 of module Crane_BuildGraphExecution: 101557
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 169, col 26 to line 169, col 66 of module Crane_BuildGraphExecution: 101557
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2772:0 @!@!@
+<CacheHit line 171, col 1 to line 171, col 14 of module Crane_BuildGraphExecution>: 40568:101551
+@!@!@ENDMSG 2772 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 171, col 22 to line 171, col 42 of module Crane_BuildGraphExecution: 1529156
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 171, col 22 to line 171, col 29 of module Crane_BuildGraphExecution: 1427605
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 172, col 22 to line 172, col 76 of module Crane_BuildGraphExecution: 101551
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 173, col 22 to line 173, col 72 of module Crane_BuildGraphExecution: 101551
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 174, col 22 to line 174, col 55 of module Crane_BuildGraphExecution: 101551
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 175, col 22 to line 175, col 62 of module Crane_BuildGraphExecution: 101551
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2772:0 @!@!@
+<BuildError line 177, col 1 to line 177, col 16 of module Crane_BuildGraphExecution>: 43779:101549
+@!@!@ENDMSG 2772 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 177, col 24 to line 177, col 46 of module Crane_BuildGraphExecution: 1529152
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 177, col 24 to line 177, col 31 of module Crane_BuildGraphExecution: 1427603
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 178, col 24 to line 178, col 79 of module Crane_BuildGraphExecution: 101549
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 179, col 24 to line 179, col 36 of module Crane_BuildGraphExecution: 101549
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 180, col 24 to line 180, col 57 of module Crane_BuildGraphExecution: 101549
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 181, col 24 to line 181, col 68 of module Crane_BuildGraphExecution: 101549
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2772:0 @!@!@
+<Terminating line 189, col 1 to line 189, col 11 of module Crane_BuildGraphExecution>: 0:10257
+@!@!@ENDMSG 2772 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 189, col 40 to line 189, col 56 of module Crane_BuildGraphExecution: 663009
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  |line 189, col 40 to line 189, col 47 of module Crane_BuildGraphExecution: 632238
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 189, col 31 to line 189, col 37 of module Crane_BuildGraphExecution: 475860
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 190, col 19 to line 190, col 32 of module Crane_BuildGraphExecution: 10257
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2774:0 @!@!@
+<TypeInvariant line 106, col 1 to line 106, col 13 of module Crane_BuildGraphExecution>
+@!@!@ENDMSG 2774 @!@!@
+@!@!@STARTMSG 2221:0 @!@!@
+  line 106, col 18 to line 106, col 30 of module Crane_BuildGraphExecution: 475828
+@!@!@ENDMSG 2221 @!@!@
+@!@!@STARTMSG 2202:0 @!@!@
+End of statistics.
+@!@!@ENDMSG 2202 @!@!@
+@!@!@STARTMSG 2200:0 @!@!@
+Progress(24) at 2020-09-09 19:27:57: 1,377,931 states generated (5,104,078 s/min), 475,828 distinct states found (1,762,543 ds/min), 0 states left on queue.
+@!@!@ENDMSG 2200 @!@!@
+@!@!@STARTMSG 2199:0 @!@!@
+1377931 states generated, 475828 distinct states found, 0 states left on queue.
+@!@!@ENDMSG 2199 @!@!@
+@!@!@STARTMSG 2186:0 @!@!@
+Finished in 16200ms at (2020-09-09 19:27:57)
+@!@!@ENDMSG 2186 @!@!@

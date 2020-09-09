@@ -23,7 +23,7 @@ be enough  to figure out how the actual worker will behave with a real build gra
 Abstraction for the win. 
 
 At the end of the execution, the queue should be emptied, and all nodes should be built or cached OR
-the process should have been aborted with some errored nodes.
+the process should have been aborted with some error.
 
 
 --------------------- MODULE Crane_BuildGraphExecution ---------------------
@@ -45,12 +45,10 @@ variables
 ;
 
 define
-    TypeInvariant == queue \in Nat
-    
     Statuses == { nodes[n]: n \in 1..Nodes }
     AllBuiltOrCached == Statuses \subseteq { "built", "cached" }
-    SomeErrored == "errored"  \in Statuses
-    
+    SomeErrored == { "errored" } \in Statuses
+    TypeInvariant == queue \in Nat
     EventuallyQueueIsConsumed == <>[]( abort \/ (~abort /\ queue = 0 ))
     NoWorkIsDoneTwice == <>[]( abort \/ (~abort /\ work_done = 1..Nodes ) )
     EitherWeAbortOrThereAreNoErrors == <>[](  (abort /\ SomeErrored)  \/  (~abort /\ AllBuiltOrCached) )
@@ -105,16 +103,14 @@ begin
 end process;
 
 end algorithm; *)
-\* BEGIN TRANSLATION - the hash of the PCal code: PCal-3054d4d62f832d2509536c57dc70d748
+\* BEGIN TRANSLATION - the hash of the PCal code: PCal-113daedceb48e426b19f36e9fa856974
 VARIABLES abort, queue, nodes, work_done, pc
 
 (* define statement *)
-TypeInvariant == queue \in Nat
-
 Statuses == { nodes[n]: n \in 1..Nodes }
 AllBuiltOrCached == Statuses \subseteq { "built", "cached" }
-SomeErrored == "errored"  \in Statuses
-
+SomeErrored == { "errored" } \in Statuses
+TypeInvariant == queue \in Nat
 EventuallyQueueIsConsumed == <>[]( abort \/ (~abort /\ queue = 0 ))
 NoWorkIsDoneTwice == <>[]( abort \/ (~abort /\ work_done = 1..Nodes ) )
 EitherWeAbortOrThereAreNoErrors == <>[](  (abort /\ SomeErrored)  \/  (~abort /\ AllBuiltOrCached) )
@@ -208,9 +204,9 @@ Spec == /\ Init /\ [][Next]_vars
 
 Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
-\* END TRANSLATION - the hash of the generated TLA code (remove to silence divergence warnings): TLA-c70b83f43df290b37b53d98b93983f83
+\* END TRANSLATION - the hash of the generated TLA code (remove to silence divergence warnings): TLA-42d6227ac678b8a5fa5459523a8fd0bf
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Sep 09 19:32:14 CEST 2020 by ostera
+\* Last modified Wed Sep 09 19:31:17 CEST 2020 by ostera
 \* Created Wed Sep 09 12:07:17 CEST 2020 by ostera
