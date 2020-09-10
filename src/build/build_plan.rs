@@ -194,8 +194,14 @@ impl BuildPlan {
         // is added!
         toolchains.ready_toolchain(ToolchainName::Erlang)?;
 
-        for t in &self.toolchains {
-            toolchains.ready_toolchain(*t)?
+        let ts: Vec<ToolchainName> = self
+            .toolchains
+            .iter()
+            .filter(|n| ToolchainName::Erlang.ne(n))
+            .cloned()
+            .collect();
+        for t in ts {
+            toolchains.ready_toolchain(t)?
         }
 
         Ok(())
