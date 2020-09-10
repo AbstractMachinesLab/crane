@@ -177,6 +177,8 @@ impl RunOpt {
         let mut build_plan = BuildPlan::for_workspace(workspace)
             .plan()?
             .scoped(target.clone())?;
+        info!("Readying toolchains: {:?}", &build_plan.toolchains_in_use());
+        let _ = &build_plan.ready_toolchains()?;
         info!("Building target and dependencies: {}", &target.to_string());
         let artifacts = build_plan.build()?;
         let t1 = t0.elapsed().as_millis();
