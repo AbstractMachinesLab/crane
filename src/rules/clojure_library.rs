@@ -91,14 +91,7 @@ impl Rule for ClojureLibrary {
     fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
         let transitive_deps = ctx.transitive_dependencies(&self.clone().as_rule());
 
-        let transitive_headers: HashSet<PathBuf> = transitive_deps
-            .iter()
-            .flat_map(|dep| dep.outputs(&ctx))
-            .flat_map(|artifact| artifact.inputs)
-            .map(|path| ctx.output_path().join(path))
-            .collect();
-
-        if self.sources.len() > 0 {
+        if !self.sources.is_empty() {
             let transitive_beam_files: HashSet<PathBuf> = transitive_deps
                 .iter()
                 .flat_map(|dep| dep.outputs(&ctx))

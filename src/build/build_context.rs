@@ -24,9 +24,9 @@ impl BuildContext {
     pub fn new(workspace: Workspace, build_plan: BuildPlan) -> BuildContext {
         let ctx = BuildContext {
             artifact_root: workspace.root().join(".crane"),
-            toolchain: workspace.toolchains().clone(),
-            workspace: workspace,
+            toolchain: workspace.toolchains(),
             declared_outputs: vec![],
+            workspace,
             build_plan,
         };
         fs::create_dir_all(ctx.output_path()).unwrap();
@@ -73,20 +73,20 @@ impl BuildContext {
         actual_path
     }
 
-    pub fn changed_inputs(&mut self, paths: &Vec<PathBuf>) -> Option<Vec<(PathBuf, String)>> {
+    pub fn changed_inputs(&mut self, paths: &[PathBuf]) -> Option<Vec<(PathBuf, String)>> {
         let mut hasher = Sha1::new();
         let result: Option<Vec<(PathBuf, String)>> = paths
             .iter()
             .cloned()
             .map(|path| {
                 let contents = fs::read_to_string(&path)
-                    .expect(&format!("Truly expected {:?} to be a readable file. Was it changed since the build started?", path));
+                    .unwrap_or_else(|_| panic!("Truly expected {:?} to be a readable file. Was it changed since the build started?", path));
                 hasher.input_str(&contents);
                 let hex = hasher.result_str();
                 hasher.reset();
 
                 let cache_path = self.cache_path().join(&hex);
-                if let Ok(_) = fs::metadata(&cache_path) {
+                if fs::metadata(&cache_path).is_ok() {
                     debug!("Cache hit for {:?} at {:?}", path, cache_path);
                     None
                 } else {
@@ -100,7 +100,7 @@ impl BuildContext {
         result.and_then(|x| if x.is_empty() { None } else { Some(x) })
     }
 
-    pub fn copy(&mut self, files: &Vec<PathBuf>) -> Result<(), anyhow::Error> {
+    pub fn copy(&mut self, files: &[PathBuf]) -> Result<(), anyhow::Error> {
         files
             .iter()
             .cloned()
@@ -116,8 +116,8 @@ impl BuildContext {
 
     pub fn update_cache(
         &mut self,
-        inputs: &Vec<PathBuf>,
-        outputs: &Vec<Artifact>,
+        inputs: &[PathBuf],
+        outputs: &[Artifact],
     ) -> Result<(), anyhow::Error> {
         let mut hasher = Sha1::new();
         let _ = inputs
@@ -126,7 +126,7 @@ impl BuildContext {
             .map(|path| {
                 debug!("Attempting to create cache file for path: {:?}", &path);
                 let contents = fs::read_to_string(&path)
-                    .expect(&format!("Truly expected {:?} to be a readable file. Was it changed since the build started?", path));
+                    .unwrap_or_else(|_| panic!("Truly expected {:?} to be a readable file. Was it changed since the build started?", path));
                 hasher.input_str(&contents);
                 let hash = hasher.result_str();
                 hasher.reset();

@@ -43,10 +43,7 @@ impl Toolchain {
     }
 
     pub fn with_archive(self, archive: Archive) -> Toolchain {
-        Toolchain {
-            archive,
-            ..self.clone()
-        }
+        Toolchain { archive, ..self }
     }
 
     pub fn with_root(self, root: PathBuf) -> Toolchain {
@@ -60,7 +57,7 @@ impl Toolchain {
         Toolchain {
             root,
             clojerl,
-            ..self.clone()
+            ..self
         }
     }
 
@@ -68,7 +65,7 @@ impl Toolchain {
         "clojerl".to_string()
     }
 
-    pub fn shell(self, code_paths: &Vec<PathBuf>) -> Result<(), anyhow::Error> {
+    pub fn shell(self, code_paths: &[PathBuf]) -> Result<(), anyhow::Error> {
         debug!("Starting shell with dependencies: {:?}", &code_paths);
         let mut code_paths: Vec<String> = code_paths
             .iter()
@@ -102,8 +99,8 @@ impl Toolchain {
 
     pub fn compile(
         self,
-        srcs: &Vec<PathBuf>,
-        extra_libs: &Vec<PathBuf>,
+        srcs: &[PathBuf],
+        extra_libs: &[PathBuf],
         dst: &PathBuf,
     ) -> Result<(), anyhow::Error> {
         let paths: Vec<&str> = srcs.iter().map(|src| src.to_str().unwrap()).collect();
@@ -118,7 +115,7 @@ impl Toolchain {
             .flat_map(|dir| vec!["-pa", dir])
             .collect();
 
-        let mut cmd = Command::new(self.clojerl.clone());
+        let mut cmd = Command::new(self.clojerl);
         let cmd = cmd
             .args(extra_libs.as_slice())
             .args(&["-o", dst.parent().unwrap().to_str().unwrap()])
@@ -143,7 +140,7 @@ impl IntoToolchainBuilder for Toolchain {
         let root = self.root.clone();
 
         let clojerl = self.clojerl.clone();
-        let rebarlock = root.clone().join("rebar.lock").clone();
+        let rebarlock = root.join("rebar.lock");
         let is_cached = Box::new(move || {
             Ok(std::fs::metadata(clojerl.clone()).is_ok()
                 && std::fs::metadata(rebarlock.clone()).is_ok())

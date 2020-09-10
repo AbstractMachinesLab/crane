@@ -17,7 +17,7 @@ impl Artifact {
             .iter()
             .map(|path| {
                 let contents = fs::read_to_string(&path)
-                    .expect(&format!("Truly expected {:?} to be a readable file. Was it changed since the build started?", path));
+                    .unwrap_or_else(|_| panic!("Truly expected {:?} to be a readable file. Was it changed since the build started?", path));
                 hasher.input_str(&contents);
                 let hash = hasher.result_str();
                 hasher.reset();

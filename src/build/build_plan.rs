@@ -2,16 +2,14 @@ use crate::build::{BuildContext, BuildRule};
 use crate::label::Label;
 use crate::toolchains::ToolchainName;
 use crate::workspace::Workspace;
-use anyhow::{anyhow, Context};
-use log::{debug, info};
+use anyhow::Context;
+use log::debug;
 use petgraph::dot;
 use petgraph::graph::{Graph, NodeIndex};
 use petgraph::visit::Topo;
 use petgraph::Direction;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::io::{BufRead, BufReader, Write};
-use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone)]
 pub struct BuildPlan {
@@ -46,7 +44,7 @@ impl BuildPlan {
             build_graph,
             toolchains,
             nodes,
-            ..self.clone()
+            ..self
         })
     }
 
@@ -131,7 +129,7 @@ impl BuildPlan {
     }
 
     pub fn find_node(&self, label: &Label) -> Option<BuildRule> {
-        let node_index = self.nodes.get(label)?.clone();
+        let node_index = *self.nodes.get(label)?;
         let node: BuildRule = self.build_graph[node_index].clone();
         Some(node)
     }
@@ -144,7 +142,7 @@ impl BuildPlan {
         while let Some(node) = walker.next(&self.build_graph) {
             let node = &mut self.build_graph[node];
             node.run(&mut ctx)?;
-            artifacts = artifacts + 1;
+            artifacts += 1;
         }
         Ok(artifacts)
     }
@@ -156,15 +154,15 @@ impl BuildPlan {
         let mut artifacts = 0;
         while let Some(node) = walker.next(&self.build_graph) {
             let node = &mut self.build_graph[node];
-            let inputs = &node.inputs(&mut ctx);
-            let outputs = &node.outputs(&mut ctx);
+            let inputs = &node.inputs(&ctx);
+            let outputs = &node.outputs(&ctx);
             let name = &node.name();
             if let Some(changes) = &ctx.changed_inputs(inputs) {
                 debug!("Changed inputs: {:?}...", &changes);
                 debug!("Building {}...", &name.to_string());
-                &node.build(&mut ctx)?;
-                artifacts = artifacts + 1;
-                &ctx.update_cache(inputs, outputs)?;
+                node.build(&mut ctx)?;
+                artifacts += 1;
+                ctx.update_cache(inputs, outputs)?;
             } else {
                 debug!("Skipping {}. Nothing to do.", &name.to_string());
             }
@@ -177,8 +175,7 @@ impl BuildPlan {
     }
 
     pub fn ready_toolchains(&mut self) -> Result<(), anyhow::Error> {
-        let home =
-            std::env::home_dir().context("Could not get your home directory, is HOME set?")?;
+        let home = home::home_dir().context("Could not get your home directory, is HOME set?")?;
         let dotcrane = home.join(".crane");
         let toolchains_dir = dotcrane.join("toolchains");
         std::fs::create_dir_all(&toolchains_dir).context(format!(
@@ -186,8 +183,8 @@ impl BuildPlan {
             &toolchains_dir
         ))?;
 
-        let rooted_toolchains = self.workspace.toolchains().set_root(toolchains_dir.clone());
-        self.workspace = self.workspace.with_toolchains(rooted_toolchains.clone());
+        let rooted_toolchains = self.workspace.toolchains().set_root(toolchains_dir);
+        self.workspace = self.workspace.with_toolchains(rooted_toolchains);
         let toolchains = self.workspace.toolchains();
 
         // NOTE(@ostera): this will not be the primary toolchain if Lumen support
@@ -214,7 +211,7 @@ fn subgraph(graph: Graph<BuildRule, Label>, node: NodeIndex) -> HashMap<NodeInde
 
     let mut walker = graph.neighbors_directed(node, Direction::Outgoing).detach();
     while let Some(neighbor) = walker.next_node(&graph) {
-        nodes.insert(neighbor.clone(), ());
+        nodes.insert(neighbor, ());
         nodes.extend(subgraph(graph.clone(), neighbor));
     }
 

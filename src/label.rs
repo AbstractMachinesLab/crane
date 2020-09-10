@@ -23,7 +23,7 @@ impl From<&str> for Label {
 
 impl From<String> for Label {
     fn from(name: String) -> Label {
-        Label::new(name.clone())
+        Label::new(name)
     }
 }
 

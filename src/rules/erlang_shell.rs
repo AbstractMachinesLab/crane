@@ -58,7 +58,7 @@ impl Rule for ErlangShell {
 
         ctx.toolchain()
             .erlang()
-            .shell(&code_paths.into_iter().collect())
+            .shell(code_paths.into_iter().collect())
     }
 
     fn build(&mut self, _ctx: &mut BuildContext) -> Result<(), anyhow::Error> {

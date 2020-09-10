@@ -43,10 +43,7 @@ impl Toolchain {
     }
 
     pub fn with_archive(self, archive: Archive) -> Toolchain {
-        Toolchain {
-            archive,
-            ..self.clone()
-        }
+        Toolchain { archive, ..self }
     }
 
     pub fn with_root(self, root: PathBuf) -> Toolchain {
@@ -60,7 +57,7 @@ impl Toolchain {
         Toolchain {
             root,
             gleamc,
-            ..self.clone()
+            ..self
         }
     }
 
@@ -68,7 +65,7 @@ impl Toolchain {
         "gleam".to_string()
     }
 
-    pub fn shell(self, code_paths: &Vec<PathBuf>) -> Result<(), anyhow::Error> {
+    pub fn shell(self, code_paths: &[PathBuf]) -> Result<(), anyhow::Error> {
         debug!("Starting shell with dependencies: {:?}", &code_paths);
         let mut code_paths: Vec<String> = code_paths
             .iter()
@@ -100,10 +97,10 @@ impl Toolchain {
 
     pub fn compile(
         self,
-        gleam_srcs: &Vec<PathBuf>,
-        erl_srcs: &Vec<PathBuf>,
-        includes: &Vec<PathBuf>,
-        extra_libs: &Vec<PathBuf>,
+        gleam_srcs: &[PathBuf],
+        erl_srcs: &[PathBuf],
+        includes: &[PathBuf],
+        extra_libs: &[PathBuf],
         dst: &PathBuf,
     ) -> Result<(), anyhow::Error> {
         /*
@@ -118,15 +115,13 @@ impl Toolchain {
             .args(gleam_srcs.as_slice());
 
         debug!("Calling {:#?}", &cmd);
-        let output = {
-            let output = cmd.output()?;
-            if output.status.success() {
-                Ok(())
-            } else {
-                std::io::stdout().write_all(&output.stdout).unwrap();
-                std::io::stderr().write_all(&output.stderr).unwrap();
-                Err(anyhow!("Error running erlc"))
-            }
+        let output = cmd.output()?;
+        if output.status.success() {
+            Ok(())
+        } else {
+            std::io::stdout().write_all(&output.stdout).unwrap();
+            std::io::stderr().write_all(&output.stderr).unwrap();
+            Err(anyhow!("Error running erlc"))
         }?;
 
         /*

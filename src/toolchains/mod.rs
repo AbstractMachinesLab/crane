@@ -1,7 +1,5 @@
-use anyhow;
 use std::convert::TryFrom;
 use std::path::PathBuf;
-use toml;
 
 mod archive;
 pub mod clojerl;
@@ -78,7 +76,7 @@ impl Toolchain {
             clojerl: self.clojerl.with_root(root.clone()),
             elixir: self.elixir.with_root(root.clone()),
             erlang: self.erlang.with_root(root.clone()),
-            gleam: self.gleam.with_root(root.clone()),
+            gleam: self.gleam.with_root(root),
         }
     }
 

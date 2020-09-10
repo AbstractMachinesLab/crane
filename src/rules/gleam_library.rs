@@ -93,7 +93,7 @@ impl Rule for GleamLibrary {
             .collect();
         let transitive_headers: Vec<PathBuf> = transitive_headers.iter().cloned().collect();
 
-        if self.sources.len() > 0 {
+        if !self.sources.is_empty() {
             let transitive_beam_files: HashSet<PathBuf> = transitive_deps
                 .iter()
                 .flat_map(|dep| dep.outputs(&ctx))

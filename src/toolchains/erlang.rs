@@ -47,10 +47,7 @@ impl Toolchain {
     }
 
     pub fn with_archive(self, archive: Archive) -> Toolchain {
-        Toolchain {
-            archive,
-            ..self.clone()
-        }
+        Toolchain { archive, ..self }
     }
 
     pub fn with_root(self, root: PathBuf) -> Toolchain {
@@ -66,7 +63,7 @@ impl Toolchain {
             root,
             erl,
             erlc,
-            ..self.clone()
+            ..self
         }
     }
 
@@ -74,7 +71,7 @@ impl Toolchain {
         "erlang".to_string()
     }
 
-    pub fn shell(self, code_paths: &Vec<PathBuf>) -> Result<(), anyhow::Error> {
+    pub fn shell(self, code_paths: Vec<PathBuf>) -> Result<(), anyhow::Error> {
         debug!("Starting shell with dependencies: {:?}", &code_paths);
         let mut code_paths: Vec<String> = code_paths
             .iter()
@@ -105,9 +102,9 @@ impl Toolchain {
 
     pub fn compile(
         self,
-        srcs: &Vec<PathBuf>,
-        includes: &Vec<PathBuf>,
-        extra_libs: &Vec<PathBuf>,
+        srcs: &[PathBuf],
+        includes: &[PathBuf],
+        extra_libs: &[PathBuf],
         dst: &PathBuf,
     ) -> Result<(), anyhow::Error> {
         let paths: Vec<&str> = srcs.iter().map(|src| src.to_str().unwrap()).collect();

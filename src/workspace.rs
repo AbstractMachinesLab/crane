@@ -1,13 +1,11 @@
 use crate::cranefile::{Cranefile, CRANEFILE};
 use crate::label::Label;
-use crate::toolchains;
 use crate::toolchains::Toolchain;
 use anyhow::Context;
 use log::debug;
 use std::convert::TryFrom;
 use std::fs;
 use std::path::PathBuf;
-use toml;
 
 pub const WORKSPACE: &str = "workspace";
 
@@ -70,7 +68,7 @@ impl Workspace {
     fn find_workspace_file_upwards(cwd: &PathBuf) -> Result<PathBuf, anyhow::Error> {
         let here = &cwd.join(WORKSPACE);
         debug!("Searching for workspace file in {:?}", here);
-        if let Ok(_) = fs::metadata(here) {
+        if fs::metadata(here).is_ok() {
             debug!("Found it! Continuing...");
             Ok(here.to_path_buf())
         } else {
@@ -88,7 +86,7 @@ impl Workspace {
                     panic!("Could not read directory: {:?} due to {:?}", root, err)
                 })
                 .flat_map(|entry| {
-                    let entry = entry.expect(&format!("Could not read entry"));
+                    let entry = entry.unwrap_or_else(|_| panic!("Could not read entry"));
                     let path = entry.path();
 
                     if path.is_dir() {
@@ -96,8 +94,10 @@ impl Workspace {
                     } else {
                         let name = path.file_name().unwrap().to_str().unwrap();
                         if name.eq_ignore_ascii_case(CRANEFILE) {
-                            let cranefile = Cranefile::from_file(path.clone())
-                                .expect(&format!("Could not read Cranefile at: {:?}", path));
+                            let cranefile =
+                                Cranefile::from_file(path.clone()).unwrap_or_else(|_| {
+                                    panic!("Could not read Cranefile at: {:?}", path)
+                                });
                             vec![cranefile]
                         } else {
                             vec![]

@@ -202,9 +202,7 @@ struct CleanOpt {}
 
 impl CleanOpt {
     fn clean(self) -> Result<(), anyhow::Error> {
-        let t0 = std::time::Instant::now();
         let workspace = Workspace::new().context("Could not create a workspace.")?;
-
         info!("Workspace: {}", &workspace.name());
         info!("Cleaning workspace...");
         workspace.clean()?;

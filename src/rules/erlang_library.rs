@@ -114,14 +114,14 @@ impl Rule for ErlangLibrary {
             .chain(transitive_headers)
             .collect();
 
-        let files: Vec<PathBuf> = self.headers.iter().cloned().collect();
+        let files: Vec<PathBuf> = self.headers.to_vec();
 
         files.iter().cloned().for_each(|f| {
             ctx.declare_output(f);
         });
 
         ctx.copy(&files).and_then(|_| {
-            if self.sources.len() > 0 {
+            if !self.sources.is_empty() {
                 let transitive_beam_files: HashSet<PathBuf> = transitive_deps
                     .iter()
                     .flat_map(|dep| dep.outputs(&ctx))

@@ -4,7 +4,7 @@ use crypto::sha1::Sha1;
 use log::{debug, info};
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 #[derive(Debug, Clone, Default)]
 pub struct Archive {
@@ -38,24 +38,15 @@ impl Archive {
     }
 
     pub fn with_url(self, url: String) -> Archive {
-        Archive {
-            url,
-            ..self.clone()
-        }
+        Archive { url, ..self }
     }
 
     pub fn with_sha1(self, sha1: String) -> Archive {
-        Archive {
-            sha1,
-            ..self.clone()
-        }
+        Archive { sha1, ..self }
     }
 
     pub fn with_prefix(self, prefix: String) -> Archive {
-        Archive {
-            prefix,
-            ..self.clone()
-        }
+        Archive { prefix, ..self }
     }
 
     pub fn is_cached(&self, outdir: &PathBuf) -> Result<bool, anyhow::Error> {
