@@ -3,11 +3,14 @@
 [workspace]
 name = "tiny_lib"
 
-[toolchains]
-erlang = {
-  archive_url = "https://github.com/erlang/otp/archive/master.tar.gz",
-  sha1 = "ffc6dfbbc3e4147419de164bfb758ed6dd54006e",
-  prefix = "otp-master"
-}
+[toolchains.erlang]
+archive_url = "https://github.com/erlang/otp/archive/master.tar.gz"
+sha1 = "ffc6dfbbc3e4147419de164bfb758ed6dd54006e"
+prefix = "otp-master"
+
+[toolchains.gleam]
+archive_url = "https://github.com/ostera/gleam/archive/gleamc.tar.gz"
+sha1 = "6de2117557b3c2b94ae6b907f8b788b7a5891ab3"
+prefix = "gleam-gleamc"
 
 [dependencies]
