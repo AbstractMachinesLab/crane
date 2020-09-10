@@ -132,7 +132,6 @@ impl Rule for GleamLibrary {
                     let file = file
                         .parent()
                         .unwrap()
-                        .join("src")
                         .join(file.file_name().unwrap())
                         .with_extension("erl");
                     ctx.declare_output(file)

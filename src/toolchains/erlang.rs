@@ -160,12 +160,7 @@ impl IntoToolchainBuilder for Toolchain {
         let root = self.root.clone();
 
         let erlc = self.erlc.clone();
-        let is_cached = Box::new(move || {
-            Command::new(erlc.clone())
-                .output()
-                .context("Could not call erlc")
-                .map(|output| output.status.success())
-        });
+        let is_cached = Box::new(move || Ok(std::fs::metadata(erlc.clone()).is_ok()));
 
         let build_toolchain = Box::new(move || {
             let root = root.clone();

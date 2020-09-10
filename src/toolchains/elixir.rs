@@ -127,7 +127,7 @@ impl Toolchain {
             .flat_map(|dir| vec!["-pa", dir])
             .collect();
 
-        let mut cmd = Command::new("/home/ostera/.crane/toolchains/elixir/1.10.4-1145dc01680aab7094f8a6dbd38b65185e14adb4/bin/elixirc");
+        let mut cmd = Command::new(self.elixirc.clone());
         let cmd = cmd
             // TODO(@ostera): consider passing -I and -pa's into ERL_COMPILER_OPTIONS
             .args(&["--warnings-as-errors"])
@@ -152,14 +152,7 @@ impl IntoToolchainBuilder for Toolchain {
         let root = self.root.clone();
 
         let elixirc = self.elixirc.clone();
-        let is_cached = Box::new(move || {
-            debug!("Elixir: calling {:?}", elixirc);
-            Command::new(elixirc.clone())
-                .args(&["-v"])
-                .output()
-                .context("Could not call elixirc")
-                .map(|output| output.status.success())
-        });
+        let is_cached = Box::new(move || Ok(std::fs::metadata(elixirc.clone()).is_ok()));
 
         let build_toolchain = Box::new(move || {
             let root = root.clone();

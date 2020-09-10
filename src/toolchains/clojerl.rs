@@ -118,9 +118,7 @@ impl Toolchain {
             .flat_map(|dir| vec!["-pa", dir])
             .collect();
 
-        let mut cmd = Command::new(
-            "/home/ostera/.crane/toolchains/clojerl/0fc57cbf85110ae59429d429f98c34d781a4fb71/bin/clojerl",
-        );
+        let mut cmd = Command::new(self.clojerl.clone());
         let cmd = cmd
             .args(extra_libs.as_slice())
             .args(&["-o", dst.parent().unwrap().to_str().unwrap()])
@@ -145,12 +143,7 @@ impl IntoToolchainBuilder for Toolchain {
         let root = self.root.clone();
 
         let clojerl = self.clojerl.clone();
-        let is_cached = Box::new(move || {
-            Command::new(clojerl.clone())
-                .output()
-                .context("Could not call clojerl")
-                .map(|output| output.status.success())
-        });
+        let is_cached = Box::new(move || Ok(std::fs::metadata(clojerl.clone()).is_ok()));
 
         let build_toolchain = Box::new(move || {
             let root = root.clone();

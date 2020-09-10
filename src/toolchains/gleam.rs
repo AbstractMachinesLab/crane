@@ -183,14 +183,7 @@ impl IntoToolchainBuilder for Toolchain {
         let root = self.root.clone();
 
         let gleamc = self.gleamc.clone();
-        let is_cached = Box::new(move || {
-            debug!("Gleamc: calling {:?}", gleamc);
-            Command::new(gleamc.clone())
-                .args(&["-V"])
-                .output()
-                .context("Could not call gleamc")
-                .map(|output| output.status.success())
-        });
+        let is_cached = Box::new(move || Ok(std::fs::metadata(gleamc.clone()).is_ok()));
 
         let build_toolchain = Box::new(move || Err(anyhow!("Can not build gleam just yet")));
 
