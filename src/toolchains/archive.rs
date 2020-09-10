@@ -59,7 +59,10 @@ impl Archive {
     }
 
     pub fn is_cached(&self, outdir: &PathBuf) -> Result<bool, anyhow::Error> {
-        Ok(std::fs::metadata(outdir.join(self.hash())).is_ok())
+        let path = outdir.join(self.file_name());
+        let result = std::fs::metadata(&path).is_ok();
+        debug!("Checking if toolchain exists in {:?}: {:?}", path, result);
+        Ok(result)
     }
 
     pub fn checksum(&self, outdir: &PathBuf) -> Result<bool, anyhow::Error> {
