@@ -2,35 +2,42 @@
 
 This is mostly some ideas that I've been toying around with, in _some_ order.
 
-## Done (or at least prototyped)
+## What's Done (or at least prototyped)
 
-* Composable: throw a crane file anywhere and it'll get built.
+- [X] Composable: throw a crane file anywhere and it'll get built.
 
-* Explicit Dependency Graph with Target Resolution
+- [X] Explicit Dependency Graph with Target Resolution lets you narrow into
+  exactly what you want to build (or build the whole thing)
 
-* Rule Library: can build erlang source code!
+- [X] Rule Library: can build erlang source code!
 
-* Rule Shell: can run a shell target and it'll load the right dependencies.
+- [X] Rule Shell: can run a shell target and it'll load the right dependencies.
 
-* Incremental Graph Compilation: only rebuild what has changed
+- [X] Incremental Graph Compilation: only rebuild what has changed
 
-* Split sources and includes for libraries
+- [X] Split sources and includes for libraries
 
-* Preliminary build of the entire RabbitMQ repositories as a benchmark
+- [X] Preliminary build of the entire RabbitMQ repositories as a benchmark
 
-* Bootstrap a few languages: Gleam, Clojerl, and Elixir got library rules too
+- [X] Bootstrap a few languages: Gleam, Clojerl, and Elixir got library rules
+  too
 
-* Tiny polyglot example!
+- [X] Tiny polyglot example! We're building some gleam, some clojerl, some
+  elixir, and some erlang ties it all together. Try it out in the shell.
 
-* SPEC: parallel build graph execution: make sure the workers behave
+- [X] SPEC: parallel build graph execution: make sure the workers behave
 
-* Toolchain Management: specify the language archive and sha1 and it'll build it and version it for you
+- [X] Toolchain Management: specify the language archive and sha1 and it'll
+  build it and version it for you
 
-* crane clean -- if running this fixes your build, then there's a bug
+- [X] crane clean -- if running this fixes your build, please file an issue
+  (that should be a bug)
 
 ## Upcoming (in *some* order)
 
 ### Actions
+
+- [ ] crane build -- fetch, lift, and build dependencies too
 
 - [ ] crane new -- bootstrap an empty project
 
@@ -50,6 +57,8 @@ This is mostly some ideas that I've been toying around with, in _some_ order.
 ### Specification
 
 - [ ] cache: how exactly should the caching work? can we distribute the work?
+
+- [ ] distributed build
 
 ### Hermeticity
 
@@ -79,7 +88,7 @@ This is mostly some ideas that I've been toying around with, in _some_ order.
 ### Dependency Management
 
 - [ ] crane fetch -- download everything that needs to be downloaded, including
-  toolchains and dependencies
+  toolchains and dependencies, but does no building.
 
 - [ ] Dependency Flattening
 
@@ -96,8 +105,7 @@ This is mostly some ideas that I've been toying around with, in _some_ order.
 - [ ] Cross-platform releases: since we're just building bytecode, we should be
   able to pull in different runtimes and bundle them for cross-compilation
 
-- [ ] Container rules: `crane build //my_service:container` and `crane run
-  //my_service:container`
+- [ ] Container rules: `crane build //my_service:container` and `crane run //my_service:container`
 
 ### Pipe dreams
 
