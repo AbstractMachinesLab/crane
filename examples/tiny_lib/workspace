@@ -4,5 +4,10 @@
 name = "tiny_lib"
 
 [toolchains]
+erlang = {
+  archive_url = "https://github.com/erlang/otp/archive/master.tar.gz",
+  sha1 = "ffc6dfbbc3e4147419de164bfb758ed6dd54006e",
+  prefix = "otp-master"
+}
 
 [dependencies]
