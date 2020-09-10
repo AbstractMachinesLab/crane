@@ -109,6 +109,11 @@ impl Workspace {
             vec![]
         }
     }
+
+    pub fn clean(self) -> Result<(), anyhow::Error> {
+        std::fs::remove_dir_all(self.root().join(".crane"))
+            .context("Could not remove .crane folder")
+    }
 }
 
 impl TryFrom<toml::Value> for Workspace {

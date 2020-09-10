@@ -69,6 +69,7 @@ impl Crane {
 enum Goal {
     Build(BuildOpt),
     Run(RunOpt),
+    Clean(CleanOpt),
 }
 
 impl Goal {
@@ -76,6 +77,7 @@ impl Goal {
         match self {
             Goal::Build(opts) => opts.build(),
             Goal::Run(opts) => opts.run(),
+            Goal::Clean(opts) => opts.clean(),
         }
     }
 }
@@ -186,6 +188,26 @@ impl RunOpt {
         info!("Running target:");
         let _ = build_plan.run()?;
 
+        Ok(())
+    }
+}
+
+#[derive(StructOpt, Debug, Clone)]
+#[structopt(
+    name = "clean",
+    setting = structopt::clap::AppSettings::ColoredHelp,
+    about = "Cleans the entire workspace"
+)]
+struct CleanOpt {}
+
+impl CleanOpt {
+    fn clean(self) -> Result<(), anyhow::Error> {
+        let t0 = std::time::Instant::now();
+        let workspace = Workspace::new().context("Could not create a workspace.")?;
+
+        info!("Workspace: {}", &workspace.name());
+        info!("Cleaning workspace...");
+        workspace.clean()?;
         Ok(())
     }
 }
