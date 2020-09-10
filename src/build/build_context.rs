@@ -24,8 +24,8 @@ impl BuildContext {
     pub fn new(workspace: Workspace, build_plan: BuildPlan) -> BuildContext {
         let ctx = BuildContext {
             artifact_root: workspace.root().join(".crane"),
+            toolchain: workspace.toolchains().clone(),
             workspace: workspace,
-            toolchain: Toolchain::default(),
             declared_outputs: vec![],
             build_plan,
         };
