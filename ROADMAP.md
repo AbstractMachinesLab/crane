@@ -41,6 +41,12 @@ This is mostly some ideas that I've been toying around with, in _some_ order.
 
 - [ ] crane fmt -- format all the sources
 
+### Build Graph Execution
+
+- [ ] Parallel build graph execution!
+
+- [ ] Can we distribute it?
+
 ### Specification
 
 - [ ] cache: how exactly should the caching work? can we distribute the work?
