@@ -136,6 +136,8 @@ impl TryFrom<toml::Value> for Workspace {
             Ok(Toolchain::default())
         }?;
 
+        debug!("Found Toolchains: {:?}", toolchains);
+
         Ok(Workspace {
             toolchains,
             name,
@@ -191,20 +193,16 @@ name = "tiny_lib"
         .unwrap();
         let workspace = Workspace::try_from(toml).unwrap();
         assert_eq!(
-            workspace.toolchains().erlang().archive_url(),
-            toolchains::erlang::DEFAULT_ARCHIVE_URL
+            workspace.toolchains().erlang().archive().url(),
+            toolchains::erlang::Toolchain::default().archive().url()
         );
         assert_eq!(
-            workspace.toolchains().elixir().archive_url(),
-            toolchains::elixir::DEFAULT_ARCHIVE_URL
+            workspace.toolchains().erlang().archive().sha1(),
+            toolchains::erlang::Toolchain::default().archive().sha1()
         );
         assert_eq!(
-            workspace.toolchains().gleam().archive_url(),
-            toolchains::gleam::DEFAULT_ARCHIVE_URL
-        );
-        assert_eq!(
-            workspace.toolchains().clojerl().archive_url(),
-            toolchains::clojerl::DEFAULT_ARCHIVE_URL
+            workspace.toolchains().erlang().archive().prefix(),
+            toolchains::erlang::Toolchain::default().archive().prefix()
         );
         assert_eq!(workspace.dependencies().len(), 0);
     }
@@ -216,7 +214,7 @@ name = "tiny_lib"
 name = "tiny_lib"
 
 [toolchains]
-erlang = { archive_url = "master" }
+erlang = { archive_url = "master", prefix = "otp-master" }
 gleam = { archive_url = "https://github.com/forked/gleam", sha1 = "test" }
 
 [dependencies]
@@ -224,20 +222,16 @@ gleam = { archive_url = "https://github.com/forked/gleam", sha1 = "test" }
         .parse::<toml::Value>()
         .unwrap();
         let workspace = Workspace::try_from(toml).unwrap();
-        assert_eq!(workspace.toolchains().erlang().archive_url(), "master");
+        assert_eq!(workspace.toolchains().erlang().archive().url(), "master");
         assert_eq!(
-            workspace.toolchains().elixir().archive_url(),
-            toolchains::elixir::DEFAULT_ARCHIVE_URL
+            workspace.toolchains().erlang().archive().prefix(),
+            "otp-master"
         );
         assert_eq!(
-            workspace.toolchains().gleam().archive_url(),
+            workspace.toolchains().gleam().archive().url(),
             "https://github.com/forked/gleam"
         );
-        assert_eq!(workspace.toolchains().gleam().archive_sha1(), "test");
-        assert_eq!(
-            workspace.toolchains().clojerl().archive_url(),
-            toolchains::clojerl::DEFAULT_ARCHIVE_URL
-        );
+        assert_eq!(workspace.toolchains().gleam().archive().sha1(), "test");
         assert_eq!(workspace.dependencies().len(), 0);
     }
 }

@@ -161,6 +161,11 @@ fn override_archive_from_toml(
                 .map(|url| archive.clone().with_url(url.to_string()))
                 .unwrap_or(archive);
             let archive = v
+                .get("prefix")
+                .and_then(|x| x.as_str())
+                .map(|prefix| archive.clone().with_prefix(prefix.to_string()))
+                .unwrap_or(archive);
+            let archive = v
                 .get("sha1")
                 .and_then(|x| x.as_str())
                 .map(|sha1| archive.clone().with_sha1(sha1.to_string()))

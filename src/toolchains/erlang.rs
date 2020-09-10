@@ -56,7 +56,7 @@ impl Toolchain {
     pub fn with_root(self, root: PathBuf) -> Toolchain {
         let root = root
             .join(self.name())
-            .join(self.archive().sha1())
+            .join(self.archive().hash())
             .join(self.archive().prefix());
 
         let erl = root.join("bin").join("erl");

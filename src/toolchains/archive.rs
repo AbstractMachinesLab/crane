@@ -14,6 +14,13 @@ pub struct Archive {
 }
 
 impl Archive {
+    pub fn hash(&self) -> String {
+        let mut hasher = Sha1::new();
+        let archive = format!("{}:{}", &self.url, &self.sha1);
+        hasher.input_str(&archive.as_str());
+        hasher.result_str()
+    }
+
     pub fn url(&self) -> String {
         self.url.clone()
     }
@@ -52,9 +59,7 @@ impl Archive {
     }
 
     pub fn is_cached(&self, outdir: &PathBuf) -> Result<bool, anyhow::Error> {
-        let archive = &outdir.join(&self.file_name());
-        debug!("Checking if archive at: {:?} exists", archive);
-        Ok(std::fs::metadata(archive).is_ok())
+        Ok(std::fs::metadata(outdir.join(self.hash())).is_ok())
     }
 
     pub fn checksum(&self, outdir: &PathBuf) -> Result<bool, anyhow::Error> {
@@ -71,7 +76,16 @@ impl Archive {
         let mut contents: Vec<u8> = std::vec::Vec::with_capacity(file.metadata()?.len() as usize);
         file.read_to_end(&mut contents)?;
         hasher.input(&contents);
-        Ok(hasher.result_str() == self.sha1)
+        let hash = hasher.result_str();
+        if hash == self.sha1 {
+            Ok(true)
+        } else {
+            Err(anyhow!(
+                "Expected archive to have SHA1 {} but found {} instead",
+                self.sha1,
+                hash
+            ))
+        }
     }
 
     pub fn download(&self, outdir: &PathBuf) -> Result<(), anyhow::Error> {
