@@ -152,7 +152,11 @@ impl IntoToolchainBuilder for Toolchain {
         let root = self.root.clone();
 
         let elixirc = self.elixirc.clone();
-        let is_cached = Box::new(move || Ok(std::fs::metadata(elixirc.clone()).is_ok()));
+        let ebin = root.join("ebin");
+        let is_cached = Box::new(move || {
+            Ok(std::fs::metadata(elixirc.clone()).is_ok()
+                && std::fs::metadata(ebin.clone()).is_ok())
+        });
 
         let build_toolchain = Box::new(move || {
             let root = root.clone();
