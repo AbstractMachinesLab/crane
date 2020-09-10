@@ -152,7 +152,7 @@ impl IntoToolchainBuilder for Toolchain {
         let root = self.root.clone();
 
         let elixirc = self.elixirc.clone();
-        let ebin = root.join("ebin");
+        let ebin = root.join("lib").join("elixir").join("ebin");
         let is_cached = Box::new(move || {
             Ok(std::fs::metadata(elixirc.clone()).is_ok()
                 && std::fs::metadata(ebin.clone()).is_ok())
