@@ -128,6 +128,8 @@ impl BuildOpt {
             let t1 = t0.elapsed().as_millis();
             info!("Printed {} in {}ms", target.to_string(), t1);
         } else {
+            info!("Readying toolchains: {:?}", &build_plan.toolchains_in_use());
+            let _ = &build_plan.ready_toolchains()?;
             info!("Building target: {}", &target.to_string());
             let artifacts = build_plan.build()?;
             let t1 = t0.elapsed().as_millis();

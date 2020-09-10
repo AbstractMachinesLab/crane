@@ -2,6 +2,7 @@ use super::build_artifact::Artifact;
 use super::build_context::BuildContext;
 use crate::label::Label;
 use crate::rules::*;
+use crate::toolchains::ToolchainName;
 use anyhow::anyhow;
 use std::path::PathBuf;
 
@@ -32,6 +33,17 @@ impl BuildRule {
             BuildRule::ErlangShell(shell) => shell.name(),
             BuildRule::GleamLibrary(lib) => lib.name(),
             BuildRule::Noop => Label::default(),
+        }
+    }
+
+    pub fn toolchain(&self) -> Option<ToolchainName> {
+        match self {
+            BuildRule::ClojureLibrary(_) => Some(ToolchainName::Clojure),
+            BuildRule::ElixirLibrary(_) => Some(ToolchainName::Elixir),
+            BuildRule::ErlangLibrary(_) => Some(ToolchainName::Erlang),
+            BuildRule::ErlangShell(_) => Some(ToolchainName::Erlang),
+            BuildRule::GleamLibrary(_) => Some(ToolchainName::Gleam),
+            BuildRule::Noop => None,
         }
     }
 

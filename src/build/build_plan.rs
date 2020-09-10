@@ -1,18 +1,24 @@
 use crate::build::{BuildContext, BuildRule};
 use crate::label::Label;
+use crate::toolchains::ToolchainName;
 use crate::workspace::Workspace;
-use log::debug;
+use anyhow::{anyhow, Context};
+use log::{debug, info};
 use petgraph::dot;
 use petgraph::graph::{Graph, NodeIndex};
 use petgraph::visit::Topo;
 use petgraph::Direction;
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::io::{BufRead, BufReader, Write};
+use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone)]
 pub struct BuildPlan {
     workspace: Workspace,
     build_graph: Graph<BuildRule, Label>,
     nodes: HashMap<Label, NodeIndex>,
+    toolchains: HashSet<ToolchainName>,
 }
 
 impl BuildPlan {
@@ -21,6 +27,7 @@ impl BuildPlan {
             workspace,
             build_graph: Graph::new(),
             nodes: HashMap::new(),
+            toolchains: HashSet::new(),
         }
     }
 
@@ -33,10 +40,11 @@ impl BuildPlan {
             .flat_map(|cranefile| cranefile.rules())
             .collect();
 
-        let (build_graph, nodes) = BuildPlan::populate_build_graph(rules);
+        let (toolchains, build_graph, nodes) = BuildPlan::populate_build_graph(rules);
 
         Ok(BuildPlan {
             build_graph,
+            toolchains,
             nodes,
             ..self.clone()
         })
@@ -44,13 +52,21 @@ impl BuildPlan {
 
     fn populate_build_graph(
         rules: Vec<BuildRule>,
-    ) -> (Graph<BuildRule, Label>, HashMap<Label, NodeIndex>) {
+    ) -> (
+        HashSet<ToolchainName>,
+        Graph<BuildRule, Label>,
+        HashMap<Label, NodeIndex>,
+    ) {
+        let mut toolchains: HashSet<ToolchainName> = HashSet::new();
         let mut build_graph = Graph::new();
         let mut nodes: HashMap<Label, NodeIndex> = HashMap::new();
 
         debug!("Building temporary table of labels to node indices...");
         for rule in rules {
             let label = rule.name().clone();
+            if let Some(toolchain) = rule.toolchain() {
+                toolchains.insert(toolchain);
+            }
             let node = build_graph.add_node(rule);
             debug!("{:?} -> {:?}", &label, &node);
             nodes.insert(label, node);
@@ -84,7 +100,7 @@ impl BuildPlan {
             &nodes.len(),
             &edges.len()
         );
-        (build_graph, nodes)
+        (toolchains, build_graph, nodes)
     }
 
     pub fn scoped(self, target: Label) -> Result<BuildPlan, anyhow::Error> {
@@ -154,6 +170,35 @@ impl BuildPlan {
             }
         }
         Ok(artifacts)
+    }
+
+    pub fn toolchains_in_use(&self) -> Vec<ToolchainName> {
+        self.toolchains.clone().into_iter().collect()
+    }
+
+    pub fn ready_toolchains(&mut self) -> Result<(), anyhow::Error> {
+        let home =
+            std::env::home_dir().context("Could not get your home directory, is HOME set?")?;
+        let dotcrane = home.join(".crane");
+        let toolchains_dir = dotcrane.join("toolchains");
+        std::fs::create_dir_all(&toolchains_dir).context(format!(
+            "Failed to create toolchains folder at {:?}",
+            &toolchains_dir
+        ))?;
+
+        let rooted_toolchains = self.workspace.toolchains().set_root(toolchains_dir.clone());
+        self.workspace = self.workspace.with_toolchains(rooted_toolchains.clone());
+        let toolchains = self.workspace.toolchains();
+
+        // NOTE(@ostera): this will not be the primary toolchain if Lumen support
+        // is added!
+        toolchains.ready_toolchain(ToolchainName::Erlang)?;
+
+        for t in &self.toolchains {
+            toolchains.ready_toolchain(*t)?
+        }
+
+        Ok(())
     }
 }
 

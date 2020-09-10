@@ -1,3 +1,6 @@
+use super::archive::Archive;
+use super::IntoToolchainBuilder;
+use super::ToolchainBuilder;
 use anyhow::{anyhow, Context};
 use log::debug;
 use std::collections::HashSet;
@@ -7,26 +10,62 @@ use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone)]
 pub struct Toolchain {
-    language: String,
-    version: String,
+    archive: Archive,
+    root: PathBuf,
+    elixirc: PathBuf,
 }
 
 impl Default for Toolchain {
     fn default() -> Toolchain {
+        let archive = Archive::default()
+            .with_url("https://github.com/elixir-lang/elixir/archive/v1.10.4.tar.gz".to_string())
+            .with_sha1("d8634700f61c72c0e97f1a212919803a86016d2a".to_string())
+            .with_prefix("elixir-1.10.4".to_string());
+
+        let elixirc = PathBuf::from("elixirc");
+        let root = PathBuf::from(".");
+
         Toolchain {
-            language: "elixir".to_string(),
-            version: "1.10.0".to_string(),
+            archive,
+            elixirc,
+            root,
         }
     }
 }
 
 impl Toolchain {
-    pub fn language(&self) -> &String {
-        &self.language
+    pub fn root(&self) -> &PathBuf {
+        &self.root
     }
 
-    pub fn version(&self) -> &String {
-        &self.version
+    pub fn archive(&self) -> &Archive {
+        &self.archive
+    }
+
+    pub fn with_archive(self, archive: Archive) -> Toolchain {
+        Toolchain {
+            archive,
+            ..self.clone()
+        }
+    }
+
+    pub fn with_root(self, root: PathBuf) -> Toolchain {
+        let root = root
+            .join(self.name())
+            .join(self.archive().sha1())
+            .join(self.archive().prefix());
+
+        let elixirc = root.join("bin").join("elixirc");
+
+        Toolchain {
+            root,
+            elixirc,
+            ..self.clone()
+        }
+    }
+
+    pub fn name(&self) -> String {
+        "elixir".to_string()
     }
 
     pub fn shell(self, code_paths: &Vec<PathBuf>) -> Result<(), anyhow::Error> {
@@ -103,7 +142,50 @@ impl Toolchain {
         } else {
             std::io::stdout().write_all(&output.stdout).unwrap();
             std::io::stderr().write_all(&output.stderr).unwrap();
-            Err(anyhow!("Error running erlc"))
+            Err(anyhow!("Error running elixirc"))
+        }
+    }
+}
+
+impl IntoToolchainBuilder for Toolchain {
+    fn toolchain_builder(&self) -> ToolchainBuilder {
+        let root = self.root.clone();
+
+        let elixirc = self.elixirc.clone();
+        let is_cached = Box::new(move || {
+            debug!("Elixir: calling {:?}", elixirc);
+            Command::new(elixirc.clone())
+                .args(&["-v"])
+                .output()
+                .context("Could not call elixirc")
+                .map(|output| output.status.success())
+        });
+
+        let build_toolchain = Box::new(move || {
+            let root = root.clone();
+            debug!("Elixir: running make -j32 in {:?}", &root);
+            let make = Command::new("make")
+                .stdout(Stdio::piped())
+                .args(&["-j32"])
+                .current_dir(&root)
+                .output()
+                .context("Could not spawn make")?;
+            debug!("Elixir: {:?}", &make.status.success());
+
+            if make.status.success() {
+                Ok(())
+            } else {
+                std::io::stdout().write_all(&make.stdout).unwrap();
+                std::io::stderr().write_all(&make.stderr).unwrap();
+                Err(anyhow!("Error running make"))
+            }
+        });
+
+        ToolchainBuilder {
+            name: self.name(),
+            archive: self.archive().clone(),
+            is_cached,
+            build_toolchain,
         }
     }
 }

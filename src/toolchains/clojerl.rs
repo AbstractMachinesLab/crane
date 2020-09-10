@@ -1,3 +1,6 @@
+use super::archive::Archive;
+use super::IntoToolchainBuilder;
+use super::ToolchainBuilder;
 use anyhow::{anyhow, Context};
 use log::debug;
 use std::collections::HashSet;
@@ -7,26 +10,62 @@ use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone)]
 pub struct Toolchain {
-    language: String,
-    version: String,
+    archive: Archive,
+    root: PathBuf,
+    clojerl: PathBuf,
 }
 
 impl Default for Toolchain {
     fn default() -> Toolchain {
+        let archive = Archive::default()
+            .with_url("https://github.com/clojerl/clojerl/archive/0.7.0.tar.gz".to_string())
+            .with_sha1("21a4747e74305429c0925af37a5d812c55cd37ab".to_string())
+            .with_prefix("clojerl-0.7.0".to_string());
+
+        let clojerl = PathBuf::from("clojerl");
+        let root = PathBuf::from(".");
+
         Toolchain {
-            language: "clojerl".to_string(),
-            version: "0.7.0".to_string(),
+            archive,
+            clojerl,
+            root,
         }
     }
 }
 
 impl Toolchain {
-    pub fn language(&self) -> &String {
-        &self.language
+    pub fn root(&self) -> &PathBuf {
+        &self.root
     }
 
-    pub fn version(&self) -> &String {
-        &self.version
+    pub fn archive(&self) -> &Archive {
+        &self.archive
+    }
+
+    pub fn with_archive(self, archive: Archive) -> Toolchain {
+        Toolchain {
+            archive,
+            ..self.clone()
+        }
+    }
+
+    pub fn with_root(self, root: PathBuf) -> Toolchain {
+        let root = root
+            .join(self.name())
+            .join(self.archive().sha1())
+            .join(self.archive().prefix());
+
+        let clojerl = root.join("bin").join("clojerl");
+
+        Toolchain {
+            root,
+            clojerl,
+            ..self.clone()
+        }
+    }
+
+    pub fn name(&self) -> String {
+        "clojerl".to_string()
     }
 
     pub fn shell(self, code_paths: &Vec<PathBuf>) -> Result<(), anyhow::Error> {
@@ -97,6 +136,47 @@ impl Toolchain {
             std::io::stdout().write_all(&output.stdout).unwrap();
             std::io::stderr().write_all(&output.stderr).unwrap();
             Err(anyhow!("Error running erlc"))
+        }
+    }
+}
+
+impl IntoToolchainBuilder for Toolchain {
+    fn toolchain_builder(&self) -> ToolchainBuilder {
+        let root = self.root.clone();
+
+        let clojerl = self.clojerl.clone();
+        let is_cached = Box::new(move || {
+            Command::new(clojerl.clone())
+                .output()
+                .context("Could not call clojerl")
+                .map(|output| output.status.success())
+        });
+
+        let build_toolchain = Box::new(move || {
+            let root = root.clone();
+            debug!("Clojerl: running make -j32 in {:?}", &root);
+            let make = Command::new("make")
+                .stdout(Stdio::piped())
+                .args(&["-j32"])
+                .current_dir(&root)
+                .output()
+                .context("Could not spawn make")?;
+            debug!("Clojerl: {:?}", &make.status.success());
+
+            if make.status.success() {
+                Ok(())
+            } else {
+                std::io::stdout().write_all(&make.stdout).unwrap();
+                std::io::stderr().write_all(&make.stderr).unwrap();
+                Err(anyhow!("Error running make"))
+            }
+        });
+
+        ToolchainBuilder {
+            name: self.name(),
+            archive: self.archive().clone(),
+            is_cached,
+            build_toolchain,
         }
     }
 }

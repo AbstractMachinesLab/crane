@@ -1,6 +1,6 @@
 [package]
 name = "crane"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Leandro Ostera <leandro@ostera.io>"]
 edition = "2018"
 publish = false
@@ -8,11 +8,12 @@ publish = false
 [dependencies]
 anyhow = "1.0"
 chrono = "0.4"
-rust-crypto = "0.2"
 fern = { version = "0.6", features = [ "colored" ] }
+git2 = "0.13.11"
 glob = "0.3"
 log = "0.4"
 petgraph = "0.5"
+rust-crypto = "0.2"
 structopt = "0.3"
 tokio = { version = "0.2", features = ["macros", "rt-core"] }
 toml = "0.5"

@@ -1,5 +1,6 @@
 use crate::cranefile::{Cranefile, CRANEFILE};
 use crate::label::Label;
+use crate::toolchains;
 use crate::toolchains::Toolchain;
 use anyhow::Context;
 use log::debug;
@@ -13,7 +14,7 @@ pub const WORKSPACE: &str = "workspace";
 #[derive(Debug, Clone, Default)]
 pub struct Workspace {
     name: String,
-    toolchain: Toolchain,
+    toolchains: Toolchain,
     dependencies: Vec<Label>,
     root: PathBuf,
 }
@@ -33,8 +34,15 @@ impl Workspace {
         &self.name
     }
 
-    pub fn toolchain(&self) -> &Toolchain {
-        &self.toolchain
+    pub fn toolchains(&self) -> Toolchain {
+        self.toolchains.clone()
+    }
+
+    pub fn with_toolchains(&self, toolchains: Toolchain) -> Workspace {
+        Workspace {
+            toolchains,
+            ..self.clone()
+        }
     }
 
     pub fn dependencies(&self) -> &Vec<Label> {
@@ -117,7 +125,14 @@ impl TryFrom<toml::Value> for Workspace {
             .context("Workspace name field must be a string")?
             .to_string();
 
+        let toolchains = if let Some(toolchains) = toml.get("toolchains") {
+            Toolchain::try_from(toolchains.clone())
+        } else {
+            Ok(Toolchain::default())
+        }?;
+
         Ok(Workspace {
+            toolchains,
             name,
             ..Workspace::default()
         })
@@ -126,7 +141,8 @@ impl TryFrom<toml::Value> for Workspace {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::workspace::*;
+    use super::*;
+
     #[test]
     fn demans_workspace_name() {
         let toml: toml::Value = r#"
@@ -169,8 +185,54 @@ name = "tiny_lib"
         .parse::<toml::Value>()
         .unwrap();
         let workspace = Workspace::try_from(toml).unwrap();
-        assert_eq!(workspace.toolchain().language(), "erlang");
-        assert_eq!(workspace.toolchain().version(), "23");
+        assert_eq!(
+            workspace.toolchains().erlang().archive_url(),
+            toolchains::erlang::DEFAULT_ARCHIVE_URL
+        );
+        assert_eq!(
+            workspace.toolchains().elixir().archive_url(),
+            toolchains::elixir::DEFAULT_ARCHIVE_URL
+        );
+        assert_eq!(
+            workspace.toolchains().gleam().archive_url(),
+            toolchains::gleam::DEFAULT_ARCHIVE_URL
+        );
+        assert_eq!(
+            workspace.toolchains().clojerl().archive_url(),
+            toolchains::clojerl::DEFAULT_ARCHIVE_URL
+        );
+        assert_eq!(workspace.dependencies().len(), 0);
+    }
+
+    #[test]
+    fn allows_for_custom_toolchains() {
+        let toml: toml::Value = r#"
+[workspace]
+name = "tiny_lib"
+
+[toolchains]
+erlang = { archive_url = "master" }
+gleam = { archive_url = "https://github.com/forked/gleam", sha1 = "test" }
+
+[dependencies]
+        "#
+        .parse::<toml::Value>()
+        .unwrap();
+        let workspace = Workspace::try_from(toml).unwrap();
+        assert_eq!(workspace.toolchains().erlang().archive_url(), "master");
+        assert_eq!(
+            workspace.toolchains().elixir().archive_url(),
+            toolchains::elixir::DEFAULT_ARCHIVE_URL
+        );
+        assert_eq!(
+            workspace.toolchains().gleam().archive_url(),
+            "https://github.com/forked/gleam"
+        );
+        assert_eq!(workspace.toolchains().gleam().archive_sha1(), "test");
+        assert_eq!(
+            workspace.toolchains().clojerl().archive_url(),
+            toolchains::clojerl::DEFAULT_ARCHIVE_URL
+        );
         assert_eq!(workspace.dependencies().len(), 0);
     }
 }
