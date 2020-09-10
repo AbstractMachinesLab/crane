@@ -143,7 +143,11 @@ impl IntoToolchainBuilder for Toolchain {
         let root = self.root.clone();
 
         let clojerl = self.clojerl.clone();
-        let is_cached = Box::new(move || Ok(std::fs::metadata(clojerl.clone()).is_ok()));
+        let rebarlock = root.clone().join("rebar.lock").clone();
+        let is_cached = Box::new(move || {
+            Ok(std::fs::metadata(clojerl.clone()).is_ok()
+                && std::fs::metadata(rebarlock.clone()).is_ok())
+        });
 
         let build_toolchain = Box::new(move || {
             let root = root.clone();
