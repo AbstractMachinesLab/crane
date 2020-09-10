@@ -14,18 +14,20 @@ We can build all of the targets by calling `crane build`:
 
 ```
 examples/tiny_lib λ crane build
-19:51:53 INFO :: Planning build...
-19:51:53 INFO :: Building target: //...
-19:51:54 INFO :: Built 4 artifacts in 943ms
+23:27:09 INFO :: Planning build...
+23:27:09 INFO :: Readying toolchains: [Erlang, Gleam, Clojure, Elixir]
+23:27:09 INFO :: Building target: //...
+23:27:10 INFO :: Built 4 artifacts in 886ms
 ```
 
 Subsequent builds after the clean one are heavily and correctly cached:
 
 ```
 examples/tiny_lib λ crane build
-19:52:23 INFO :: Planning build...
-19:52:23 INFO :: Building target: //...
-19:52:23 INFO :: Built 0 artifacts in 1ms
+23:27:29 INFO :: Planning build...
+23:27:29 INFO :: Readying toolchains: [Erlang, Elixir, Clojure, Gleam]
+23:27:29 INFO :: Building target: //...
+23:27:29 INFO :: Built 0 artifacts in 1ms
 ```
 
 ## Running
@@ -35,13 +37,17 @@ the dependency BEAM files:
 
 ```
 examples/tiny_lib λ crane run //math:shell
-19:53:12 INFO :: Workspace: tiny_lib
-19:53:12 INFO :: Target: //math:shell
-19:53:12 INFO :: Planning build...
-19:53:12 INFO :: Building target and dependencies: //math:shell
-19:53:12 INFO :: Built 0 artifacts in 1ms
-19:53:12 INFO :: Running target:
+23:27:43 INFO :: Workspace: tiny_lib
+23:27:43 INFO :: Target: //math:shell
+23:27:43 INFO :: Planning build...
+23:27:43 INFO :: Readying toolchains: [Elixir, Clojure, Gleam, Erlang]
+23:27:43 INFO :: Building target and dependencies: //math:shell
+23:27:43 INFO :: Built 0 artifacts in 1ms
+23:27:43 INFO :: Running target:
 Eshell V11.0.3  (abort with ^G)
-1> math:test().
-16384.0
+math:test().
+1> 16384.0
 ```
+
+There's a littl wonkyness with the output, but otherwise things are running
+fine.
