@@ -185,7 +185,25 @@ impl IntoToolchainBuilder for Toolchain {
         let gleamc = self.gleamc.clone();
         let is_cached = Box::new(move || Ok(std::fs::metadata(gleamc.clone()).is_ok()));
 
-        let build_toolchain = Box::new(move || Err(anyhow!("Can not build gleam just yet")));
+        let build_toolchain = Box::new(move || {
+            let root = root.clone();
+            debug!("Cargo: running cargo in {:?}", &root);
+            let cargo = Command::new("cargo")
+                .stdout(Stdio::piped())
+                .args(&["build", "--release"])
+                .current_dir(&root)
+                .output()
+                .context("Could not spawn cargo")?;
+            debug!("Cargo: {:?}", &cargo.status.success());
+
+            if cargo.status.success() {
+                Ok(())
+            } else {
+                std::io::stdout().write_all(&cargo.stdout).unwrap();
+                std::io::stderr().write_all(&cargo.stderr).unwrap();
+                Err(anyhow!("Error running cargo"))
+            }
+        });
 
         ToolchainBuilder {
             name: self.name(),
