@@ -1,0 +1,8 @@
+# vim: ft=toml
+
+[[erlang_library]]
+name = "hello_world"
+
+[[erlang_shell]]
+name = "shell"
+deps = [ ":hello_world" ]
