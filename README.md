@@ -123,6 +123,9 @@ This means that Crane won't let system-wide pre-installed tools do any work,
 and it will manage and version any language toolchains necessaries to do these
 builds. If it doesn't right now, it is just a matter of time until it does.
 
+In fact, Crane will be distributed as a single binary, compiled for several
+architectures. So you don't even need to have the BEAM installed to use it.
+
 ## Getting Started
 
 ...
