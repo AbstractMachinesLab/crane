@@ -35,7 +35,9 @@ This is mostly some ideas that I've been toying around with, in _some_ order.
 
 ## Upcoming (in *some* order)
 
-### Actions
+### Goals
+
+- [ ] crane query -- find targets in the build graph
 
 - [ ] crane build -- fetch, lift, and build dependencies too
 
