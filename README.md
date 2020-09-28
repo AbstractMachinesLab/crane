@@ -2,6 +2,8 @@
 > a build system for the BEAM, focused on speed, correctness, and developer
 > productivity.
 
+[![Build Status](https://travis-ci.org/AbstractMachinesLab/crane.svg?branch=main)](https://travis-ci.org/AbstractMachinesLab/crane)
+
 <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2Foriginals%2Fb9%2F3d%2Fb5%2Fb93db5e965fb69dddf7e672ed5f74395.jpg&f=1&nofb=1" />
 
 Crane is a build system for BEAM projects. You can use it to build executables,
