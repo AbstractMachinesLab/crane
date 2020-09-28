@@ -19,9 +19,9 @@ pub struct Toolchain {
 impl Default for Toolchain {
     fn default() -> Toolchain {
         let archive = Archive::default()
-            .with_url("https://github.com/erlang/otp/archive/OTP-23.0.3.tar.gz".to_string())
-            .with_sha1("b8ec65b335d8a98318870fb2250fc4409e34975a".to_string())
-            .with_prefix("otp-OTP-23.0.3".to_string());
+            .with_url("https://github.com/erlang/otp/archive/OTP-23.1.tar.gz".to_string())
+            .with_sha1("2d6eaefe960f52cc79d7614c11256b73174e4161".to_string())
+            .with_prefix("otp-OTP-23.1".to_string());
 
         let erl = PathBuf::from("erl");
         let erlc = PathBuf::from("erlc");
