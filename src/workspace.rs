@@ -149,6 +149,7 @@ impl TryFrom<toml::Value> for Workspace {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::toolchains;
 
     #[test]
     fn demans_workspace_name() {
