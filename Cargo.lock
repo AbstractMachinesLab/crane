@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "crane"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "anyhow",
  "chrono",
@@ -91,6 +91,7 @@ dependencies = [
  "glob",
  "home",
  "log",
+ "os_info",
  "petgraph",
  "rust-crypto",
  "structopt",
@@ -212,6 +213,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac267bcc07f48ee5f8935ab0d24f316fb722d7a1292e2913f0cc196b29ffd611"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "os_info"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09300db72fca7d425d1f51b76b881fdcc63241fdc952b5cd013f8a6f8c01e6d5"
+dependencies = [
+ "log",
+ "winapi",
 ]
 
 [[package]]
