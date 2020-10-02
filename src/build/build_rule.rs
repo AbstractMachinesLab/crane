@@ -16,6 +16,7 @@ pub enum BuildRule {
     ClojureLibrary(ClojureLibrary),
     ElixirLibrary(ElixirLibrary),
     GleamLibrary(GleamLibrary),
+    CaramelLibrary(CaramelLibrary),
 }
 
 impl Default for BuildRule {
@@ -32,6 +33,7 @@ impl BuildRule {
             BuildRule::ErlangLibrary(lib) => lib.name(),
             BuildRule::ErlangShell(shell) => shell.name(),
             BuildRule::GleamLibrary(lib) => lib.name(),
+            BuildRule::CaramelLibrary(lib) => lib.name(),
             BuildRule::Noop => Label::default(),
         }
     }
@@ -43,6 +45,7 @@ impl BuildRule {
             BuildRule::ErlangLibrary(_) => Some(ToolchainName::Erlang),
             BuildRule::ErlangShell(_) => Some(ToolchainName::Erlang),
             BuildRule::GleamLibrary(_) => Some(ToolchainName::Gleam),
+            BuildRule::CaramelLibrary(_) => Some(ToolchainName::Caramel),
             BuildRule::Noop => None,
         }
     }
@@ -54,6 +57,7 @@ impl BuildRule {
             BuildRule::ErlangLibrary(lib) => lib.dependencies(),
             BuildRule::ErlangShell(shell) => shell.dependencies(),
             BuildRule::GleamLibrary(lib) => lib.dependencies(),
+            BuildRule::CaramelLibrary(lib) => lib.dependencies(),
             BuildRule::Noop => vec![],
         }
     }
@@ -65,6 +69,7 @@ impl BuildRule {
             BuildRule::ErlangLibrary(lib) => lib.run(ctx),
             BuildRule::ErlangShell(shell) => shell.run(ctx),
             BuildRule::GleamLibrary(lib) => lib.run(ctx),
+            BuildRule::CaramelLibrary(lib) => lib.run(ctx),
             BuildRule::Noop => Ok(()),
         }
     }
@@ -76,6 +81,7 @@ impl BuildRule {
             BuildRule::ErlangLibrary(lib) => lib.build(ctx),
             BuildRule::ErlangShell(shell) => shell.build(ctx),
             BuildRule::GleamLibrary(lib) => lib.build(ctx),
+            BuildRule::CaramelLibrary(lib) => lib.build(ctx),
             BuildRule::Noop => Ok(()),
         }
     }
@@ -87,6 +93,7 @@ impl BuildRule {
             BuildRule::ErlangLibrary(lib) => lib.inputs(ctx),
             BuildRule::ErlangShell(shell) => shell.inputs(ctx),
             BuildRule::GleamLibrary(lib) => lib.inputs(ctx),
+            BuildRule::CaramelLibrary(lib) => lib.inputs(ctx),
             BuildRule::Noop => vec![],
         }
     }
@@ -98,6 +105,7 @@ impl BuildRule {
             BuildRule::ErlangLibrary(lib) => lib.outputs(ctx),
             BuildRule::ErlangShell(shell) => shell.outputs(ctx),
             BuildRule::GleamLibrary(lib) => lib.outputs(ctx),
+            BuildRule::CaramelLibrary(lib) => lib.outputs(ctx),
             BuildRule::Noop => vec![],
         }
     }

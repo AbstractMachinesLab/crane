@@ -1,7 +1,9 @@
+use log::debug;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 
 mod archive;
+pub mod caramel;
 pub mod clojerl;
 pub mod elixir;
 pub mod erlang;
@@ -13,6 +15,7 @@ pub enum ToolchainName {
     Elixir,
     Erlang,
     Gleam,
+    Caramel,
 }
 
 impl Eq for ToolchainName {}
@@ -52,6 +55,7 @@ pub struct Toolchain {
     elixir: elixir::Toolchain,
     erlang: erlang::Toolchain,
     gleam: gleam::Toolchain,
+    caramel: caramel::Toolchain,
 }
 
 impl Toolchain {
@@ -71,11 +75,16 @@ impl Toolchain {
         self.gleam.clone()
     }
 
+    pub fn caramel(&self) -> caramel::Toolchain {
+        self.caramel.clone()
+    }
+
     pub fn set_root(self, root: PathBuf) -> Toolchain {
         Toolchain {
             clojerl: self.clojerl.with_root(root.clone()),
             elixir: self.elixir.with_root(root.clone()),
             erlang: self.erlang.with_root(root.clone()),
+            caramel: self.caramel.with_root(root.clone()),
             gleam: self.gleam.with_root(root),
         }
     }
@@ -86,6 +95,7 @@ impl Toolchain {
             ToolchainName::Clojure => self.clojerl().root().clone(),
             ToolchainName::Elixir => self.elixir().root().clone(),
             ToolchainName::Gleam => self.gleam().root().clone(),
+            ToolchainName::Caramel => self.caramel().root().clone(),
         };
 
         let no_prefix = match toolchain {
@@ -93,6 +103,7 @@ impl Toolchain {
             ToolchainName::Clojure => self.clojerl().archive().prefix(),
             ToolchainName::Elixir => self.elixir().archive().prefix(),
             ToolchainName::Gleam => self.gleam().archive().prefix(),
+            ToolchainName::Caramel => self.caramel().archive().prefix(),
         }
         .is_empty();
 
@@ -101,6 +112,7 @@ impl Toolchain {
             ToolchainName::Clojure => self.clojerl().toolchain_builder(),
             ToolchainName::Elixir => self.elixir().toolchain_builder(),
             ToolchainName::Gleam => self.gleam().toolchain_builder(),
+            ToolchainName::Caramel => self.caramel().toolchain_builder(),
         };
 
         let download_root = if no_prefix {
@@ -151,7 +163,14 @@ impl TryFrom<toml::Value> for Toolchain {
             t.with_archive(a)
         };
 
+        let caramel = {
+            let t = caramel::Toolchain::default();
+            let a = override_archive_from_toml(t.archive().clone(), toml.get("caramel"));
+            t.with_archive(a)
+        };
+
         Ok(Toolchain {
+            caramel,
             clojerl,
             gleam,
             elixir,

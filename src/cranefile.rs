@@ -1,5 +1,7 @@
 use crate::build::{BuildRule, Rule};
-use crate::rules::{ClojureLibrary, ElixirLibrary, ErlangLibrary, ErlangShell, GleamLibrary};
+use crate::rules::{
+    CaramelLibrary, ClojureLibrary, ElixirLibrary, ErlangLibrary, ErlangShell, GleamLibrary,
+};
 use anyhow::Error;
 use std::convert::TryFrom;
 use std::fs;
@@ -86,25 +88,20 @@ impl Cranefile {
             .map(|x| GleamLibrary::try_from((x, parent)).map(Rule::as_rule))
             .collect();
         let gleam_libraries = gleam_libraries?;
-        /*
-        &contents
-        .get("gleam_library")
-        .unwrap_or(&Value::Array(vec![]))
-        .into::<GleamLibrary>()
-        .as_rule(),
-        &contents
-        .get("hamler_library")
-        .unwrap_or(&Value::Array(vec![]))
-        .into::<HamlerLibrary>()
-        .as_rule(),
-        &contents
-        .get("luerl_library")
-        .unwrap_or(&Value::Array(vec![]))
-        .into::<LuaLibrary>()
-        .as_rule(),
-        */
+
+        let caramel_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
+            .get("caramel_library")
+            .unwrap_or(&Value::Array(vec![]))
+            .as_array()
+            .unwrap_or(&vec![])
+            .iter()
+            .cloned()
+            .map(|x| CaramelLibrary::try_from((x, parent)).map(Rule::as_rule))
+            .collect();
+        let caramel_libraries = caramel_libraries?;
 
         let rules: Vec<BuildRule> = vec![
+            caramel_libraries,
             clojure_libraries,
             elixir_libraries,
             erlang_libraries,
