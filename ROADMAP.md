@@ -33,15 +33,17 @@ This is mostly some ideas that I've been toying around with, in _some_ order.
 - [X] crane clean -- if running this fixes your build, please file an issue
   (that should be a bug)
 
+- [X] Release cross-compiled binaries for common architectures
+
 ## Upcoming (in *some* order)
 
-### Goals
+### Goals (things Crane can do)
 
 - [ ] crane query -- find targets in the build graph
 
 - [ ] crane build -- fetch, lift, and build dependencies too
 
-- [ ] crane new -- bootstrap an empty project
+- [ ] crane new -- bootstrap an empty project.
 
 - [ ] crane test -- run a test target
 
@@ -71,6 +73,22 @@ This is mostly some ideas that I've been toying around with, in _some_ order.
 
   This lock would also block fetching stuff, updating dependencies, or anything that
   produces some artifacts.
+
+- [ ] sandboxing -- we are currently hoping the tools will not generate other
+  outputs on the directory they are being invoked from, but this can't always
+  be guaranteed! We should instead prepare a sandbox where we can detect unwanted
+  outputs (e.g, sandbox is temp folder, its empty, we run command, only expected
+  files are there) and we can complain loudly about them.
+
+  As a side-effect, this allows us to easily just tarball up the entire output
+  and move it around more easily. This should simplify the transitive input
+  gathering too.
+
+  As a litmus test, if we need to add anything new to a .gitignore because a tool
+  had some side-outputs, that's an output we need to declare!
+
+  As an actual enforcing rule: cgroups? look into how to run the command as a user
+  that can only read and write to the sandbox.
 
 ### Language / Runtime Support
 
@@ -113,6 +131,10 @@ This is mostly some ideas that I've been toying around with, in _some_ order.
 
 - [ ] Could we just use the Lumen Erlang/Core->BEAM compiler instead?
 
+- [ ] Rewriting in Erlang and compiling to a binary may be possible with either
+  Lumen or Caramel -- parallelism with Caramel would be trickier until OCaml
+  multicore!
+
 ### Distribution
 
-- [ ] Cross-compile crane for several architectures
+...
