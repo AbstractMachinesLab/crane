@@ -88,6 +88,14 @@ impl Toolchain {
             ToolchainName::Gleam => self.gleam().root().clone(),
         };
 
+        let no_prefix = match toolchain {
+            ToolchainName::Erlang => self.erlang().archive().prefix(),
+            ToolchainName::Clojure => self.clojerl().archive().prefix(),
+            ToolchainName::Elixir => self.elixir().archive().prefix(),
+            ToolchainName::Gleam => self.gleam().archive().prefix(),
+        }
+        .is_empty();
+
         let builder = match toolchain {
             ToolchainName::Erlang => self.erlang().toolchain_builder(),
             ToolchainName::Clojure => self.clojerl().toolchain_builder(),
@@ -95,8 +103,13 @@ impl Toolchain {
             ToolchainName::Gleam => self.gleam().toolchain_builder(),
         };
 
-        let download_root = root.parent().unwrap().to_path_buf();
+        let download_root = if no_prefix {
+            root.to_path_buf()
+        } else {
+            root.parent().unwrap().to_path_buf()
+        };
         let archive = builder.archive().clone();
+        &archive.validate();
         if !archive.is_cached(&download_root)? {
             archive.download(&download_root)?;
             archive.checksum(&download_root)?;
@@ -156,7 +169,12 @@ fn override_archive_from_toml(
             let archive = v
                 .get("archive_url")
                 .and_then(|x| x.as_str())
-                .map(|url| archive.clone().with_url(url.to_string()))
+                .map(|url| archive.clone().with_url(url.to_string()).as_source())
+                .unwrap_or(archive);
+            let archive = v
+                .get("release_url")
+                .and_then(|x| x.as_str())
+                .map(|url| archive.clone().with_url(url.to_string()).as_release())
                 .unwrap_or(archive);
             let archive = v
                 .get("prefix")
