@@ -1,5 +1,11 @@
 # vim: ft=toml
 
+[[caramel_library]]
+name = "caramel"
+deps = []
+caramelc_opts = []
+
+
 [[erlang_library]]
 name = "erlang"
 deps = []
@@ -27,4 +33,5 @@ deps = [
   ":clojerl",
   ":gleam",
   ":elixir",
+  ":caramel",
 ]

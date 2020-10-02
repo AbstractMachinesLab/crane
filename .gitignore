@@ -1,3 +1,6 @@
 /target
 .crane
 spec/*.toolbox
+.cmo
+.cmi
+.cma
