@@ -2,7 +2,7 @@ use crate::build::{Artifact, BuildContext, BuildRule, Rule};
 use crate::label::Label;
 use anyhow::{anyhow, Context};
 use glob::glob;
-use std::collections::HashSet;
+use log::debug;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use toml::Value;
@@ -59,95 +59,35 @@ impl Rule for CaramelLibrary {
     fn name(&self) -> Label {
         self.name.clone()
     }
+
     fn dependencies(&self) -> Vec<Label> {
         self.dependencies.clone()
     }
 
     fn inputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
-        vec![self.sources.clone()]
-            .iter()
-            .flatten()
-            .cloned()
-            .collect()
+        self.sources.clone()
     }
 
+    // FIXME(@ostera): map inputs to artifacts instead
     fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
         vec![Artifact {
             inputs: self.inputs(&ctx),
             outputs: self
                 .sources
                 .iter()
-                .map(|file| file.with_extension("beam"))
+                .flat_map(|file| {
+                    vec![
+                        file.with_extension("cmi"),
+                        file.with_extension("cmo"),
+                        file.with_extension("erl"),
+                    ]
+                })
                 .collect(),
         }]
     }
 
     fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        let transitive_deps = ctx.transitive_dependencies(&self.clone().as_rule());
-
-        let transitive_headers: HashSet<PathBuf> = transitive_deps
-            .iter()
-            .flat_map(|dep| dep.outputs(&ctx))
-            .flat_map(|artifact| artifact.inputs)
-            .map(|path| ctx.output_path().join(path))
-            .collect();
-        let transitive_headers: Vec<PathBuf> = transitive_headers.iter().cloned().collect();
-
-        if !self.sources.is_empty() {
-            let transitive_beam_files: HashSet<PathBuf> = transitive_deps
-                .iter()
-                .flat_map(|dep| dep.outputs(&ctx))
-                .flat_map(|artifact| artifact.outputs)
-                .map(|path| ctx.output_path().join(path))
-                .collect();
-
-            let beam_files: Vec<PathBuf> = self
-                .sources
-                .iter()
-                .cloned()
-                .map(|file| {
-                    let file = file
-                        .parent()
-                        .unwrap()
-                        .join("Caramel")
-                        .with_extension(file.file_name().unwrap())
-                        .with_extension("beam");
-                    ctx.declare_output(file)
-                })
-                .collect();
-
-            let beam_files: Vec<PathBuf> = beam_files
-                .iter()
-                .chain(transitive_beam_files.iter())
-                .cloned()
-                .collect();
-
-            let dest = beam_files[0].clone();
-
-            let erlang_sources: Vec<PathBuf> = self
-                .sources
-                .clone()
-                .iter()
-                .map(|file| {
-                    let file = file
-                        .parent()
-                        .unwrap()
-                        .join(file.file_name().unwrap())
-                        .with_extension("erl");
-                    ctx.declare_output(file)
-                })
-                .collect();
-
-            ctx.toolchain().caramel().compile(
-                &self.sources,
-                &erlang_sources,
-                &transitive_headers,
-                &beam_files,
-                &dest,
-            )
-        } else {
-            Ok(())
-        }
+        ctx.toolchain().caramel().compile(&self.inputs(ctx))
     }
 }
 
@@ -156,6 +96,10 @@ impl TryFrom<(toml::Value, &PathBuf)> for CaramelLibrary {
 
     fn try_from(input: (toml::Value, &PathBuf)) -> Result<CaramelLibrary, anyhow::Error> {
         let (lib, path) = input;
+        let path = path
+            .strip_prefix(PathBuf::from("."))
+            .context(format!("Could not strip prefix . from path: {:?}", &path))?
+            .to_path_buf();
         let name = lib
             .get("name")
             .context("Rule does not have a valid name")?
@@ -172,11 +116,22 @@ impl TryFrom<(toml::Value, &PathBuf)> for CaramelLibrary {
             Value::Array(sources) => sources
                 .iter()
                 .flat_map(|f| match f {
-                    Value::String(name) => glob(path.join(name).to_str().unwrap())
-                        .expect("Could not read glob")
-                        .filter_map(Result::ok)
-                        .collect(),
+                    Value::String(name) => {
+                        let glob_pattern = path.join(name);
+                        glob(glob_pattern.to_str().unwrap())
+                            .expect(&format!("Could not read glob {:?}", &glob_pattern))
+                            .filter_map(Result::ok)
+                            .collect()
+                    }
                     _ => vec![],
+                })
+                .map(|file| {
+                    file.strip_prefix(&path)
+                        .expect(&format!(
+                            "Could not strip prefix {:?} from path {:?}",
+                            &file, &path
+                        ))
+                        .to_path_buf()
                 })
                 .collect(),
             _ => vec![],
