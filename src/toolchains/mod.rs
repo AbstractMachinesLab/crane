@@ -196,6 +196,11 @@ fn override_archive_from_toml(
                 .map(|url| archive.clone().with_url(url.to_string()).as_release())
                 .unwrap_or(archive);
             let archive = v
+                .get("release_name")
+                .and_then(|x| x.as_str())
+                .map(|name| archive.clone().with_name(name.to_string()).as_release())
+                .unwrap_or(archive);
+            let archive = v
                 .get("prefix")
                 .and_then(|x| x.as_str())
                 .map(|prefix| archive.clone().with_prefix(prefix.to_string()))
