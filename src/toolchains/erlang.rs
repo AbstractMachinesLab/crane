@@ -105,13 +105,19 @@ impl Toolchain {
         srcs: &[PathBuf],
         includes: &[PathBuf],
         extra_libs: &[PathBuf],
-        dst: &PathBuf,
     ) -> Result<(), anyhow::Error> {
         let paths: Vec<&str> = srcs.iter().map(|src| src.to_str().unwrap()).collect();
 
         let include_paths: HashSet<&str> = includes
             .iter()
-            .map(|hrl| hrl.parent().unwrap().to_str().unwrap())
+            .map(|hrl| {
+                let parent = hrl.parent().unwrap().to_str().unwrap();
+                if parent.is_empty() {
+                    "."
+                } else {
+                    parent
+                }
+            })
             .collect();
         let includes: Vec<&str> = include_paths
             .iter()
@@ -131,11 +137,9 @@ impl Toolchain {
 
         let mut cmd = Command::new("erlc");
         let cmd = cmd
-            // TODO(@ostera): consider enabling `-server`
-            .args(&["-server", "-b", "beam", "-Wall", "-Werror"])
+            .args(&["-b", "beam", "-Wall", "-Werror"])
             .args(includes.as_slice())
             .args(extra_libs.as_slice())
-            .args(&["-o", dst.parent().unwrap().to_str().unwrap()])
             .args(&["--"])
             .args(paths.as_slice());
 

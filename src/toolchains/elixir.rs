@@ -17,6 +17,7 @@ pub struct Toolchain {
 impl Default for Toolchain {
     fn default() -> Toolchain {
         let archive = Archive::default()
+            .as_source()
             .with_url("https://github.com/elixir-lang/elixir/archive/v1.10.4.tar.gz".to_string())
             .with_sha1("d8634700f61c72c0e97f1a212919803a86016d2a".to_string())
             .with_prefix("elixir-1.10.4".to_string());
@@ -79,7 +80,7 @@ impl Toolchain {
             .stderr(Stdio::piped())
             .args(args.as_slice())
             .spawn()
-            .context("Could not spawn erl")?
+            .context("Could not spawn iex")?
             .stdout
             .context("Could not capture standard output")?;
         debug!("Calling {:?}", &cmd);
@@ -99,7 +100,6 @@ impl Toolchain {
         srcs: &[PathBuf],
         _includes: &[PathBuf],
         _extra_libs: &[PathBuf],
-        dst: &PathBuf,
     ) -> Result<(), anyhow::Error> {
         let paths: Vec<&str> = srcs.iter().map(|src| src.to_str().unwrap()).collect();
 
@@ -130,8 +130,6 @@ impl Toolchain {
         let mut cmd = Command::new(self.elixirc);
         let cmd = cmd
             // TODO(@ostera): consider passing -I and -pa's into ERL_COMPILER_OPTIONS
-            .args(&["--warnings-as-errors"])
-            .args(&["-o", dst.parent().unwrap().to_str().unwrap()])
             .args(paths.as_slice());
 
         debug!("Calling {:#?}", &cmd);
