@@ -97,12 +97,7 @@ impl Toolchain {
         Ok(())
     }
 
-    pub fn compile(
-        self,
-        srcs: &[PathBuf],
-        extra_libs: &[PathBuf],
-        dst: &PathBuf,
-    ) -> Result<(), anyhow::Error> {
+    pub fn compile(self, srcs: &[PathBuf], extra_libs: &[PathBuf]) -> Result<(), anyhow::Error> {
         let paths: Vec<&str> = srcs.iter().map(|src| src.to_str().unwrap()).collect();
 
         let extra_lib_paths: HashSet<&str> = extra_libs
@@ -118,8 +113,7 @@ impl Toolchain {
         let mut cmd = Command::new(self.clojerl);
         let cmd = cmd
             .args(extra_libs.as_slice())
-            .args(&["-o", dst.parent().unwrap().to_str().unwrap()])
-            .args(&["--time", "--compile"])
+            .args(&["--compile"])
             .args(paths.as_slice());
 
         debug!("Calling {:#?}", &cmd);
@@ -130,7 +124,7 @@ impl Toolchain {
         } else {
             std::io::stdout().write_all(&output.stdout).unwrap();
             std::io::stderr().write_all(&output.stderr).unwrap();
-            Err(anyhow!("Error running erlc"))
+            Err(anyhow!("Error running clojerl"))
         }
     }
 }
