@@ -10,17 +10,19 @@ use toml::Value;
 #[derive(Debug, Clone)]
 pub struct GleamLibrary {
     name: Label,
+    config: PathBuf,
     sources: Vec<PathBuf>,
     dependencies: Vec<Label>,
     outputs: Vec<PathBuf>,
 }
 
 impl GleamLibrary {
-    pub fn set_sources(&self, sources: Vec<PathBuf>) -> GleamLibrary {
-        GleamLibrary {
-            sources,
-            ..self.clone()
-        }
+    pub fn set_config(self, config: PathBuf) -> GleamLibrary {
+        GleamLibrary { config, ..self }
+    }
+
+    pub fn set_sources(self, sources: Vec<PathBuf>) -> GleamLibrary {
+        GleamLibrary { sources, ..self }
     }
 
     pub fn sources(&self) -> Vec<PathBuf> {
@@ -36,6 +38,7 @@ impl Rule for GleamLibrary {
     fn new(name: Label) -> GleamLibrary {
         GleamLibrary {
             name,
+            config: PathBuf::from("gleam.toml"),
             sources: vec![],
             dependencies: vec![],
             outputs: vec![],
@@ -64,11 +67,9 @@ impl Rule for GleamLibrary {
     }
 
     fn inputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
-        vec![self.sources.clone()]
-            .iter()
-            .flatten()
-            .cloned()
-            .collect()
+        let mut inputs = self.sources.clone();
+        inputs.push(self.config.clone());
+        inputs
     }
 
     fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
@@ -77,77 +78,13 @@ impl Rule for GleamLibrary {
             outputs: self
                 .sources
                 .iter()
-                .map(|file| file.with_extension("beam"))
+                .map(|file| file.with_extension("erl"))
                 .collect(),
         }]
     }
 
     fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        let transitive_deps = ctx.transitive_dependencies(&self.clone().as_rule());
-
-        let transitive_headers: HashSet<PathBuf> = transitive_deps
-            .iter()
-            .flat_map(|dep| dep.outputs(&ctx))
-            .flat_map(|artifact| artifact.inputs)
-            .map(|path| ctx.output_path().join(path))
-            .collect();
-        let transitive_headers: Vec<PathBuf> = transitive_headers.iter().cloned().collect();
-
-        if !self.sources.is_empty() {
-            let transitive_beam_files: HashSet<PathBuf> = transitive_deps
-                .iter()
-                .flat_map(|dep| dep.outputs(&ctx))
-                .flat_map(|artifact| artifact.outputs)
-                .map(|path| ctx.output_path().join(path))
-                .collect();
-
-            let beam_files: Vec<PathBuf> = self
-                .sources
-                .iter()
-                .cloned()
-                .map(|file| {
-                    let file = file
-                        .parent()
-                        .unwrap()
-                        .join("Gleam")
-                        .with_extension(file.file_name().unwrap())
-                        .with_extension("beam");
-                    ctx.declare_output(file)
-                })
-                .collect();
-
-            let beam_files: Vec<PathBuf> = beam_files
-                .iter()
-                .chain(transitive_beam_files.iter())
-                .cloned()
-                .collect();
-
-            let dest = beam_files[0].clone();
-
-            let erlang_sources: Vec<PathBuf> = self
-                .sources
-                .clone()
-                .iter()
-                .map(|file| {
-                    let file = file
-                        .parent()
-                        .unwrap()
-                        .join(file.file_name().unwrap())
-                        .with_extension("erl");
-                    ctx.declare_output(file)
-                })
-                .collect();
-
-            ctx.toolchain().gleam().compile(
-                &self.sources,
-                &erlang_sources,
-                &transitive_headers,
-                &beam_files,
-                &dest,
-            )
-        } else {
-            Ok(())
-        }
+        ctx.toolchain().gleam().compile(&self.sources)
     }
 }
 
@@ -156,6 +93,10 @@ impl TryFrom<(toml::Value, &PathBuf)> for GleamLibrary {
 
     fn try_from(input: (toml::Value, &PathBuf)) -> Result<GleamLibrary, anyhow::Error> {
         let (lib, path) = input;
+        let path = path
+            .strip_prefix(PathBuf::from("."))
+            .context(format!("Could not strip prefix . from path: {:?}", &path))?
+            .to_path_buf();
         let name = lib
             .get("name")
             .context("Rule does not have a valid name")?
@@ -165,6 +106,14 @@ impl TryFrom<(toml::Value, &PathBuf)> for GleamLibrary {
         let name: Label = name.into();
         let name = name.canonicalize(&path);
 
+        let config = match &lib
+            .get("config")
+            .unwrap_or(&Value::String("gleam.toml".to_string()))
+        {
+            Value::String(config) => PathBuf::from(config),
+            _ => panic!("Gleam library config field must be an string"),
+        };
+
         let sources = match &lib
             .get("sources")
             .unwrap_or(&Value::Array(vec![Value::String("*.gleam".to_string())]))
@@ -172,11 +121,22 @@ impl TryFrom<(toml::Value, &PathBuf)> for GleamLibrary {
             Value::Array(sources) => sources
                 .iter()
                 .flat_map(|f| match f {
-                    Value::String(name) => glob(path.join(name).to_str().unwrap())
-                        .expect("Could not read glob")
-                        .filter_map(Result::ok)
-                        .collect(),
+                    Value::String(name) => {
+                        let glob_pattern = path.join(name);
+                        glob(glob_pattern.to_str().unwrap())
+                            .expect(&format!("Could not read glob {:?}", &glob_pattern))
+                            .filter_map(Result::ok)
+                            .collect()
+                    }
                     _ => vec![],
+                })
+                .map(|file| {
+                    file.strip_prefix(&path)
+                        .expect(&format!(
+                            "Could not strip prefix {:?} from path {:?}",
+                            &file, &path
+                        ))
+                        .to_path_buf()
                 })
                 .collect(),
             _ => vec![],
@@ -197,6 +157,7 @@ impl TryFrom<(toml::Value, &PathBuf)> for GleamLibrary {
         }?;
 
         Ok(GleamLibrary::new(name)
+            .set_config(config)
             .set_sources(sources)
             .set_dependencies(dependencies))
     }

@@ -103,54 +103,34 @@ impl Rule for ErlangLibrary {
             .iter()
             .flat_map(|dep| dep.outputs(&ctx))
             .flat_map(|artifact| artifact.inputs)
-            .map(|path| ctx.output_path().join(path))
             .collect();
 
         let headers: Vec<PathBuf> = self
             .headers
             .iter()
             .cloned()
-            .map(|f| ctx.declare_output(f))
             .chain(transitive_headers)
             .collect();
 
-        let files: Vec<PathBuf> = self.headers.to_vec();
+        if !self.sources.is_empty() {
+            let transitive_beam_files: HashSet<PathBuf> = transitive_deps
+                .iter()
+                .flat_map(|dep| dep.outputs(&ctx))
+                .flat_map(|artifact| artifact.outputs)
+                .collect();
 
-        files.iter().cloned().for_each(|f| {
-            ctx.declare_output(f);
-        });
+            let beam_files: Vec<PathBuf> = vec![]
+                .iter()
+                .chain(transitive_beam_files.iter())
+                .cloned()
+                .collect();
 
-        ctx.copy(&files).and_then(|_| {
-            if !self.sources.is_empty() {
-                let transitive_beam_files: HashSet<PathBuf> = transitive_deps
-                    .iter()
-                    .flat_map(|dep| dep.outputs(&ctx))
-                    .flat_map(|artifact| artifact.outputs)
-                    .map(|path| ctx.output_path().join(path))
-                    .collect();
-
-                let beam_files: Vec<PathBuf> = self
-                    .sources
-                    .iter()
-                    .cloned()
-                    .map(|f| ctx.declare_output(f.with_extension("beam")))
-                    .collect();
-
-                let beam_files: Vec<PathBuf> = beam_files
-                    .iter()
-                    .chain(transitive_beam_files.iter())
-                    .cloned()
-                    .collect();
-
-                let dest = beam_files[0].clone();
-
-                ctx.toolchain()
-                    .erlang()
-                    .compile(&self.sources, &headers, &beam_files, &dest)
-            } else {
-                Ok(())
-            }
-        })
+            ctx.toolchain()
+                .erlang()
+                .compile(&self.sources, &headers, &beam_files)
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -159,6 +139,10 @@ impl TryFrom<(toml::Value, &PathBuf)> for ErlangLibrary {
 
     fn try_from(input: (toml::Value, &PathBuf)) -> Result<ErlangLibrary, anyhow::Error> {
         let (lib, path) = input;
+        let path = path
+            .strip_prefix(PathBuf::from("."))
+            .context(format!("Could not strip prefix . from path: {:?}", &path))?
+            .to_path_buf();
         let name = lib
             .get("name")
             .context("Rule does not have a valid name")?
@@ -197,6 +181,14 @@ impl TryFrom<(toml::Value, &PathBuf)> for ErlangLibrary {
                         .filter_map(Result::ok)
                         .collect(),
                     _ => vec![],
+                })
+                .map(|file| {
+                    file.strip_prefix(&path)
+                        .expect(&format!(
+                            "Could not strip prefix {:?} from path {:?}",
+                            &file, &path
+                        ))
+                        .to_path_buf()
                 })
                 .collect(),
             _ => vec![],

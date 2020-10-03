@@ -53,7 +53,6 @@ impl Rule for ErlangShell {
             .flat_map(|dep| dep.outputs(&ctx))
             .flat_map(|artifact| artifact.outputs)
             .map(|path| path.parent().unwrap().to_path_buf())
-            .map(|path| ctx.output_path().join(path))
             .collect();
 
         ctx.toolchain()

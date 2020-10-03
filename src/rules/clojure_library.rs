@@ -64,11 +64,7 @@ impl Rule for ClojureLibrary {
     }
 
     fn inputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
-        vec![self.sources.clone()]
-            .iter()
-            .flatten()
-            .cloned()
-            .collect()
+        self.sources.clone()
     }
 
     fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
@@ -77,57 +73,28 @@ impl Rule for ClojureLibrary {
             outputs: self
                 .sources
                 .iter()
-                .map(|file| {
-                    file.parent()
-                        .unwrap()
-                        .join("ebin")
-                        .join(file.file_name().unwrap())
-                        .with_extension("beam")
-                })
+                .map(|file| PathBuf::from("ebin").join(file).with_extension("beam"))
                 .collect(),
         }]
     }
 
     fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        let transitive_deps = ctx.transitive_dependencies(&self.clone().as_rule());
+        let transitive_beam_files: HashSet<PathBuf> = ctx
+            .transitive_dependencies(&self.clone().as_rule())
+            .iter()
+            .flat_map(|dep| dep.outputs(&ctx))
+            .flat_map(|artifact| artifact.outputs)
+            .collect();
 
-        if !self.sources.is_empty() {
-            let transitive_beam_files: HashSet<PathBuf> = transitive_deps
-                .iter()
-                .flat_map(|dep| dep.outputs(&ctx))
-                .flat_map(|artifact| artifact.outputs)
-                .map(|path| ctx.output_path().join(path))
-                .collect();
+        let beam_files: Vec<PathBuf> = vec![]
+            .iter()
+            .chain(transitive_beam_files.iter())
+            .cloned()
+            .collect();
 
-            let beam_files: Vec<PathBuf> = self
-                .sources
-                .iter()
-                .cloned()
-                .map(|file| {
-                    let file = file
-                        .parent()
-                        .unwrap()
-                        .join("ebin")
-                        .join(file.file_name().unwrap())
-                        .with_extension("beam");
-                    ctx.declare_output(file)
-                })
-                .collect();
-
-            let beam_files: Vec<PathBuf> = beam_files
-                .iter()
-                .chain(transitive_beam_files.iter())
-                .cloned()
-                .collect();
-
-            let dest = beam_files[0].clone();
-
-            ctx.toolchain()
-                .clojerl()
-                .compile(&self.sources, &beam_files, &dest)
-        } else {
-            Ok(())
-        }
+        ctx.toolchain()
+            .clojerl()
+            .compile(&self.sources, &beam_files)
     }
 }
 
@@ -136,6 +103,10 @@ impl TryFrom<(toml::Value, &PathBuf)> for ClojureLibrary {
 
     fn try_from(input: (toml::Value, &PathBuf)) -> Result<ClojureLibrary, anyhow::Error> {
         let (lib, path) = input;
+        let path = path
+            .strip_prefix(PathBuf::from("."))
+            .context(format!("Could not strip prefix . from path: {:?}", &path))?
+            .to_path_buf();
         let name = lib
             .get("name")
             .context("Rule does not have a valid name")?
@@ -157,6 +128,14 @@ impl TryFrom<(toml::Value, &PathBuf)> for ClojureLibrary {
                         .filter_map(Result::ok)
                         .collect(),
                     _ => vec![],
+                })
+                .map(|file| {
+                    file.strip_prefix(&path)
+                        .expect(&format!(
+                            "Could not strip prefix {:?} from path {:?}",
+                            &file, &path
+                        ))
+                        .to_path_buf()
                 })
                 .collect(),
             _ => vec![],
