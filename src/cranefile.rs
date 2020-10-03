@@ -2,7 +2,7 @@ use crate::build::{BuildRule, Rule};
 use crate::rules::{
     CaramelLibrary, ClojureLibrary, ElixirLibrary, ErlangLibrary, ErlangShell, GleamLibrary,
 };
-use anyhow::Error;
+use anyhow::{Context, Error};
 use std::convert::TryFrom;
 use std::fs;
 use std::path::PathBuf;
@@ -32,12 +32,15 @@ impl Cranefile {
     pub fn from_file(path: PathBuf) -> Result<Cranefile, Error> {
         let contents = fs::read_to_string(&path)?.parse::<Value>()?;
 
-        let parent = &path.parent().unwrap().to_path_buf();
+        let parent = path.clone();
+        let parent = &parent
+            .parent()
+            .context(format!("Could not get the parent of: {:?}", &path))?
+            .to_path_buf();
 
         let erlang_shells: Result<Vec<BuildRule>, anyhow::Error> = contents
             .get("erlang_shell")
-            .unwrap_or(&Value::Array(vec![]))
-            .as_array()
+            .and_then(|m| m.as_array())
             .unwrap_or(&vec![])
             .iter()
             .cloned()
@@ -47,8 +50,7 @@ impl Cranefile {
 
         let erlang_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
             .get("erlang_library")
-            .unwrap_or(&Value::Array(vec![]))
-            .as_array()
+            .and_then(|m| m.as_array())
             .unwrap_or(&vec![])
             .iter()
             .cloned()
@@ -58,8 +60,7 @@ impl Cranefile {
 
         let clojure_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
             .get("clojure_library")
-            .unwrap_or(&Value::Array(vec![]))
-            .as_array()
+            .and_then(|m| m.as_array())
             .unwrap_or(&vec![])
             .iter()
             .cloned()
@@ -69,8 +70,7 @@ impl Cranefile {
 
         let elixir_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
             .get("elixir_library")
-            .unwrap_or(&Value::Array(vec![]))
-            .as_array()
+            .and_then(|m| m.as_array())
             .unwrap_or(&vec![])
             .iter()
             .cloned()
@@ -80,8 +80,7 @@ impl Cranefile {
 
         let gleam_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
             .get("gleam_library")
-            .unwrap_or(&Value::Array(vec![]))
-            .as_array()
+            .and_then(|m| m.as_array())
             .unwrap_or(&vec![])
             .iter()
             .cloned()
@@ -91,8 +90,7 @@ impl Cranefile {
 
         let caramel_libraries: Result<Vec<BuildRule>, anyhow::Error> = contents
             .get("caramel_library")
-            .unwrap_or(&Value::Array(vec![]))
-            .as_array()
+            .and_then(|m| m.as_array())
             .unwrap_or(&vec![])
             .iter()
             .cloned()
