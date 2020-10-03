@@ -29,8 +29,9 @@ impl BuildContext {
             workspace,
             build_plan,
         };
-        fs::create_dir_all(ctx.output_path()).unwrap();
+        fs::create_dir_all(ctx.workspace_path()).unwrap();
         fs::create_dir_all(ctx.cache_path()).unwrap();
+        fs::create_dir_all(ctx.sandbox_path()).unwrap();
         ctx
     }
 
@@ -56,7 +57,7 @@ impl BuildContext {
             .collect()
     }
 
-    pub fn output_path(&self) -> PathBuf {
+    pub fn workspace_path(&self) -> PathBuf {
         self.artifact_root.clone().join("workspace")
     }
 
@@ -64,99 +65,107 @@ impl BuildContext {
         self.artifact_root.clone().join("cache")
     }
 
-    pub fn declare_output(&mut self, path: PathBuf) -> PathBuf {
-        self.declared_outputs.push(path.clone());
-        debug!("Declared output {:?}", &path);
-        let actual_path = self.output_path().join(path);
-        let parent = actual_path.parent().unwrap();
-        fs::create_dir_all(parent).unwrap();
-        actual_path
+    pub fn sandbox_path(&self) -> PathBuf {
+        self.artifact_root.clone().join("sandbox")
     }
 
-    pub fn changed_inputs(&mut self, paths: &[PathBuf]) -> Option<Vec<(PathBuf, String)>> {
-        let mut hasher = Sha1::new();
-        let result: Option<Vec<(PathBuf, String)>> = paths
-            .iter()
-            .cloned()
-            .map(|path| {
-                let contents = fs::read_to_string(&path)
-                    .unwrap_or_else(|_| panic!("Truly expected {:?} to be a readable file. Was it changed since the build started?", path));
-                hasher.input_str(&contents);
-                let hex = hasher.result_str();
-                hasher.reset();
+    /// Determine if a given node has been cached already or not.
+    ///
+    /// This is based on hash of the node (see `BuildRule::hash`).
+    ///
+    /// FIXME: check if the expected hashes of the inputs match the actual
+    /// hash of the files to determine if the cache is corrupted.
+    pub fn is_cached(&mut self, node: &BuildRule) -> Result<bool, anyhow::Error> {
+        let name = &node.name();
+        let hash = &node.hash(self);
 
-                let cache_path = self.cache_path().join(&hex);
-                if fs::metadata(&cache_path).is_ok() {
-                    debug!("Cache hit for {:?} at {:?}", path, cache_path);
-                    None
-                } else {
-                    debug!("No cache hit for {:?}", path);
-                    Some((path, hex))
-                }
-            })
-            .filter(Option::is_some)
-            .collect();
+        let cache_path = self.cache_path().join(&hash);
+        let is_cached = fs::metadata(&cache_path).is_ok();
 
-        result.and_then(|x| if x.is_empty() { None } else { Some(x) })
+        if is_cached {
+            debug!("Cache hit for {:?} at {:?}", name, cache_path);
+        } else {
+            debug!("No cache hit for {:?}", name);
+        }
+
+        Ok(is_cached)
     }
 
-    pub fn copy(&mut self, files: &[PathBuf]) -> Result<(), anyhow::Error> {
-        files
-            .iter()
-            .cloned()
-            .map(|path| {
-                let to = self.output_path().join(&path);
-                debug!("Attempting to copy file from {:?} to {:?}", &path, &to);
-                fs::copy(&path, &to)
-                    .context(format!("Truly expected {:?} to be a readable file. Was it changed since the build started?", &path))
-                    .map(|_| ())
-            })
-            .collect::<Result<(), anyhow::Error>>()
-    }
+    /// Run a build rule within a sandboxed environment.
+    ///
+    /// FIXME: turn this into a BuildSandbox struct.
+    pub fn run_in_sandbox(&mut self, node: &mut BuildRule) -> Result<(), anyhow::Error> {
+        let name = &node.name();
 
-    pub fn update_cache(
-        &mut self,
-        inputs: &[PathBuf],
-        outputs: &[Artifact],
-    ) -> Result<(), anyhow::Error> {
-        let mut hasher = Sha1::new();
-        let _ = inputs
-            .iter()
-            .cloned()
-            .map(|path| {
-                debug!("Attempting to create cache file for path: {:?}", &path);
-                let contents = fs::read_to_string(&path)
-                    .unwrap_or_else(|_| panic!("Truly expected {:?} to be a readable file. Was it changed since the build started?", path));
-                hasher.input_str(&contents);
-                let hash = hasher.result_str();
-                hasher.reset();
+        let current_dir = std::env::current_dir().context(format!(
+            "Could not get the current directory while building sandbox for node {:?}",
+            name.to_string(),
+        ))?;
 
-                let cache_path = self.cache_path().join(hash);
-                fs::create_dir_all(&cache_path)
-                    .context(format!("Could not create cache file for {:?} at {:?}", path, cache_path))
-                    .map(|_| ())
-            })
-            .collect::<Result<(), anyhow::Error>>()?;
+        let hash = &node.hash(self);
+        debug!("Rule {:?} hashed as {:?}", &name, &hash);
 
-        outputs
+        // create .crane/sandbox/<sha>
+        let sandbox_path = self.sandbox_path().join(hash);
+        fs::create_dir_all(&sandbox_path)
+            .context(format!(
+                "Could not create sandbox directory for node {:?} at: {:?}",
+                name.to_string(),
+                &sandbox_path
+            ))
+            .map(|_| ())?;
+        debug!("Created sandbox at: {:?}", &sandbox_path);
+
+        // copy all inputs there
+        let inputs = &node.inputs(&self);
+        for src in inputs {
+            // find in cache
+            let dst = sandbox_path.join(&src);
+            let src = name.path().join(&src);
+            std::fs::copy(&src, &dst).context(format!(
+                "When building {:?}, could not copy input {:?} into sandbox at {:?}",
+                name.to_string(),
+                &src,
+                &dst
+            ))?;
+            debug!("Copied {:?} to {:?}", &src, &dst);
+        }
+
+        // move into the sandbox
+        std::env::set_current_dir(&sandbox_path).context(format!(
+            "Could not move into the created sandbox at: {:?} when building {:?}",
+            &sandbox_path,
+            name.to_string()
+        ))?;
+        debug!("Entered sandbox at: {:?}", &sandbox_path);
+
+        // run rule in that folder
+        node.build(self)?;
+
+        // list all the files
+        // expect inputs + outputs
+        // if there are more files, panic!
+
+        // move out of the sandbox
+        std::env::set_current_dir(&current_dir).context(format!(
+            "Could not move out of the created sandbox at: {:?} when building {:?}",
+            &sandbox_path,
+            name.to_string()
+        ))?;
+        debug!("Exited sandbox at: {:?}", &sandbox_path);
+
+        // update cache
+        let cache_path = self.cache_path().join(hash);
+        let workspace_path = self.workspace_path();
+
+        let result = node
+            .outputs(self)
             .iter()
             .cloned()
             .map(|artifact| {
                 debug!("Caching build artifact: {:?}", &artifact);
-                let hash = &artifact.compute_hash();
-                let cache_path = self.cache_path().join(hash);
-                debug!("Creating cache path: {:?}", &cache_path);
-                fs::create_dir_all(&cache_path)
-                    .context(format!(
-                        "Could not create cache file for {:?} at {:?}",
-                        artifact, cache_path
-                    ))
-                    .map(|_| ())?;
-
                 let unique_outputs: HashSet<PathBuf> = artifact.outputs.iter().cloned().collect();
-
                 for output in unique_outputs.iter() {
-                    let workspace_file = self.output_path().join(output);
                     let cached_file = cache_path.join(output);
                     let cached_dir = &cached_file.parent().unwrap();
                     debug!("Creating artifact cache path: {:?}", &cached_dir);
@@ -166,14 +175,25 @@ impl BuildContext {
                             &output, &cached_dir
                         ))
                         .map(|_| ())?;
-                    debug!("Moving artifact to cache: {:?}", &workspace_file);
-                    fs::rename(&workspace_file, &cached_file)
+                    let sandboxed_file = sandbox_path.join(output);
+                    debug!(
+                        "Moving artifact from sandbox path {:?} to cache path {:?}",
+                        &sandboxed_file, &cached_file
+                    );
+                    fs::rename(&sandboxed_file, &cached_file)
                         .context(format!(
-                            "Could not copy artifact {:?} into cache path: {:?}",
-                            output, cached_file
+                            "Could not move artifact {:?} into cache path: {:?}",
+                            sandboxed_file, cached_file
                         ))
                         .map(|_| ())?;
                     let abs_path = fs::canonicalize(&cached_file)?;
+                    let workspace_file = workspace_path.join(output);
+                    fs::create_dir_all(&workspace_file.parent().unwrap())
+                        .context(format!(
+                            "Could not create workspace directory for {:?}",
+                            &workspace_path
+                        ))
+                        .map(|_| ())?;
                     debug!(
                         "Symlinking cached artifact to workspace: {:?} -> {:?}",
                         &abs_path, &workspace_file
@@ -186,6 +206,14 @@ impl BuildContext {
 
                 Ok(())
             })
-            .collect()
+            .collect::<Result<(), anyhow::Error>>();
+
+        if let Err(_) = result {
+            fs::remove_dir_all(&cache_path)?;
+        }
+        result?;
+
+        // we're good!
+        Ok(())
     }
 }

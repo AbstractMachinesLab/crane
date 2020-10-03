@@ -107,7 +107,10 @@ impl BuildPlan {
         if target.is_all() {
             Ok(build_plan)
         } else {
-            let node_index = build_plan.nodes.get(&target).expect("Could not find node!");
+            let node_index = build_plan
+                .nodes
+                .get(&target)
+                .context(format!("Could not find node: {:?}", &target))?;
             let nodes_to_keep = subgraph(self.build_graph, *node_index);
             build_plan
                 .build_graph
@@ -153,18 +156,14 @@ impl BuildPlan {
         let mut walker = Topo::new(&self.build_graph);
         let mut artifacts = 0;
         while let Some(node) = walker.next(&self.build_graph) {
-            let node = &mut self.build_graph[node];
-            let inputs = &node.inputs(&ctx);
-            let outputs = &node.outputs(&ctx);
+            let mut node = &mut self.build_graph[node];
             let name = &node.name();
-            if let Some(changes) = &ctx.changed_inputs(inputs) {
-                debug!("Changed inputs: {:?}...", &changes);
-                debug!("Building {}...", &name.to_string());
-                node.build(&mut ctx)?;
-                artifacts += 1;
-                ctx.update_cache(inputs, outputs)?;
-            } else {
+            debug!("About to build {:?}...", &node.name());
+            if ctx.is_cached(&node)? {
                 debug!("Skipping {}. Nothing to do.", &name.to_string());
+            } else {
+                ctx.run_in_sandbox(&mut node)?;
+                artifacts += 1;
             }
         }
         Ok(artifacts)
