@@ -42,43 +42,14 @@ impl Archive {
                 let parts: Vec<&str> = self.url.split("/tag/").collect();
                 let prefix = parts[0];
                 let tag = parts[1];
-                let suffix = match os_info::get().os_type() {
-                    os_info::Type::Macos => "x86_64-apple-darwin",
-                    os_info::Type::Alpine => "x86_64-linux-musl",
-                    os_info::Type::Arch
-                    | os_info::Type::CentOS
-                    | os_info::Type::Debian
-                    | os_info::Type::Fedora
-                    | os_info::Type::Linux
-                    | os_info::Type::Manjaro
-                    | os_info::Type::openSUSE
-                    | os_info::Type::OracleLinux
-                    | os_info::Type::Redhat
-                    | os_info::Type::RedHatEnterprise
-                    | os_info::Type::Solus
-                    | os_info::Type::SUSE
-                    | os_info::Type::Ubuntu => "x86_64-linux-gnu",
-                    os_info::Type::Windows => "x86_64-pc-windows",
-                    os_info::Type::Amazon
-                    | os_info::Type::Android
-                    | os_info::Type::Emscripten
-                    | os_info::Type::EndeavourOS
-                    | os_info::Type::Pop
-                    | os_info::Type::Redox
-                    | os_info::Type::Unknown
-                    | _ => "UNSUPPORTED_PLATFORM",
-                };
-                // NOTE: This constructs a URL like:
-                //  https://github.com/AbstractMachinesLab/caramel/releases/download/v0.0.4/caramel-v0.0.4-x86_64-linux-gnu.tar.gz
-                //  which means we support this sort of release tarball patterning.
-                // FIXME: just copy the actual pattern from the Rust toolchain
+                let host_triple = guess_host_triple::guess_host_triple().unwrap();
                 format!(
-                    "{}/download/{}/{}-{}-{}.tar.gz",
-                    prefix,
-                    tag.clone(),
-                    self.name.clone(),
-                    tag,
-                    suffix
+                    "{prefix}/download/{tag}/{name}-{tag}-{host_triple}.{ext}",
+                    prefix = prefix,
+                    tag = tag.clone(),
+                    name = self.name.clone(),
+                    host_triple = host_triple,
+                    ext = ".tar.gz",
                 )
             }
         }
