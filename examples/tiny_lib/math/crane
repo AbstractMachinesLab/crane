@@ -2,36 +2,20 @@
 
 [[caramel_library]]
 name = "caramel"
-deps = []
-caramelc_opts = []
 
-
-[[erlang_library]]
-name = "erlang"
-deps = []
-erlc_opts = []
-
-[[gleam_library]]
-name = "gleam"
-deps = []
-gleam_opts = []
+# [[gleam_library]]
+# name = "gleam"
 
 [[clojure_library]]
 name = "clojerl"
-deps = []
-clojerl_opts = []
 
 [[elixir_library]]
 name = "elixir"
-deps = []
-elixirc_opts = []
+
+[[erlang_library]]
+name = "erlang"
+deps = [":caramel", ":elixir", ":clojerl"]
 
 [[erlang_shell]]
 name = "shell"
-deps = [
-  ":erlang",
-  ":clojerl",
-  ":gleam",
-  ":elixir",
-  ":caramel",
-]
+deps = [ ":erlang" ]

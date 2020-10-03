@@ -12,9 +12,4 @@ prefix = "otp-OTP-23.1"
 release_url = "https://github.com/AbstractMachinesLab/caramel/releases/tag/v0.0.4"
 sha1 = "eb14a3d2ec697d42a6ea7cf565d79141846aa538"
 
-[toolchains.gleam]
-archive_url = "https://github.com/ostera/gleam/archive/gleamc.tar.gz"
-sha1 = "6de2117557b3c2b94ae6b907f8b788b7a5891ab3"
-prefix = "gleam-gleamc"
-
 [dependencies]
