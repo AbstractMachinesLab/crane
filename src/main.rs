@@ -114,10 +114,12 @@ Use //... to build the entire project.
 impl BuildOpt {
     fn build(self) -> Result<(), anyhow::Error> {
         let t0 = std::time::Instant::now();
-        let workspace = Workspace::new().context("Could not create a workspace.")?;
         let target: Label = self.target.into();
-        debug!("Workspace: {}", &workspace.name());
+        debug!("Host: {}", guess_host_triple::guess_host_triple().unwrap());
         debug!("Target: {}", &target.to_string());
+
+        let workspace = Workspace::new().context("Could not create a workspace.")?;
+        debug!("Workspace: {}", &workspace.name());
 
         info!("Planning build...");
         let mut build_plan = BuildPlan::for_workspace(workspace)
