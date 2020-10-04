@@ -8,7 +8,8 @@ use std::path::PathBuf;
 /// A BuildRule defines what actions to be taken to compute a BuildNode.
 ///
 /// NOTE(@ostera): this could've been a trait but the petgraph library insisted in
-/// having Sized implemente for the graph nodes.
+/// having Sized implemented for the graph nodes.
+///
 #[derive(Debug, Clone)]
 pub enum BuildRule {
     Noop,
@@ -91,26 +92,38 @@ impl BuildRule {
         }
     }
 
-    pub fn inputs(&self) -> Vec<PathBuf> {
+    pub fn inputs(&self, deps: &[Artifact]) -> Vec<PathBuf> {
         match self {
-            BuildRule::ClojureLibrary(lib) => lib.inputs(),
-            BuildRule::ElixirLibrary(lib) => lib.inputs(),
-            BuildRule::ErlangLibrary(lib) => lib.inputs(),
-            BuildRule::ErlangShell(shell) => shell.inputs(),
-            BuildRule::GleamLibrary(lib) => lib.inputs(),
-            BuildRule::CaramelLibrary(lib) => lib.inputs(),
+            BuildRule::ClojureLibrary(lib) => lib.inputs(deps),
+            BuildRule::ElixirLibrary(lib) => lib.inputs(deps),
+            BuildRule::ErlangLibrary(lib) => lib.inputs(deps),
+            BuildRule::ErlangShell(shell) => shell.inputs(deps),
+            BuildRule::GleamLibrary(lib) => lib.inputs(deps),
+            BuildRule::CaramelLibrary(lib) => lib.inputs(deps),
             BuildRule::Noop => vec![],
         }
     }
 
-    pub fn outputs(&self) -> Vec<Artifact> {
+    pub fn set_inputs(self, inputs: Vec<PathBuf>) -> BuildRule {
         match self {
-            BuildRule::ClojureLibrary(lib) => lib.outputs(),
-            BuildRule::ElixirLibrary(lib) => lib.outputs(),
-            BuildRule::ErlangLibrary(lib) => lib.outputs(),
-            BuildRule::ErlangShell(shell) => shell.outputs(),
-            BuildRule::GleamLibrary(lib) => lib.outputs(),
-            BuildRule::CaramelLibrary(lib) => lib.outputs(),
+            BuildRule::ClojureLibrary(lib) => BuildRule::ClojureLibrary(lib.set_inputs(inputs)),
+            BuildRule::ElixirLibrary(lib) => BuildRule::ElixirLibrary(lib.set_inputs(inputs)),
+            BuildRule::ErlangLibrary(lib) => BuildRule::ErlangLibrary(lib.set_inputs(inputs)),
+            BuildRule::ErlangShell(shell) => BuildRule::ErlangShell(shell.set_inputs(inputs)),
+            BuildRule::GleamLibrary(lib) => BuildRule::GleamLibrary(lib.set_inputs(inputs)),
+            BuildRule::CaramelLibrary(lib) => BuildRule::CaramelLibrary(lib.set_inputs(inputs)),
+            BuildRule::Noop => BuildRule::Noop,
+        }
+    }
+
+    pub fn outputs(&self, deps: &[Artifact]) -> Vec<Artifact> {
+        match self {
+            BuildRule::ClojureLibrary(lib) => lib.outputs(deps),
+            BuildRule::ElixirLibrary(lib) => lib.outputs(deps),
+            BuildRule::ErlangLibrary(lib) => lib.outputs(deps),
+            BuildRule::ErlangShell(shell) => shell.outputs(deps),
+            BuildRule::GleamLibrary(lib) => lib.outputs(deps),
+            BuildRule::CaramelLibrary(lib) => lib.outputs(deps),
             BuildRule::Noop => vec![],
         }
     }
@@ -133,9 +146,7 @@ pub trait Rule {
 
     fn name(&self) -> Label;
 
-    fn dependencies(&self) -> Vec<Label> {
-        vec![]
-    }
+    fn dependencies(&self) -> Vec<Label>;
 
     /// The inputs of a build rule are the collection of files used as compilation input.  If a
     /// rule depends on anything else, it should be explicit about it and declare it in this
@@ -149,9 +160,9 @@ pub trait Rule {
     ///
     /// So to be a good citizen of Crane, keep your inputs declared, and relative to the build rule
     /// location.
-    fn inputs(&self) -> Vec<PathBuf> {
-        vec![]
-    }
+    fn inputs(&self, _deps: &[Artifact]) -> Vec<PathBuf>;
+
+    fn set_inputs(self, inputs: Vec<PathBuf>) -> Self;
 
     /// The outputs of a build rule are a collecton of Artifact definitions, where an Artifact
     /// establishes the relation between one or more inputs to one ore more sources.
@@ -164,9 +175,7 @@ pub trait Rule {
     /// to be compiled individually (e.g, it supports circular dependencies between them), then it
     /// is acceptable to return a single Artifact where both inputs are mapped to the corresponding
     /// outputs.
-    fn outputs(&self) -> Vec<Input> {
-        vec![]
-    }
+    fn outputs(&self, _deps: &[Artifact]) -> Vec<Artifact>;
 
     fn run(&mut self, _plan: &BuildPlan, _toolchain: &Toolchains) -> Result<(), anyhow::Error> {
         Err(anyhow!("This rule does not implement Rule::run/2."))
