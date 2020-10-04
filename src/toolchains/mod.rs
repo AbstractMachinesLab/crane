@@ -1,4 +1,3 @@
-use log::debug;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 
@@ -50,7 +49,7 @@ pub trait IntoToolchainBuilder {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct Toolchain {
+pub struct Toolchains {
     clojerl: clojerl::Toolchain,
     elixir: elixir::Toolchain,
     erlang: erlang::Toolchain,
@@ -58,7 +57,7 @@ pub struct Toolchain {
     caramel: caramel::Toolchain,
 }
 
-impl Toolchain {
+impl Toolchains {
     pub fn clojerl(&self) -> clojerl::Toolchain {
         self.clojerl.clone()
     }
@@ -79,8 +78,8 @@ impl Toolchain {
         self.caramel.clone()
     }
 
-    pub fn set_root(self, root: PathBuf) -> Toolchain {
-        Toolchain {
+    pub fn set_root(self, root: PathBuf) -> Toolchains {
+        Toolchains {
             clojerl: self.clojerl.with_root(root.clone()),
             elixir: self.elixir.with_root(root.clone()),
             erlang: self.erlang.with_root(root.clone()),
@@ -135,10 +134,10 @@ impl Toolchain {
     }
 }
 
-impl TryFrom<toml::Value> for Toolchain {
+impl TryFrom<toml::Value> for Toolchains {
     type Error = anyhow::Error;
 
-    fn try_from(toml: toml::Value) -> Result<Toolchain, anyhow::Error> {
+    fn try_from(toml: toml::Value) -> Result<Toolchains, anyhow::Error> {
         let erlang = {
             let t = erlang::Toolchain::default();
             let a = override_archive_from_toml(t.archive().clone(), toml.get("erlang"));
@@ -169,7 +168,7 @@ impl TryFrom<toml::Value> for Toolchain {
             t.with_archive(a)
         };
 
-        Ok(Toolchain {
+        Ok(Toolchains {
             caramel,
             clojerl,
             gleam,
