@@ -77,7 +77,7 @@ impl Rule for ErlangLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self) -> Vec<PathBuf> {
+    fn inputs(&self, _deps: &[Artifact]) -> Vec<PathBuf> {
         vec![self.headers.clone(), self.sources.clone()]
             .iter()
             .flatten()
@@ -85,12 +85,29 @@ impl Rule for ErlangLibrary {
             .collect()
     }
 
-    fn outputs(&self) -> Vec<Artifact> {
+    fn set_inputs(self, sources: Vec<PathBuf>) -> ErlangLibrary {
+        ErlangLibrary { sources, ..self }
+    }
+
+    fn outputs(&self, deps: &[Artifact]) -> Vec<Artifact> {
+        let extra_sources: Vec<PathBuf> = deps
+            .iter()
+            .flat_map(|a| a.outputs.clone())
+            .filter(|path| {
+                path.extension()
+                    .and_then(std::ffi::OsStr::to_str)
+                    .map(|str| str.eq_ignore_ascii_case("erl"))
+                    .unwrap_or(false)
+            })
+            .collect();
+
         vec![Artifact {
-            inputs: self.inputs(),
+            inputs: self.inputs(&deps),
             outputs: self
                 .sources
                 .iter()
+                .cloned()
+                .chain(extra_sources)
                 .map(|file| file.with_extension("beam"))
                 .chain(self.headers.clone())
                 .collect(),
@@ -198,21 +215,17 @@ impl TryFrom<(toml::Value, &PathBuf)> for ErlangLibrary {
             _ => vec![],
         };
 
-        let sources = match &lib.get("sources").unwrap_or(&Value::Array(vec![])) {
+        let sources = match &lib
+            .get("srcs")
+            .unwrap_or(&Value::Array(vec![Value::String("*.erl".to_string())]))
+        {
             Value::Array(sources) => sources
                 .iter()
                 .flat_map(|f| match f {
-                    Value::String(name) =>  {
-                        if (Label::is_label_like(name)) {
-                            let label: Label = x.to_string().into();
-                            vec![ label.canonicalize(&path) ]
-                        } else {
-                        glob(path.join(name).to_str().unwrap())
+                    Value::String(name) => glob(path.join(name).to_str().unwrap())
                         .expect("Could not read glob")
                         .filter_map(Result::ok)
                         .collect(),
-                        }
-                },
                     _ => vec![],
                 })
                 .map(|file| {

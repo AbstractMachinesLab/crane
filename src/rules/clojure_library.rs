@@ -63,13 +63,17 @@ impl Rule for ClojureLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self) -> Vec<PathBuf> {
+    fn inputs(&self, _deps: &[Artifact]) -> Vec<PathBuf> {
         self.sources.clone()
     }
 
-    fn outputs(&self) -> Vec<Artifact> {
+    fn set_inputs(self, sources: Vec<PathBuf>) -> ClojureLibrary {
+        ClojureLibrary { sources, ..self }
+    }
+
+    fn outputs(&self, deps: &[Artifact]) -> Vec<Artifact> {
         vec![Artifact {
-            inputs: self.inputs(),
+            inputs: self.inputs(&deps),
             outputs: self
                 .sources
                 .iter()

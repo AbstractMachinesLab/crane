@@ -1,4 +1,4 @@
-use crate::build::{BuildPlan, BuildRule, Rule};
+use crate::build::{Artifact, BuildPlan, BuildRule, Rule};
 use crate::label::Label;
 use crate::toolchains::Toolchains;
 use anyhow::{anyhow, Context};
@@ -45,6 +45,18 @@ impl Rule for ErlangShell {
 
     fn dependencies(&self) -> Vec<Label> {
         self.dependencies.clone()
+    }
+
+    fn inputs(&self, _deps: &[Artifact]) -> Vec<PathBuf> {
+        vec![]
+    }
+
+    fn outputs(&self, _deps: &[Artifact]) -> Vec<Artifact> {
+        vec![]
+    }
+
+    fn set_inputs(self, _inputs: Vec<PathBuf>) -> ErlangShell {
+        self
     }
 
     fn run(&mut self, plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {

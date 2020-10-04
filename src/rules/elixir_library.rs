@@ -63,17 +63,17 @@ impl Rule for ElixirLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self) -> Vec<PathBuf> {
-        vec![self.sources.clone()]
-            .iter()
-            .flatten()
-            .cloned()
-            .collect()
+    fn inputs(&self, _deps: &[Artifact]) -> Vec<PathBuf> {
+        self.sources.clone()
     }
 
-    fn outputs(&self) -> Vec<Artifact> {
+    fn set_inputs(self, sources: Vec<PathBuf>) -> ElixirLibrary {
+        ElixirLibrary { sources, ..self }
+    }
+
+    fn outputs(&self, deps: &[Artifact]) -> Vec<Artifact> {
         vec![Artifact {
-            inputs: self.inputs(),
+            inputs: self.inputs(&deps),
             outputs: self
                 .sources
                 .iter()

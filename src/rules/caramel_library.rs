@@ -64,14 +64,14 @@ impl Rule for CaramelLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self) -> Vec<PathBuf> {
+    fn inputs(&self, _deps: &[Artifact]) -> Vec<PathBuf> {
         self.sources.clone()
     }
 
     // FIXME(@ostera): map inputs to artifacts instead
-    fn outputs(&self) -> Vec<Artifact> {
+    fn outputs(&self, deps: &[Artifact]) -> Vec<Artifact> {
         vec![Artifact {
-            inputs: self.inputs(),
+            inputs: self.inputs(&deps),
             outputs: self
                 .sources
                 .iter()
@@ -86,8 +86,12 @@ impl Rule for CaramelLibrary {
         }]
     }
 
+    fn set_inputs(self, sources: Vec<PathBuf>) -> CaramelLibrary {
+        CaramelLibrary { sources, ..self }
+    }
+
     fn build(&mut self, _plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {
-        toolchains.caramel().compile(&self.inputs())
+        toolchains.caramel().compile(&self.sources)
     }
 }
 

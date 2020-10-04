@@ -66,21 +66,25 @@ impl Rule for GleamLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self) -> Vec<PathBuf> {
+    fn inputs(&self, _deps: &[Artifact]) -> Vec<PathBuf> {
         let mut inputs = self.sources.clone();
         inputs.push(self.config.clone());
         inputs
     }
 
-    fn outputs(&self) -> Vec<Artifact> {
+    fn outputs(&self, deps: &[Artifact]) -> Vec<Artifact> {
         vec![Artifact {
-            inputs: self.inputs(),
+            inputs: self.inputs(&deps),
             outputs: self
                 .sources
                 .iter()
                 .map(|file| file.with_extension("erl"))
                 .collect(),
         }]
+    }
+
+    fn set_inputs(self, sources: Vec<PathBuf>) -> GleamLibrary {
+        GleamLibrary { sources, ..self }
     }
 
     fn build(&mut self, _plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {
@@ -115,7 +119,7 @@ impl TryFrom<(toml::Value, &PathBuf)> for GleamLibrary {
         };
 
         let sources = match &lib
-            .get("sources")
+            .get("srcs")
             .unwrap_or(&Value::Array(vec![Value::String("*.gleam".to_string())]))
         {
             Value::Array(sources) => sources
