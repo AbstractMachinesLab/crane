@@ -1,12 +1,11 @@
 use super::archive::Archive;
 use super::IntoToolchainBuilder;
 use super::ToolchainBuilder;
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use log::debug;
-use std::collections::HashSet;
-use std::io::{BufRead, BufReader, Write};
+use std::io::Write;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 #[derive(Debug, Clone)]
 pub struct Toolchain {
@@ -78,7 +77,7 @@ impl Toolchain {
         let mut cmd = Command::new(self.caramelc);
         let cmd = cmd.args(&["compile"]).args(caramel_srcs.as_slice());
 
-        debug!("Calling {:#?}", &cmd);
+        debug!("Calling {:?}", &cmd);
         let output = cmd.output()?;
         if output.status.success() {
             Ok(())

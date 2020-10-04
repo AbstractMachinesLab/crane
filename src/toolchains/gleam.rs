@@ -3,8 +3,7 @@ use super::IntoToolchainBuilder;
 use super::ToolchainBuilder;
 use anyhow::{anyhow, Context};
 use log::debug;
-use std::collections::HashSet;
-use std::io::{BufRead, BufReader, Write};
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -67,12 +66,15 @@ impl Toolchain {
         "gleam".to_string()
     }
 
-    pub fn compile(self, gleam_srcs: &[PathBuf]) -> Result<(), anyhow::Error> {
-        /*
-         * Compile Gleam to Erlang
-         */
-        let gleam_srcs: Vec<&str> = gleam_srcs.iter().map(|src| src.to_str().unwrap()).collect();
-
+    /// Compile Gleam to Erlang.
+    ///
+    /// Due to sandboxing, we'll be taken to the right directory, but we don't actually need to
+    /// pass in any files to `gleam build .` as it is right now.
+    ///
+    /// This would change if the work outlined in
+    /// [crane/issues/2](https://github.com/AbstractMachinesLab/crane/issues/2) ends up in the
+    /// upstream Gleam compiler.
+    pub fn compile(self, _gleam_srcs: &[PathBuf]) -> Result<(), anyhow::Error> {
         let mut cmd = Command::new(self.gleam_bin);
         let cmd = cmd.args(&["build", "."]);
 
