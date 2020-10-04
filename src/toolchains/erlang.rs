@@ -75,7 +75,14 @@ impl Toolchain {
         debug!("Starting shell with dependencies: {:?}", &code_paths);
         let mut code_paths: Vec<String> = code_paths
             .iter()
-            .map(|p| String::from(p.to_str().unwrap()))
+            .map(|p| {
+                let p = p.to_str().unwrap();
+                if p.is_empty() {
+                    ".".to_string()
+                } else {
+                    String::from(p)
+                }
+            })
             .collect();
         let mut args = vec![String::from("-pa")];
         args.append(&mut code_paths);
