@@ -1,71 +1,60 @@
-use crate::build::{BuildContext, BuildRule};
+use super::{BuildNode, BuildRule};
 use crate::label::Label;
 use crate::toolchains::ToolchainName;
-use crate::workspace::Workspace;
 use anyhow::Context;
 use log::debug;
 use petgraph::dot;
 use petgraph::graph::{Graph, NodeIndex};
-use petgraph::visit::Topo;
 use petgraph::Direction;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+/// The BuildPlan contains the graph of all the nodes that have been scoped for
+/// building, and the list of toolchains that are required by these nodes.
+///
+/// It is used to perform a dependency-first traversal (aka, Topological) that
+/// will ensure that every node is executed _after_ its dependencies have been
+/// successfully executed.
+///
+/// Initially, the BuildPlan will populate its internal build graph with all
+/// of the BuildRules given to it. However, it is most often the case that we
+/// want to build a subset of the entirety of a project, so scoping the path to
+/// our target node throughout this build graph is incredibly useful.
+///
+/// To do this, we can call `build_plan.scoped(label)` where Label is our target
+/// node's label.
+///
+/// This will trim down the build graph to the smallest graph that would satisfy
+/// our target's dependencies transitively.
+///
+/// In other words, this struct takes care of figuring out what the smallest
+/// amount of work that needs to be done is.
+///
 #[derive(Debug, Clone)]
 pub struct BuildPlan {
-    workspace: Workspace,
-    build_graph: Graph<BuildRule, Label>,
+    /// The build graph from all of the BuildNodes, linked by their Labels
+    pub build_graph: Graph<BuildNode, Label>,
+
+    /// A lookup map used to find a node in the graph by its label alone
     nodes: HashMap<Label, NodeIndex>,
+
+    /// A set of toolchains collected while scoping down the build plan.
     toolchains: HashSet<ToolchainName>,
 }
 
 impl BuildPlan {
-    pub fn for_workspace(workspace: Workspace) -> BuildPlan {
-        BuildPlan {
-            workspace,
-            build_graph: Graph::new(),
-            nodes: HashMap::new(),
-            toolchains: HashSet::new(),
-        }
-    }
-
-    pub fn plan(self) -> Result<BuildPlan, anyhow::Error> {
-        let rules: Vec<BuildRule> = self
-            .workspace
-            .cranefiles()
-            .iter()
-            .cloned()
-            .flat_map(|cranefile| cranefile.rules())
-            .collect();
-
-        let (toolchains, build_graph, nodes) = BuildPlan::populate_build_graph(rules);
-
-        Ok(BuildPlan {
-            build_graph,
-            toolchains,
-            nodes,
-            ..self
-        })
-    }
-
-    fn populate_build_graph(
-        rules: Vec<BuildRule>,
-    ) -> (
-        HashSet<ToolchainName>,
-        Graph<BuildRule, Label>,
-        HashMap<Label, NodeIndex>,
-    ) {
+    pub fn from_rules(rules: Vec<BuildRule>) -> Result<BuildPlan, anyhow::Error> {
         let mut toolchains: HashSet<ToolchainName> = HashSet::new();
-        let mut build_graph = Graph::new();
+        let mut build_graph: Graph<BuildNode, Label> = Graph::new();
         let mut nodes: HashMap<Label, NodeIndex> = HashMap::new();
 
-        debug!("Building temporary table of labels to node indices...");
+        debug!("Building table of labels to node indices...");
         for rule in rules {
             let label = rule.name().clone();
             if let Some(toolchain) = rule.toolchain() {
                 toolchains.insert(toolchain);
             }
-            let node = build_graph.add_node(rule);
+            let node = build_graph.add_node(BuildNode::from_rule(rule));
             debug!("{:?} -> {:?}", &label, &node);
             nodes.insert(label, node);
         }
@@ -73,20 +62,20 @@ impl BuildPlan {
 
         let mut edges = vec![];
         debug!("Building dependency adjacency matrix...");
-        for node in nodes.values() {
-            let rule = build_graph.node_weight(*node).unwrap();
-            debug!("{:?} depends on:", &rule.name());
-            for label in rule.dependencies().iter().cloned() {
+        for node_idx in nodes.values() {
+            let node = build_graph.node_weight(*node_idx).unwrap();
+            debug!("{:?} depends on:", node.name());
+            for label in node.deps().iter().cloned() {
                 let dep = nodes.get(&label);
                 debug!("\t-> {:?} ({:?})", &label, &dep);
                 if let Some(dep) = dep {
-                    let edge = (*node, *dep);
+                    let edge = (*node_idx, *dep);
                     edges.push(edge);
                 } else {
                     panic!(
                         "Could not resolve dependency {:?} for target {:?}",
                         &label.to_string(),
-                        rule.name()
+                        node.name()
                     );
                 }
             }
@@ -98,7 +87,12 @@ impl BuildPlan {
             &nodes.len(),
             &edges.len()
         );
-        (toolchains, build_graph, nodes)
+
+        Ok(BuildPlan {
+            build_graph,
+            toolchains,
+            nodes,
+        })
     }
 
     pub fn scoped(self, target: Label) -> Result<BuildPlan, anyhow::Error> {
@@ -131,81 +125,23 @@ impl BuildPlan {
         )
     }
 
-    pub fn find_node(&self, label: &Label) -> Option<BuildRule> {
-        let node_index = *self.nodes.get(label)?;
-        let node: BuildRule = self.build_graph[node_index].clone();
-        Some(node)
-    }
-
-    pub fn run(&mut self) -> Result<u32, anyhow::Error> {
-        let mut ctx = BuildContext::new(self.workspace.clone(), self.clone());
-        self.build_graph.reverse();
-        let mut walker = Topo::new(&self.build_graph);
-        let mut artifacts = 0;
-        while let Some(node) = walker.next(&self.build_graph) {
-            let node = &mut self.build_graph[node];
-            node.run(&mut ctx)?;
-            artifacts += 1;
-        }
-        Ok(artifacts)
-    }
-
-    pub fn build(&mut self) -> Result<u32, anyhow::Error> {
-        let mut ctx = BuildContext::new(self.workspace.clone(), self.clone());
-        self.build_graph.reverse();
-        let mut walker = Topo::new(&self.build_graph);
-        let mut artifacts = 0;
-        while let Some(node) = walker.next(&self.build_graph) {
-            let mut node = &mut self.build_graph[node];
-            let name = &node.name();
-            debug!("About to build {:?}...", &node.name());
-            if ctx.is_cached(&node)? {
-                debug!("Skipping {}. Nothing to do.", &name.to_string());
-            } else {
-                ctx.run_in_sandbox(&mut node)?;
-                artifacts += 1;
-            }
-        }
-        Ok(artifacts)
-    }
-
     pub fn toolchains_in_use(&self) -> Vec<ToolchainName> {
         self.toolchains.clone().into_iter().collect()
     }
 
-    pub fn ready_toolchains(&mut self) -> Result<(), anyhow::Error> {
-        let home = home::home_dir().context("Could not get your home directory, is HOME set?")?;
-        let dotcrane = home.join(".crane");
-        let toolchains_dir = dotcrane.join("toolchains");
-        std::fs::create_dir_all(&toolchains_dir).context(format!(
-            "Failed to create toolchains folder at {:?}",
-            &toolchains_dir
-        ))?;
+    pub fn find_nodes(&self, labels: &[Label]) -> Vec<BuildNode> {
+        labels.iter().flat_map(|l| self.find_node(l)).collect()
+    }
 
-        let rooted_toolchains = self.workspace.toolchains().set_root(toolchains_dir);
-        self.workspace = self.workspace.with_toolchains(rooted_toolchains);
-        let toolchains = self.workspace.toolchains();
-
-        // NOTE(@ostera): this will not be the primary toolchain if Lumen support
-        // is added!
-        toolchains.ready_toolchain(ToolchainName::Erlang)?;
-
-        let ts: Vec<ToolchainName> = self
-            .toolchains
-            .iter()
-            .filter(|n| ToolchainName::Erlang.ne(n))
-            .cloned()
-            .collect();
-        for t in ts {
-            toolchains.ready_toolchain(t)?
-        }
-
-        Ok(())
+    pub fn find_node(&self, label: &Label) -> Option<BuildNode> {
+        let node_index = *self.nodes.get(label)?;
+        Some(self.build_graph[node_index].clone())
     }
 }
 
-fn subgraph(graph: Graph<BuildRule, Label>, node: NodeIndex) -> HashMap<NodeIndex, ()> {
+fn subgraph(graph: Graph<BuildNode, Label>, node: NodeIndex) -> HashMap<NodeIndex, ()> {
     let mut nodes = HashMap::new();
+    nodes.insert(node, ());
     nodes.insert(node, ());
 
     let mut walker = graph.neighbors_directed(node, Direction::Outgoing).detach();
