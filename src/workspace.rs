@@ -1,6 +1,7 @@
+use crate::build::BuildRule;
 use crate::cranefile::{Cranefile, CRANEFILE};
 use crate::label::Label;
-use crate::toolchains::Toolchain;
+use crate::toolchains::Toolchains;
 use anyhow::Context;
 use log::debug;
 use std::convert::TryFrom;
@@ -12,7 +13,7 @@ pub const WORKSPACE: &str = "workspace";
 #[derive(Debug, Clone, Default)]
 pub struct Workspace {
     name: String,
-    toolchains: Toolchain,
+    toolchains: Toolchains,
     dependencies: Vec<Label>,
     root: PathBuf,
 }
@@ -32,11 +33,11 @@ impl Workspace {
         &self.name
     }
 
-    pub fn toolchains(&self) -> Toolchain {
+    pub fn toolchains(&self) -> Toolchains {
         self.toolchains.clone()
     }
 
-    pub fn with_toolchains(&self, toolchains: Toolchain) -> Workspace {
+    pub fn with_toolchains(&self, toolchains: Toolchains) -> Workspace {
         Workspace {
             toolchains,
             ..self.clone()
@@ -51,8 +52,31 @@ impl Workspace {
         &self.root
     }
 
+    pub fn crane_root(&self) -> PathBuf {
+        self.root.join(".crane")
+    }
+
+    pub fn workspace_root(&self) -> PathBuf {
+        self.crane_root().join("workspace")
+    }
+
+    pub fn cache_root(&self) -> PathBuf {
+        self.crane_root().join("cache")
+    }
+
+    pub fn sandbox_root(&self) -> PathBuf {
+        self.crane_root().join("sandbox")
+    }
+
     pub fn cranefiles(&self) -> Vec<Cranefile> {
         Workspace::find_files(&self.root)
+    }
+
+    pub fn rules(&self) -> Vec<BuildRule> {
+        self.cranefiles()
+            .iter()
+            .flat_map(|cranefile| cranefile.rules())
+            .collect()
     }
 
     pub fn from_toml_file(path: PathBuf) -> Result<Workspace, anyhow::Error> {
@@ -131,9 +155,9 @@ impl TryFrom<toml::Value> for Workspace {
             .to_string();
 
         let toolchains = if let Some(toolchains) = toml.get("toolchains") {
-            Toolchain::try_from(toolchains.clone())
+            Toolchains::try_from(toolchains.clone())
         } else {
-            Ok(Toolchain::default())
+            Ok(Toolchains::default())
         }?;
 
         debug!("Found Toolchains: {:?}", toolchains);
@@ -152,7 +176,7 @@ mod tests {
     use crate::toolchains;
 
     #[test]
-    fn demans_workspace_name() {
+    fn demands_workspace_name() {
         let toml: toml::Value = r#"
 [workspace]
 [toolchains]
