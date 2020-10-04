@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use std::path::PathBuf;
 
 static WILDCARD: &str = "//...";
@@ -41,6 +40,14 @@ impl Default for Label {
 }
 
 impl Label {
+    pub fn is_label_like(str: String) -> bool {
+        let is_wildcard = name.starts_with("//") && name.ends_with("...");
+        let is_abs_name = name.starts_with("//") && name.contains(':');
+        let is_relative = name.starts_with(':');
+
+        is_wildcard || is_abs_name || is_relative
+    }
+
     pub fn new(name: String) -> Label {
         let name = name.replace("\"", "");
 
