@@ -1,15 +1,14 @@
-use super::build_artifact::Artifact;
-use super::build_context::BuildContext;
+use super::{Artifact, BuildPlan};
 use crate::label::Label;
 use crate::rules::*;
-use crate::toolchains::ToolchainName;
+use crate::toolchains::{ToolchainName, Toolchains};
 use anyhow::anyhow;
-use crypto::digest::Digest;
-use crypto::sha1::Sha1;
 use std::path::PathBuf;
 
-// NOTE(@ostera): this could've been a trait but the petgraph library insisted in
-// having Sized implemente for the graph nodes.
+/// A BuildRule defines what actions to be taken to compute a BuildNode.
+///
+/// NOTE(@ostera): this could've been a trait but the petgraph library insisted in
+/// having Sized implemente for the graph nodes.
 #[derive(Debug, Clone)]
 pub enum BuildRule {
     Noop,
@@ -40,18 +39,6 @@ impl BuildRule {
         }
     }
 
-    pub fn hash(&self, ctx: &mut BuildContext) -> String {
-        match self {
-            BuildRule::CaramelLibrary(lib) => lib.hash(ctx),
-            BuildRule::ClojureLibrary(lib) => lib.hash(ctx),
-            BuildRule::ElixirLibrary(lib) => lib.hash(ctx),
-            BuildRule::ErlangLibrary(lib) => lib.hash(ctx),
-            BuildRule::ErlangShell(shell) => shell.hash(ctx),
-            BuildRule::GleamLibrary(lib) => lib.hash(ctx),
-            BuildRule::Noop => "no-hash".to_string(),
-        }
-    }
-
     pub fn toolchain(&self) -> Option<ToolchainName> {
         match self {
             BuildRule::ClojureLibrary(_) => Some(ToolchainName::Clojure),
@@ -76,50 +63,54 @@ impl BuildRule {
         }
     }
 
-    pub fn run(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
+    pub fn run(&mut self, plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {
         match self {
-            BuildRule::ClojureLibrary(lib) => lib.run(ctx),
-            BuildRule::ElixirLibrary(lib) => lib.run(ctx),
-            BuildRule::ErlangLibrary(lib) => lib.run(ctx),
-            BuildRule::ErlangShell(shell) => shell.run(ctx),
-            BuildRule::GleamLibrary(lib) => lib.run(ctx),
-            BuildRule::CaramelLibrary(lib) => lib.run(ctx),
+            BuildRule::ClojureLibrary(lib) => lib.run(plan, toolchains),
+            BuildRule::ElixirLibrary(lib) => lib.run(plan, toolchains),
+            BuildRule::ErlangLibrary(lib) => lib.run(plan, toolchains),
+            BuildRule::ErlangShell(shell) => shell.run(plan, toolchains),
+            BuildRule::GleamLibrary(lib) => lib.run(plan, toolchains),
+            BuildRule::CaramelLibrary(lib) => lib.run(plan, toolchains),
             BuildRule::Noop => Ok(()),
         }
     }
 
-    pub fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
+    pub fn build(
+        &mut self,
+        plan: &BuildPlan,
+        toolchains: &Toolchains,
+    ) -> Result<(), anyhow::Error> {
         match self {
-            BuildRule::ClojureLibrary(lib) => lib.build(ctx),
-            BuildRule::ElixirLibrary(lib) => lib.build(ctx),
-            BuildRule::ErlangLibrary(lib) => lib.build(ctx),
-            BuildRule::ErlangShell(shell) => shell.build(ctx),
-            BuildRule::GleamLibrary(lib) => lib.build(ctx),
-            BuildRule::CaramelLibrary(lib) => lib.build(ctx),
+            BuildRule::ClojureLibrary(lib) => lib.build(plan, toolchains),
+            BuildRule::ElixirLibrary(lib) => lib.build(plan, toolchains),
+            BuildRule::ErlangLibrary(lib) => lib.build(plan, toolchains),
+            BuildRule::ErlangShell(shell) => shell.build(plan, toolchains),
+            BuildRule::GleamLibrary(lib) => lib.build(plan, toolchains),
+            BuildRule::CaramelLibrary(lib) => lib.build(plan, toolchains),
             BuildRule::Noop => Ok(()),
         }
     }
 
-    pub fn inputs(&self, ctx: &BuildContext) -> Vec<PathBuf> {
+    pub fn inputs(&self) -> Vec<PathBuf> {
         match self {
-            BuildRule::ClojureLibrary(lib) => lib.inputs(ctx),
-            BuildRule::ElixirLibrary(lib) => lib.inputs(ctx),
-            BuildRule::ErlangLibrary(lib) => lib.inputs(ctx),
-            BuildRule::ErlangShell(shell) => shell.inputs(ctx),
-            BuildRule::GleamLibrary(lib) => lib.inputs(ctx),
-            BuildRule::CaramelLibrary(lib) => lib.inputs(ctx),
+            BuildRule::ClojureLibrary(lib) => lib.inputs(),
+            BuildRule::ElixirLibrary(lib) => lib.inputs(),
+            BuildRule::ErlangLibrary(lib) => lib.inputs(),
+            BuildRule::ErlangShell(shell) => shell.inputs(),
+            BuildRule::GleamLibrary(lib) => lib.inputs(),
+            BuildRule::CaramelLibrary(lib) => lib.inputs(),
             BuildRule::Noop => vec![],
         }
     }
 
-    pub fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
+    pub fn outputs(&self) -> Vec<Artifact> {
         match self {
-            BuildRule::ClojureLibrary(lib) => lib.outputs(ctx),
-            BuildRule::ElixirLibrary(lib) => lib.outputs(ctx),
-            BuildRule::ErlangLibrary(lib) => lib.outputs(ctx),
-            BuildRule::ErlangShell(shell) => shell.outputs(ctx),
-            BuildRule::GleamLibrary(lib) => lib.outputs(ctx),
-            BuildRule::CaramelLibrary(lib) => lib.outputs(ctx),
+            BuildRule::ClojureLibrary(lib) => lib.outputs(),
+            BuildRule::ElixirLibrary(lib) => lib.outputs(),
+            BuildRule::ErlangLibrary(lib) => lib.outputs(),
+            BuildRule::ErlangShell(shell) => shell.outputs(),
+            BuildRule::GleamLibrary(lib) => lib.outputs(),
+            BuildRule::CaramelLibrary(lib) => lib.outputs(),
             BuildRule::Noop => vec![],
         }
     }
@@ -136,36 +127,8 @@ pub trait Rule {
 
     fn name(&self) -> Label;
 
-    /// The hash of a rule identifies a rule's entire configuration:
-    /// * listed inputs, and their contents
-    /// * listed outputs
-    /// * rule name
-    ///
-    /// FIXME: add a pluggable way to add relevant information to this hash to
-    /// use build options in it
-    ///
-    /// TODO: remove dependency on BuildContext, and force all rules to hash
-    /// themselves based on their label paths instead
-    fn hash(&self, ctx: &BuildContext) -> String {
-        let name = self.name();
-        let mut hasher = Sha1::new();
-        hasher.input_str(&name.to_string());
-        for o in self.outputs(ctx) {
-            hasher.input_str(&o.compute_hash(name.path()));
-        }
-        hasher.result_str()
-    }
-
     fn dependencies(&self) -> Vec<Label> {
         vec![]
-    }
-
-    fn run(&mut self, _ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        Err(anyhow!("This rule does not implement Rule::run/2."))
-    }
-
-    fn build(&mut self, _ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        Err(anyhow!("This rule does not implement Rule::build/2."))
     }
 
     /// The inputs of a build rule are the collection of files used as compilation input.  If a
@@ -180,7 +143,7 @@ pub trait Rule {
     ///
     /// So to be a good citizen of Crane, keep your inputs declared, and relative to the build rule
     /// location.
-    fn inputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
+    fn inputs(&self) -> Vec<PathBuf> {
         vec![]
     }
 
@@ -195,7 +158,15 @@ pub trait Rule {
     /// to be compiled individually (e.g, it supports circular dependencies between them), then it
     /// is acceptable to return a single Artifact where both inputs are mapped to the corresponding
     /// outputs.
-    fn outputs(&self, _ctx: &BuildContext) -> Vec<Artifact> {
+    fn outputs(&self) -> Vec<Artifact> {
         vec![]
+    }
+
+    fn run(&mut self, _plan: &BuildPlan, _toolchain: &Toolchains) -> Result<(), anyhow::Error> {
+        Err(anyhow!("This rule does not implement Rule::run/2."))
+    }
+
+    fn build(&mut self, _plan: &BuildPlan, _toolchain: &Toolchains) -> Result<(), anyhow::Error> {
+        Err(anyhow!("This rule does not implement Rule::build/2."))
     }
 }
