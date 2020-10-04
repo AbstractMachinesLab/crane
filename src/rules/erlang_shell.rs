@@ -1,5 +1,6 @@
-use crate::build::{BuildContext, BuildRule, Rule};
+use crate::build::{BuildPlan, BuildRule, Rule};
 use crate::label::Label;
+use crate::toolchains::Toolchains;
 use anyhow::{anyhow, Context};
 use std::collections::HashSet;
 use std::convert::TryFrom;
@@ -46,21 +47,19 @@ impl Rule for ErlangShell {
         self.dependencies.clone()
     }
 
-    fn run(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        let code_paths: HashSet<PathBuf> = ctx
-            .transitive_dependencies(&self.clone().as_rule())
+    fn run(&mut self, plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {
+        let code_paths: HashSet<PathBuf> = plan
+            .find_nodes(&self.dependencies())
             .iter()
-            .flat_map(|dep| dep.outputs(&ctx))
-            .flat_map(|artifact| artifact.outputs)
+            .flat_map(|node| node.outs())
+            .flat_map(|artifact| artifact.outputs.clone())
             .map(|path| path.parent().unwrap().to_path_buf())
             .collect();
 
-        ctx.toolchain()
-            .erlang()
-            .shell(code_paths.into_iter().collect())
+        toolchains.erlang().shell(code_paths.into_iter().collect())
     }
 
-    fn build(&mut self, _ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
+    fn build(&mut self, _plan: &BuildPlan, _toolchains: &Toolchains) -> Result<(), anyhow::Error> {
         Ok(())
     }
 }

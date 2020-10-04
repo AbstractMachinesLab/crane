@@ -1,8 +1,8 @@
-use crate::build::{Artifact, BuildContext, BuildRule, Rule};
+use crate::build::{Artifact, BuildPlan, BuildRule, Rule};
 use crate::label::Label;
+use crate::toolchains::Toolchains;
 use anyhow::{anyhow, Context};
 use glob::glob;
-use std::collections::HashSet;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use toml::Value;
@@ -63,13 +63,13 @@ impl Rule for ClojureLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
+    fn inputs(&self) -> Vec<PathBuf> {
         self.sources.clone()
     }
 
-    fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
+    fn outputs(&self) -> Vec<Artifact> {
         vec![Artifact {
-            inputs: self.inputs(&ctx),
+            inputs: self.inputs(),
             outputs: self
                 .sources
                 .iter()
@@ -78,23 +78,9 @@ impl Rule for ClojureLibrary {
         }]
     }
 
-    fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        let transitive_beam_files: HashSet<PathBuf> = ctx
-            .transitive_dependencies(&self.clone().as_rule())
-            .iter()
-            .flat_map(|dep| dep.outputs(&ctx))
-            .flat_map(|artifact| artifact.outputs)
-            .collect();
-
-        let beam_files: Vec<PathBuf> = vec![]
-            .iter()
-            .chain(transitive_beam_files.iter())
-            .cloned()
-            .collect();
-
-        ctx.toolchain()
-            .clojerl()
-            .compile(&self.sources, &beam_files)
+    fn build(&mut self, _plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {
+        let beam_files: Vec<PathBuf> = vec![];
+        toolchains.clojerl().compile(&self.sources, &beam_files)
     }
 }
 

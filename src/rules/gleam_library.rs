@@ -1,8 +1,8 @@
-use crate::build::{Artifact, BuildContext, BuildRule, Rule};
+use crate::build::{Artifact, BuildPlan, BuildRule, Rule};
 use crate::label::Label;
+use crate::toolchains::Toolchains;
 use anyhow::{anyhow, Context};
 use glob::glob;
-use std::collections::HashSet;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use toml::Value;
@@ -66,15 +66,15 @@ impl Rule for GleamLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
+    fn inputs(&self) -> Vec<PathBuf> {
         let mut inputs = self.sources.clone();
         inputs.push(self.config.clone());
         inputs
     }
 
-    fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
+    fn outputs(&self) -> Vec<Artifact> {
         vec![Artifact {
-            inputs: self.inputs(&ctx),
+            inputs: self.inputs(),
             outputs: self
                 .sources
                 .iter()
@@ -83,8 +83,8 @@ impl Rule for GleamLibrary {
         }]
     }
 
-    fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        ctx.toolchain().gleam().compile(&self.sources)
+    fn build(&mut self, _plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {
+        toolchains.gleam().compile(&self.sources)
     }
 }
 

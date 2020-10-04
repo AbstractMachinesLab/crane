@@ -1,5 +1,6 @@
-use crate::build::{Artifact, BuildContext, BuildRule, Rule};
+use crate::build::{Artifact, BuildPlan, BuildRule, Rule};
 use crate::label::Label;
+use crate::toolchains::Toolchains;
 use anyhow::{anyhow, Context};
 use glob::glob;
 use std::collections::HashSet;
@@ -76,7 +77,7 @@ impl Rule for ErlangLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
+    fn inputs(&self) -> Vec<PathBuf> {
         vec![self.headers.clone(), self.sources.clone()]
             .iter()
             .flatten()
@@ -84,9 +85,9 @@ impl Rule for ErlangLibrary {
             .collect()
     }
 
-    fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
+    fn outputs(&self) -> Vec<Artifact> {
         vec![Artifact {
-            inputs: self.inputs(&ctx),
+            inputs: self.inputs(),
             outputs: self
                 .sources
                 .iter()
@@ -96,41 +97,69 @@ impl Rule for ErlangLibrary {
         }]
     }
 
-    fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        let transitive_deps = ctx.transitive_dependencies(&self.clone().as_rule());
-
-        let transitive_headers: HashSet<PathBuf> = transitive_deps
+    fn build(&mut self, plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {
+        // Collect all the transitive dependencies' outputs
+        let transitive_deps: Vec<PathBuf> = plan
+            .find_nodes(&self.dependencies())
             .iter()
-            .flat_map(|dep| dep.outputs(&ctx))
-            .flat_map(|artifact| artifact.inputs)
+            .flat_map(|node| node.outs())
+            .flat_map(|artifact| artifact.outputs.clone())
+            .collect();
+
+        // Collect all the headers
+        let transitive_headers: HashSet<&PathBuf> = transitive_deps
+            .iter()
+            .filter(|out| {
+                out.extension()
+                    .and_then(std::ffi::OsStr::to_str)
+                    .map(|str| str.eq_ignore_ascii_case("hrl"))
+                    .unwrap_or(false)
+            })
             .collect();
 
         let headers: Vec<PathBuf> = self
             .headers
             .iter()
-            .cloned()
             .chain(transitive_headers)
+            .cloned()
             .collect();
 
-        if !self.sources.is_empty() {
-            let transitive_beam_files: HashSet<PathBuf> = transitive_deps
-                .iter()
-                .flat_map(|dep| dep.outputs(&ctx))
-                .flat_map(|artifact| artifact.outputs)
-                .collect();
+        // Collect all the sources
+        let transitive_sources: HashSet<&PathBuf> = transitive_deps
+            .iter()
+            .filter(|out| {
+                out.extension()
+                    .and_then(std::ffi::OsStr::to_str)
+                    .map(|str| str.eq_ignore_ascii_case("erl"))
+                    .unwrap_or(false)
+            })
+            .collect();
 
-            let beam_files: Vec<PathBuf> = vec![]
-                .iter()
-                .chain(transitive_beam_files.iter())
-                .cloned()
-                .collect();
+        let sources: Vec<PathBuf> = self
+            .sources
+            .iter()
+            .chain(transitive_sources)
+            .cloned()
+            .collect();
 
-            ctx.toolchain()
-                .erlang()
-                .compile(&self.sources, &headers, &beam_files)
-        } else {
-            Ok(())
-        }
+        // Collect all the bea files
+        let transitive_beam_files: HashSet<&PathBuf> = transitive_deps
+            .iter()
+            .filter(|out| {
+                out.extension()
+                    .and_then(std::ffi::OsStr::to_str)
+                    .map(|str| str.eq_ignore_ascii_case("beam"))
+                    .unwrap_or(false)
+            })
+            .collect();
+
+        let beam_files: Vec<PathBuf> = vec![]
+            .iter()
+            .chain(transitive_beam_files)
+            .cloned()
+            .collect();
+
+        toolchains.erlang().compile(&sources, &headers, &beam_files)
     }
 }
 
@@ -169,17 +198,21 @@ impl TryFrom<(toml::Value, &PathBuf)> for ErlangLibrary {
             _ => vec![],
         };
 
-        let sources = match &lib.get("sources").unwrap_or(&Value::Array(vec![
-            Value::String("*.erl".to_string()),
-            Value::String("src/*.erl".to_string()),
-        ])) {
+        let sources = match &lib.get("sources").unwrap_or(&Value::Array(vec![])) {
             Value::Array(sources) => sources
                 .iter()
                 .flat_map(|f| match f {
-                    Value::String(name) => glob(path.join(name).to_str().unwrap())
+                    Value::String(name) =>  {
+                        if (Label::is_label_like(name)) {
+                            let label: Label = x.to_string().into();
+                            vec![ label.canonicalize(&path) ]
+                        } else {
+                        glob(path.join(name).to_str().unwrap())
                         .expect("Could not read glob")
                         .filter_map(Result::ok)
                         .collect(),
+                        }
+                },
                     _ => vec![],
                 })
                 .map(|file| {

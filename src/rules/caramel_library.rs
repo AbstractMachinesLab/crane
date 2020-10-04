@@ -1,8 +1,8 @@
-use crate::build::{Artifact, BuildContext, BuildRule, Rule};
+use crate::build::{Artifact, BuildPlan, BuildRule, Rule};
 use crate::label::Label;
+use crate::toolchains::Toolchains;
 use anyhow::{anyhow, Context};
 use glob::glob;
-use log::debug;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use toml::Value;
@@ -64,14 +64,14 @@ impl Rule for CaramelLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
+    fn inputs(&self) -> Vec<PathBuf> {
         self.sources.clone()
     }
 
     // FIXME(@ostera): map inputs to artifacts instead
-    fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
+    fn outputs(&self) -> Vec<Artifact> {
         vec![Artifact {
-            inputs: self.inputs(&ctx),
+            inputs: self.inputs(),
             outputs: self
                 .sources
                 .iter()
@@ -86,8 +86,8 @@ impl Rule for CaramelLibrary {
         }]
     }
 
-    fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        ctx.toolchain().caramel().compile(&self.inputs(ctx))
+    fn build(&mut self, _plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {
+        toolchains.caramel().compile(&self.inputs())
     }
 }
 

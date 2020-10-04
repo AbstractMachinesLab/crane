@@ -1,8 +1,8 @@
-use crate::build::{Artifact, BuildContext, BuildRule, Rule};
+use crate::build::{Artifact, BuildPlan, BuildRule, Rule};
 use crate::label::Label;
+use crate::toolchains::Toolchains;
 use anyhow::{anyhow, Context};
 use glob::glob;
-use std::collections::HashSet;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use toml::Value;
@@ -63,7 +63,7 @@ impl Rule for ElixirLibrary {
         self.dependencies.clone()
     }
 
-    fn inputs(&self, _ctx: &BuildContext) -> Vec<PathBuf> {
+    fn inputs(&self) -> Vec<PathBuf> {
         vec![self.sources.clone()]
             .iter()
             .flatten()
@@ -71,9 +71,9 @@ impl Rule for ElixirLibrary {
             .collect()
     }
 
-    fn outputs(&self, ctx: &BuildContext) -> Vec<Artifact> {
+    fn outputs(&self) -> Vec<Artifact> {
         vec![Artifact {
-            inputs: self.inputs(&ctx),
+            inputs: self.inputs(),
             outputs: self
                 .sources
                 .iter()
@@ -88,35 +88,12 @@ impl Rule for ElixirLibrary {
         }]
     }
 
-    fn build(&mut self, ctx: &mut BuildContext) -> Result<(), anyhow::Error> {
-        let transitive_deps = ctx.transitive_dependencies(&self.clone().as_rule());
-
-        let transitive_headers: HashSet<PathBuf> = transitive_deps
-            .iter()
-            .flat_map(|dep| dep.outputs(&ctx))
-            .flat_map(|artifact| artifact.inputs)
-            .collect();
-        let transitive_headers: Vec<PathBuf> = transitive_headers.iter().cloned().collect();
-
-        if !self.sources.is_empty() {
-            let transitive_beam_files: HashSet<PathBuf> = transitive_deps
-                .iter()
-                .flat_map(|dep| dep.outputs(&ctx))
-                .flat_map(|artifact| artifact.outputs)
-                .collect();
-
-            let beam_files: Vec<PathBuf> = vec![]
-                .iter()
-                .chain(transitive_beam_files.iter())
-                .cloned()
-                .collect();
-
-            ctx.toolchain()
-                .elixir()
-                .compile(&self.sources, &transitive_headers, &beam_files)
-        } else {
-            Ok(())
-        }
+    fn build(&mut self, _plan: &BuildPlan, toolchains: &Toolchains) -> Result<(), anyhow::Error> {
+        let beam_files: Vec<PathBuf> = vec![];
+        let headers: Vec<PathBuf> = vec![];
+        toolchains
+            .elixir()
+            .compile(&self.sources, &headers, &beam_files)
     }
 }
 
