@@ -47,6 +47,7 @@ pub struct Sandbox {
 pub enum ValidationStatus {
     Pending,
     Invalid {
+        expected_and_present: Vec<PathBuf>,
         expected_but_missing: Vec<PathBuf>,
         unexpected_but_present: Vec<PathBuf>,
     },
@@ -108,13 +109,23 @@ impl Sandbox {
     /// No undeclared outputs will be accepted, as they may collide with transitive
     /// dependency outputs that will be present in the sandbox.
     ///
-    fn validate_outputs(&mut self) -> Result<(), anyhow::Error> {
-        let inputs: HashSet<PathBuf> = self.node.rule().inputs().iter().cloned().collect();
+    fn validate_outputs(&mut self, build_plan: &BuildPlan) -> Result<(), anyhow::Error> {
+        let node_inputs: HashSet<PathBuf> = self.node.srcs().iter().cloned().collect();
+        let deps_inputs: HashSet<PathBuf> = build_plan
+            .find_nodes(&self.node.deps())
+            .iter()
+            .flat_map(|n| n.outs())
+            .flat_map(|a| a.outputs.clone())
+            .collect();
+
+        debug!("Sandboxed Node Inputs: {:?}", &node_inputs);
+        debug!("Sandboxed Deps Outputs: {:?}", &deps_inputs);
+
+        let inputs: HashSet<PathBuf> = node_inputs.union(&deps_inputs).cloned().collect();
 
         let expected_outputs: HashSet<PathBuf> = self
             .node
-            .rule()
-            .outputs()
+            .outs()
             .iter()
             .flat_map(|a| a.outputs.clone())
             .collect();
@@ -154,8 +165,14 @@ impl Sandbox {
                 .into_iter()
                 .cloned()
                 .collect();
+            let expected_and_present = actual_outputs
+                .intersection(&expected_outputs)
+                .into_iter()
+                .cloned()
+                .collect();
 
             self.status = ValidationStatus::Invalid {
+                expected_and_present,
                 unexpected_but_present,
                 expected_but_missing,
             }
@@ -235,7 +252,7 @@ impl Sandbox {
 
     fn copy_inputs(&mut self) -> Result<(), anyhow::Error> {
         // copy all inputs there
-        let inputs = &self.node.rule().inputs();
+        let inputs = &self.node.srcs();
         for src in inputs {
             // find in cache
             let dst = self.root.join(&src);
@@ -273,18 +290,25 @@ impl Sandbox {
         Ok(())
     }
 
+    pub fn clear_sandbox(&self) -> Result<(), anyhow::Error> {
+        std::fs::remove_dir_all(&self.root).context(format!(
+            "Could not clean sandbox for node {:?} at {:?}",
+            self.node.name().to_string(),
+            &self.root,
+        ))
+    }
+
     /// check that transitive output names and current rule output names
     /// do not collide.
     fn ensure_outputs_are_safe(&mut self, build_plan: &BuildPlan) -> Result<(), anyhow::Error> {
-        let rule = self.node.rule();
-
-        let output_set: HashSet<PathBuf> = rule
-            .outputs()
+        let output_set: HashSet<PathBuf> = self
+            .node
+            .outs()
             .iter()
             .flat_map(|os| os.outputs.clone())
             .collect();
 
-        let dep_labels = rule.dependencies();
+        let dep_labels = self.node.rule().dependencies();
         let dep_nodes = build_plan.find_nodes(&dep_labels);
         let dep_output_set: HashSet<PathBuf> = dep_nodes
             .iter()
@@ -331,12 +355,13 @@ impl Sandbox {
         self.enter_sandbox()?;
 
         debug!("Executing build rule...");
-        self.node.rule().build(&build_plan, &toolchains)?;
+        self.node.build(&build_plan, &toolchains)?;
         debug!("Build rule executed successfully.");
 
         self.exit_sandbox(working_directory)?;
 
-        self.validate_outputs();
+        self.validate_outputs(&build_plan)?;
+
         debug!(
             "Sandbox status updated to: {:?} {:?}",
             &self.status, &self.outputs
