@@ -80,6 +80,8 @@ impl BuildRunner {
 
             let name = node.name();
             debug!("About to build {:?}...", name.to_string());
+            debug!("with sources {:?}...", &node.srcs());
+            debug!("with dependencies {:?}...", &node.deps());
             if self.build_cache.is_cached(&node)? {
                 debug!("Skipping {}. Nothing to do.", name.to_string());
             } else {
@@ -89,16 +91,19 @@ impl BuildRunner {
                         let node = &mut self.build_plan.build_graph[idx];
                         *node = sandbox.node().clone();
                         self.build_cache.save(&sandbox)?;
+                        sandbox.clear_sandbox()?;
                         targets += 1;
                         Ok(())
                     },
                     ValidationStatus::NoOutputs => {
-                        Err(anyhow!("Node {} had no outputs...was the sandbox cleaned while the build was running?", &name.to_string()))
+                        sandbox.clear_sandbox()?;
+                        targets += 1;
+                        Ok(())
                     },
                     ValidationStatus::Pending => {
                         Err(anyhow!("Node {} is somehow still pending...", &name.to_string()))
                     },
-                    ValidationStatus::Invalid { expected_but_missing, unexpected_but_present, } => {
+                    ValidationStatus::Invalid { expected_but_missing, unexpected_but_present, ..} => {
                         Err(anyhow!("Node {} expected the following but missing outputs: {:?}\n\ninstead it found the following unexpected outputs: {:?}", &name.to_string(), expected_but_missing, unexpected_but_present))
                     },
                 }?
