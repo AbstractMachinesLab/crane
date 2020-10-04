@@ -1,5 +1,5 @@
 use anyhow::Context;
-use crane::build::BuildPlan;
+use crane::build::{BuildPlan, BuildRunner};
 use crane::label::Label;
 use crane::workspace::Workspace;
 use fern::colors::{Color, ColoredLevelConfig};
@@ -122,9 +122,7 @@ impl BuildOpt {
         debug!("Workspace: {}", &workspace.name());
 
         info!("Planning build...");
-        let mut build_plan = BuildPlan::for_workspace(workspace)
-            .plan()?
-            .scoped(target.clone())?;
+        let build_plan = BuildPlan::from_rules(workspace.rules())?.scoped(target.clone())?;
 
         if self.print_graph {
             info!("Printing build graph as GraphViz Dot...");
@@ -133,9 +131,12 @@ impl BuildOpt {
             info!("Printed {} in {}ms", target.to_string(), t1);
         } else {
             info!("Readying toolchains: {:?}", &build_plan.toolchains_in_use());
-            let _ = &build_plan.ready_toolchains()?;
+            let mut runner = BuildRunner::new(workspace, build_plan);
+            let _ = &mut runner.ready_toolchains()?;
+
             info!("Building target: {}", &target.to_string());
-            let artifacts = build_plan.build()?;
+            let artifacts = runner.build()?;
+
             let t1 = t0.elapsed().as_millis();
             info!("Built {} artifacts in {}ms", artifacts, t1);
         }
@@ -178,17 +179,17 @@ impl RunOpt {
         info!("Target: {}", &target.to_string());
 
         info!("Planning build...");
-        let mut build_plan = BuildPlan::for_workspace(workspace)
-            .plan()?
-            .scoped(target.clone())?;
+        let build_plan = BuildPlan::from_rules(workspace.rules())?.scoped(target.clone())?;
         info!("Readying toolchains: {:?}", &build_plan.toolchains_in_use());
-        let _ = &build_plan.ready_toolchains()?;
-        info!("Building target and dependencies: {}", &target.to_string());
-        let artifacts = build_plan.build()?;
+        let mut runner = BuildRunner::new(workspace, build_plan);
+        let _ = &mut runner.ready_toolchains()?;
+
+        info!("Building target: {}", &target.to_string());
+        let artifacts = runner.build()?;
         let t1 = t0.elapsed().as_millis();
         info!("Built {} artifacts in {}ms", artifacts, t1);
         info!("Running target:");
-        let _ = build_plan.run()?;
+        let _ = &mut runner.run()?;
 
         Ok(())
     }
