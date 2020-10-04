@@ -1,6 +1,10 @@
-use super::{BuildNode, BuildRunner};
+use super::{BuildCache, BuildNode, BuildPlan};
+use crate::toolchains::Toolchains;
 use crate::workspace::Workspace;
-use anyhow::{Context, Error};
+use anyhow::{anyhow, Context};
+use log::debug;
+use std::collections::HashSet;
+use std::path::PathBuf;
 
 /// A build Sandbox.
 ///
@@ -21,17 +25,14 @@ use anyhow::{Context, Error};
 ///   7. exit sandbox
 ///
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Sandbox {
-    /// The name of this sandbox
+    /// The name of this sandbox, not to be confused by the `node.name()`, which
+    /// is a Label.
     name: String,
 
     /// The node to be built.
     node: BuildNode,
-
-    /// The plan this node is a part of. It will be used to find the actual
-    /// dependencies of the node above.
-    build_plan: BuildPlan,
 
     /// The path to this sandbox on disk
     root: PathBuf,
@@ -54,18 +55,51 @@ pub enum ValidationStatus {
 }
 
 impl Sandbox {
-    pub fn for_node(workspace: Workspace, node: BuildNode, build_plan: BuildPlan) -> Sandbox {
+    pub fn for_node(workspace: Workspace, node: BuildNode) -> Sandbox {
+        let root = workspace.sandbox_root().join(node.hash());
         Sandbox {
-            build_plan,
             name: node.hash(),
             node,
             outputs: vec![],
-            root: workspace.sandbox_root().join(node.hash()),
+            root,
             status: ValidationStatus::Pending,
         }
     }
 
-    /// Return the validation status of this sandbox by comparing the expected
+    pub fn node(&self) -> &BuildNode {
+        &self.node
+    }
+
+    pub fn root(&self) -> PathBuf {
+        self.root.clone()
+    }
+
+    pub fn outputs(&self) -> Vec<PathBuf> {
+        self.outputs.clone()
+    }
+
+    fn scan_files(root: &PathBuf) -> Vec<PathBuf> {
+        if root.is_dir() {
+            std::fs::read_dir(root)
+                .unwrap_or_else(|err| {
+                    panic!("Could not read directory: {:?} due to {:?}", root, err)
+                })
+                .flat_map(|entry| {
+                    let entry = entry.unwrap_or_else(|_| panic!("Could not read entry"));
+                    let path = entry.path();
+                    if path.is_dir() {
+                        Sandbox::scan_files(&path)
+                    } else {
+                        vec![path]
+                    }
+                })
+                .collect()
+        } else {
+            vec![]
+        }
+    }
+
+    /// Update the validation status of this sandbox by comparing the expected
     /// and actual outputs of this build rule.
     ///
     /// It is at this point that we enforce that every rule in the system will
@@ -74,67 +108,102 @@ impl Sandbox {
     /// No undeclared outputs will be accepted, as they may collide with transitive
     /// dependency outputs that will be present in the sandbox.
     ///
-    fn validate_outputs(&mut self) {
-        let expected_outputs: HashSet<PathBuf> = self.node.rule().outputs().iter().collect();
-        let actual_outputs: HashSet<PathBuf> = self.outputs.iter().collect();
+    fn validate_outputs(&mut self) -> Result<(), anyhow::Error> {
+        let inputs: HashSet<PathBuf> = self.node.rule().inputs().iter().cloned().collect();
 
-        /// No outputs either expected or created, what did this rule do anyway?
-        if expected_outputs.is_empty() && actual_outputs.is_empty() {
+        let expected_outputs: HashSet<PathBuf> = self
+            .node
+            .rule()
+            .outputs()
+            .iter()
+            .flat_map(|a| a.outputs.clone())
+            .collect();
+
+        let all_outputs: HashSet<PathBuf> = Sandbox::scan_files(&self.root)
+            .iter()
+            .flat_map(|path| path.strip_prefix(&self.root))
+            .map(|path| path.to_path_buf())
+            .collect();
+
+        // No outputs either expected or created, what did this rule do anyway?
+        if expected_outputs.is_empty() || all_outputs.is_empty() {
             self.status = ValidationStatus::NoOutputs;
+            return Ok(());
         }
 
-        let diff = actual_outputs.difference(expected_outputs);
+        // All files found - Inputs
+        let actual_outputs: HashSet<PathBuf> = all_outputs
+            .iter()
+            .filter(|path| !inputs.contains(&path.to_path_buf()))
+            .cloned()
+            .collect();
 
-        /// No diff means we have the outputs we expected!
+        let diff: Vec<&PathBuf> = actual_outputs
+            .difference(&expected_outputs)
+            .into_iter()
+            .collect();
+
+        // No diff means we have the outputs we expected!
         if diff.is_empty() {
             self.status = ValidationStatus::Valid;
+            self.outputs = actual_outputs.iter().cloned().collect();
+        } else {
+            let unexpected_but_present = diff.into_iter().cloned().collect();
+            let expected_but_missing = expected_outputs
+                .difference(&actual_outputs)
+                .into_iter()
+                .cloned()
+                .collect();
+
+            self.status = ValidationStatus::Invalid {
+                unexpected_but_present,
+                expected_but_missing,
+            }
         }
-
-        self.status = ValidationStatus::Invalid {
-            unexpected_but_present: diff.iter().collect(),
-            expected_but_missing: expected_outputs.difference(actual_outputs).iter().collect(),
-        }
-    }
-
-    fn prepare_sandbox_dir(&mut self) -> Result<(), anyhow::Error> {
-        // remember where we are
-        let current_dir = std::env::current_dir().context(format!(
-            "Could not get the current directory while building sandbox for node {:?}",
-            name.to_string(),
-        ))?;
-
-        // create .crane/sandbox/<sha>
-        let sandbox_path = ctx.sandbox_path().join(hash);
-        let _ = fs::remove_dir_all(&sandbox_path);
-        fs::create_dir_all(&sandbox_path)
-            .context(format!(
-                "Could not create sandbox directory for node {:?} at: {:?}",
-                name.to_string(),
-                &sandbox_path
-            ))
-            .map(|_| ())?;
-
-        debug!("Created sandbox at: {:?}", &sandbox_path);
 
         Ok(())
     }
 
-    fn copy_dependences(&mut self) -> Result<(), anyhow::Error> {
+    fn prepare_sandbox_dir(&mut self) -> Result<PathBuf, anyhow::Error> {
+        let current_dir = std::env::current_dir().context(format!(
+            "Could not get the current directory while building sandbox for node {:?}",
+            self.node.name().to_string(),
+        ))?;
+
+        let _ = std::fs::remove_dir_all(&self.root);
+        std::fs::create_dir_all(&self.root)
+            .context(format!(
+                "Could not create sandbox directory for node {:?} at: {:?}",
+                self.node.name().to_string(),
+                &self.root
+            ))
+            .map(|_| ())?;
+
+        debug!("Created sandbox at: {:?}", &self.root);
+
+        Ok(current_dir)
+    }
+
+    fn copy_dependences(
+        &mut self,
+        build_cache: &BuildCache,
+        build_plan: &BuildPlan,
+    ) -> Result<(), anyhow::Error> {
         // copy all the direct dependency outputs
+        let dep_labels = self.node.deps();
+        let dep_nodes = build_plan.find_nodes(&dep_labels);
         let deps: Vec<(PathBuf, PathBuf)> = dep_nodes
             .iter()
             .flat_map(|dep| {
-                let dep_hash = &dep.hash(ctx);
+                let dep_hash = dep.hash();
                 let outs: Vec<(PathBuf, PathBuf)> = dep
-                    .outputs(&ctx)
+                    .outs()
                     .iter()
-                    .cloned()
-                    .flat_map(|artifact| artifact.outputs)
+                    .flat_map(|artifact| artifact.outputs.clone())
                     .map(|out| {
                         (
-                            std::fs::canonicalize(ctx.cache_path().join(&dep_hash).join(&out))
-                                .unwrap(),
-                            ctx.sandbox_path().join(&hash).join(&out),
+                            build_cache.absolute_path_by_hash(&dep_hash).join(&out),
+                            self.root.join(&out),
                         )
                     })
                     .collect();
@@ -144,7 +213,7 @@ impl Sandbox {
 
         for (src, dst) in deps {
             if let Some(dst_parent) = &dst.parent() {
-                fs::create_dir_all(dst_parent)
+                std::fs::create_dir_all(dst_parent)
                     .context(format!(
                         "Could not create directory for transitive dependency {:?} at: {:?}",
                         &dst, &dst_parent
@@ -152,9 +221,9 @@ impl Sandbox {
                     .map(|_| ())?;
             };
 
-            symlink(&src, &dst).context(format!(
+            std::os::unix::fs::symlink(&src, &dst).context(format!(
             "When building {:?}, could not link transitive dependency {:?} into sandbox at {:?}",
-            name.to_string(),
+            self.node.name().to_string(),
             &src,
             &dst
         ))?;
@@ -166,14 +235,14 @@ impl Sandbox {
 
     fn copy_inputs(&mut self) -> Result<(), anyhow::Error> {
         // copy all inputs there
-        let inputs = &node.rule().inputs(&ctx);
+        let inputs = &self.node.rule().inputs();
         for src in inputs {
             // find in cache
-            let dst = sandbox_path.join(&src);
-            let src = name.path().join(&src);
+            let dst = self.root.join(&src);
+            let src = self.node.name().path().join(&src);
             std::fs::copy(&src, &dst).context(format!(
                 "When building {:?}, could not copy input {:?} into sandbox at {:?}",
-                name.to_string(),
+                self.name.to_string(),
                 &src,
                 &dst
             ))?;
@@ -184,64 +253,102 @@ impl Sandbox {
 
     fn enter_sandbox(&mut self) -> Result<(), anyhow::Error> {
         // move into the sandbox
-        std::env::set_current_dir(&sandbox_path).context(format!(
+        std::env::set_current_dir(&self.root).context(format!(
             "Could not move into the created sandbox at: {:?} when building {:?}",
-            &sandbox_path,
-            name.to_string()
+            &self.root,
+            self.node.name().to_string()
         ))?;
-        debug!("Entered sandbox at: {:?}", &sandbox_path);
+        debug!("Entered sandbox at: {:?}", &self.root);
         Ok(())
     }
 
-    fn exit_sandbox(&mut self) -> Result<(), anyhow::Error> {
+    fn exit_sandbox(&mut self, working_directory: PathBuf) -> Result<(), anyhow::Error> {
         // move out of the sandbox
-        std::env::set_current_dir(&current_dir).context(format!(
+        std::env::set_current_dir(&working_directory).context(format!(
             "Could not move out of the created sandbox at: {:?} when building {:?}",
-            &sandbox_path,
-            name.to_string()
+            &self.root,
+            self.node.name().to_string()
         ))?;
-        debug!("Exited sandbox at: {:?}", &sandbox_path);
+        debug!("Exited sandbox at: {:?}", &self.root);
         Ok(())
     }
 
     /// check that transitive output names and current rule output names
     /// do not collide.
-    fn ensure_outputs_are_safe(&mut self) -> Result<(), anyhow::Error> {
-        let dep_labels = self.node.rule().dependencies();
-        let dep_nodes = self.build_plan.find_nodes(dep_labels);
-        let dep_output_set = dep_nodes.iter().map(|os| os.outputs).collect();
+    fn ensure_outputs_are_safe(&mut self, build_plan: &BuildPlan) -> Result<(), anyhow::Error> {
+        let rule = self.node.rule();
 
-        if !output_set.is_disjoint(dep_output_set) {
-            let overlapping_outputs = output_set.intersection(dep_output_set);
-            Error(anyhow!(
+        let output_set: HashSet<PathBuf> = rule
+            .outputs()
+            .iter()
+            .flat_map(|os| os.outputs.clone())
+            .collect();
+
+        let dep_labels = rule.dependencies();
+        let dep_nodes = build_plan.find_nodes(&dep_labels);
+        let dep_output_set: HashSet<PathBuf> = dep_nodes
+            .iter()
+            .flat_map(|os| os.outs())
+            .flat_map(|a| a.outputs.clone())
+            .collect();
+
+        if !output_set.is_disjoint(&dep_output_set) {
+            let overlapping_outputs = output_set.intersection(&dep_output_set);
+            Err(anyhow!(
                 "Oops, this rule would collide by creating outputs that would
           override dependency outputs: {:?}",
                 overlapping_outputs
             ))
-        }?;
-        Ok(())
+        } else {
+            Ok(())
+        }
+    }
+
+    fn update_build_node(&mut self) {
+        self.node = match self.status {
+            ValidationStatus::Valid => self.node.clone().mark_succeeded(),
+            _ => self.node.clone().mark_failed(),
+        }
     }
 
     /// Run a build rule within a sandboxed environment.
     ///
     /// NOTE(@ostera): wouldn't this be nice as a free monad?
-    pub fn run(&mut self, runner: &mut BuildRunner) -> Result<(), anyhow::Error> {
-        self.ensure_outputs_are_safe()?;
+    pub fn run(
+        &mut self,
+        build_plan: &BuildPlan,
+        build_cache: &BuildCache,
+        toolchains: &Toolchains,
+    ) -> Result<ValidationStatus, anyhow::Error> {
+        self.ensure_outputs_are_safe(&build_plan)?;
 
-        self.prepare_sandbox_dir()?;
+        let working_directory = self.prepare_sandbox_dir()?;
 
-        self.copy_dependences()?;
+        self.copy_dependences(&build_cache, &build_plan)?;
 
         self.copy_inputs()?;
 
         self.enter_sandbox()?;
 
-        self.node.rule().build(ctx)?;
+        debug!("Executing build rule...");
+        self.node.rule().build(&build_plan, &toolchains)?;
+        debug!("Build rule executed successfully.");
+
+        self.exit_sandbox(working_directory)?;
 
         self.validate_outputs();
+        debug!(
+            "Sandbox status updated to: {:?} {:?}",
+            &self.status, &self.outputs
+        );
 
-        self.exit_sandbox()?;
+        self.update_build_node();
 
-        Ok(())
+        Ok(self.status.clone())
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
 }
