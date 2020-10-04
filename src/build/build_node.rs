@@ -1,7 +1,9 @@
-use super::{Artifact, BuildRule};
+use super::{Artifact, BuildPlan, BuildRule};
 use crate::label::Label;
+use crate::toolchains::Toolchains;
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
+use std::path::PathBuf;
 
 /// A Build Node represents a compilation unit in the Build Graph.
 ///
@@ -15,6 +17,12 @@ pub struct BuildNode {
 
     /// The hash of this node
     hash: Option<String>,
+
+    /// The outputs of this node
+    outputs: Option<Vec<Artifact>>,
+
+    /// The inputs of this node
+    inputs: Option<Vec<PathBuf>>,
 
     /// Whether this BuildNode has already been successfully built, is waiting
     /// to be built, or has been found in the cache
@@ -46,6 +54,8 @@ impl BuildNode {
             rule,
             status: NodeStatus::Pending,
             hash: None,
+            outputs: None,
+            inputs: None,
         }
     }
 
@@ -64,15 +74,34 @@ impl BuildNode {
     }
 
     pub fn hash(&self) -> String {
-        self.hash.clone().unwrap_or("not-yet-hashed".to_string())
+        self.hash.clone().unwrap_or_else(|| {
+            panic!(
+                "Node {:?} has not been hashed yet!",
+                self.name().to_string()
+            )
+        })
     }
 
     pub fn name(&self) -> Label {
         self.rule.name().clone()
     }
 
+    pub fn srcs(&self) -> Vec<PathBuf> {
+        self.inputs.clone().unwrap_or_else(|| {
+            panic!(
+                "Node {:?} does not have computed inputs yet!",
+                self.name().to_string()
+            )
+        })
+    }
+
     pub fn outs(&self) -> Vec<Artifact> {
-        self.rule.outputs()
+        self.outputs.clone().unwrap_or_else(|| {
+            panic!(
+                "Node {:?} does not have computed outputs yet!",
+                self.name().to_string()
+            )
+        })
     }
 
     pub fn deps(&self) -> Vec<Label> {
@@ -81,6 +110,14 @@ impl BuildNode {
 
     pub fn rule(&mut self) -> &mut BuildRule {
         &mut self.rule
+    }
+
+    pub fn build(&mut self, plan: &BuildPlan, toolchain: &Toolchains) -> Result<(), anyhow::Error> {
+        let inputs = self.srcs();
+        self.rule
+            .clone()
+            .set_inputs(inputs)
+            .build(&plan, &toolchain)
     }
 
     /// The hash of a build node serves for caching work:
@@ -95,15 +132,26 @@ impl BuildNode {
         let mut hasher = Sha1::new();
         let name = self.rule.name();
         hasher.input_str(&name.to_string());
-        for d in deps {
-            hasher.input_str(&d.hash());
+
+        let dep_outs: Vec<Artifact> = deps
+            .iter()
+            .flat_map(|d| {
+                hasher.input_str(&d.hash());
+                d.outs()
+            })
+            .collect();
+
+        self.inputs = Some(self.rule.inputs(&dep_outs));
+        for i in self.inputs.clone().unwrap_or(vec![]) {
+            hasher.input_str(&i.to_str().unwrap())
         }
-        for o in self.rule.outputs() {
+
+        self.outputs = Some(self.rule.outputs(&dep_outs));
+        for o in self.outputs.clone().unwrap_or(vec![]) {
             hasher.input_str(&o.compute_hash(name.path()));
         }
 
         let hash = hasher.result_str();
-
         self.hash = Some(hash);
     }
 }
