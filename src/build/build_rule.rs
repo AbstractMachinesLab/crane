@@ -116,6 +116,12 @@ impl BuildRule {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum Input {
+    SourceFile(PathBuf),
+    Computed(Label),
+}
+
 pub trait Rule {
     fn as_rule(self) -> BuildRule;
 
@@ -158,7 +164,7 @@ pub trait Rule {
     /// to be compiled individually (e.g, it supports circular dependencies between them), then it
     /// is acceptable to return a single Artifact where both inputs are mapped to the corresponding
     /// outputs.
-    fn outputs(&self) -> Vec<Artifact> {
+    fn outputs(&self) -> Vec<Input> {
         vec![]
     }
 

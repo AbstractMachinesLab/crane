@@ -3,6 +3,10 @@
 [[caramel_library]]
 name = "caramel"
 
+[[erlang_library]]
+name = "from_caramel"
+srcs = [":caramel"]
+
 # [[gleam_library]]
 # name = "gleam"
 
@@ -14,7 +18,7 @@ name = "elixir"
 
 [[erlang_library]]
 name = "erlang"
-deps = [":caramel", ":elixir", ":clojerl"]
+deps = [":from_caramel", ":elixir", ":clojerl"]
 
 [[erlang_shell]]
 name = "shell"
