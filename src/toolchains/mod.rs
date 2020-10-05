@@ -7,6 +7,7 @@ pub mod clojerl;
 pub mod elixir;
 pub mod erlang;
 pub mod gleam;
+pub mod standard;
 
 #[derive(Debug, Copy, Clone, PartialEq, Hash)]
 pub enum ToolchainName {
@@ -55,6 +56,7 @@ pub struct Toolchains {
     erlang: erlang::Toolchain,
     gleam: gleam::Toolchain,
     caramel: caramel::Toolchain,
+    standard: standard::Toolchain,
 }
 
 impl Toolchains {
@@ -78,6 +80,10 @@ impl Toolchains {
         self.caramel.clone()
     }
 
+    pub fn standard(&self) -> standard::Toolchain {
+        self.standard.clone()
+    }
+
     pub fn set_root(self, root: PathBuf) -> Toolchains {
         Toolchains {
             clojerl: self.clojerl.with_root(root.clone()),
@@ -85,6 +91,7 @@ impl Toolchains {
             erlang: self.erlang.with_root(root.clone()),
             caramel: self.caramel.with_root(root.clone()),
             gleam: self.gleam.with_root(root),
+            ..self
         }
     }
 
@@ -174,6 +181,7 @@ impl TryFrom<toml::Value> for Toolchains {
             gleam,
             elixir,
             erlang,
+            standard: standard::Toolchain::default(),
         })
     }
 }
