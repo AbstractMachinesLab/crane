@@ -24,6 +24,7 @@ pub struct Archive {
     url: String,
     sha1: String,
     name: String,
+    tag: String,
     prefix: String,
 }
 
@@ -39,17 +40,14 @@ impl Archive {
         match self.kind {
             ArchiveKind::Source => self.url.clone(),
             ArchiveKind::Release => {
-                let parts: Vec<&str> = self.url.split("/tag/").collect();
-                let prefix = parts[0];
-                let tag = parts[1];
                 let host_triple = guess_host_triple::guess_host_triple().unwrap();
                 format!(
-                    "{prefix}/download/{tag}/{name}-{tag}-{host_triple}.{ext}",
-                    prefix = prefix,
-                    tag = tag.clone(),
+                    "{prefix}/releases/download/{tag}/{name}-{host_triple}.{ext}",
+                    prefix = self.url.clone(),
+                    tag = self.tag.clone(),
                     name = self.name.clone(),
                     host_triple = host_triple,
-                    ext = ".tar.gz",
+                    ext = "tar.gz",
                 )
             }
         }
@@ -73,6 +71,10 @@ impl Archive {
 
     pub fn with_url(self, url: String) -> Archive {
         Archive { url, ..self }
+    }
+
+    pub fn with_tag(self, tag: String) -> Archive {
+        Archive { tag, ..self }
     }
 
     pub fn with_sha1(self, sha1: String) -> Archive {

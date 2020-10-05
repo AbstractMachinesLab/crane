@@ -11,25 +11,25 @@ use std::process::Command;
 pub struct Toolchain {
     archive: Archive,
     root: PathBuf,
-    caramelc: PathBuf,
+    lumen: PathBuf,
 }
 
 impl Default for Toolchain {
     fn default() -> Toolchain {
         let archive = Archive::default()
             .as_release()
-            .with_name("caramel-v0.0.4-triples".to_string())
-            .with_tag("v0.0.4-triples".to_string())
-            .with_url("https://github.com/AbstractMachinesLab/caramel".to_string())
-            .with_sha1("068fd0f2635f9c3279d69b72044cedd440b54ab3".to_string())
-            .with_prefix("".to_string());
+            .with_name("lumen-0.1.0-nightly".to_string())
+            .with_tag("0.1.0-nightly-2020-09-02".to_string())
+            .with_url("https://github.com/lumen/lumen".to_string())
+            .with_sha1("53e0ca166c0b5106c997f56cea3045a3b110e255".to_string())
+            .with_prefix("lumen".to_string());
 
-        let caramelc = PathBuf::from("caramelc.exe");
+        let lumen = PathBuf::from("bin/lumen");
         let root = PathBuf::from(".");
 
         Toolchain {
             archive,
-            caramelc,
+            lumen,
             root,
         }
     }
@@ -54,17 +54,17 @@ impl Toolchain {
             .join(self.archive().hash())
             .join(self.archive().prefix());
 
-        let caramelc = root.join("caramelc.exe");
+        let lumen = root.join("bin/lumen");
 
         Toolchain {
             root,
-            caramelc,
+            lumen,
             ..self
         }
     }
 
     pub fn name(&self) -> String {
-        "caramel".to_string()
+        "lumen".to_string()
     }
 
     pub fn compile(self, caramel_srcs: &[PathBuf]) -> Result<(), anyhow::Error> {
@@ -73,7 +73,7 @@ impl Toolchain {
             .map(|src| src.to_str().unwrap())
             .collect();
 
-        let mut cmd = Command::new(self.caramelc);
+        let mut cmd = Command::new(self.lumen);
         let cmd = cmd.args(&["compile"]).args(caramel_srcs.as_slice());
 
         debug!("Calling {:?}", &cmd);
@@ -83,15 +83,15 @@ impl Toolchain {
         } else {
             std::io::stdout().write_all(&output.stdout).unwrap();
             std::io::stderr().write_all(&output.stderr).unwrap();
-            Err(anyhow!("Error running caramelc"))
+            Err(anyhow!("Error running lumen"))
         }
     }
 }
 
 impl IntoToolchainBuilder for Toolchain {
     fn toolchain_builder(&self) -> ToolchainBuilder {
-        let caramelc = self.caramelc.clone();
-        let is_cached = Box::new(move || Ok(std::fs::metadata(caramelc.clone()).is_ok()));
+        let lumen = self.lumen.clone();
+        let is_cached = Box::new(move || Ok(std::fs::metadata(lumen.clone()).is_ok()));
 
         let build_toolchain = Box::new(move || {
             debug!("Nothing to do here!");

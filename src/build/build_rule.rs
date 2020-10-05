@@ -20,6 +20,7 @@ pub enum BuildRule {
     GleamLibrary(GleamLibrary),
     CaramelLibrary(CaramelLibrary),
     BeamArchive(BeamArchive),
+    LumenBinary(LumenBinary),
 }
 
 impl Default for BuildRule {
@@ -31,6 +32,7 @@ impl Default for BuildRule {
 impl BuildRule {
     pub fn name(&self) -> Label {
         match self {
+            BuildRule::LumenBinary(lib) => lib.name(),
             BuildRule::ClojureLibrary(lib) => lib.name(),
             BuildRule::ElixirLibrary(lib) => lib.name(),
             BuildRule::ErlangLibrary(lib) => lib.name(),
@@ -50,6 +52,7 @@ impl BuildRule {
             BuildRule::ErlangShell(_) => Some(ToolchainName::Erlang),
             BuildRule::GleamLibrary(_) => Some(ToolchainName::Gleam),
             BuildRule::CaramelLibrary(_) => Some(ToolchainName::Caramel),
+            BuildRule::LumenBinary(_) => Some(ToolchainName::Lumen),
             BuildRule::BeamArchive(_) => None,
             BuildRule::Noop => None,
         }
@@ -64,6 +67,7 @@ impl BuildRule {
             BuildRule::GleamLibrary(lib) => lib.dependencies(),
             BuildRule::CaramelLibrary(lib) => lib.dependencies(),
             BuildRule::BeamArchive(lib) => lib.dependencies(),
+            BuildRule::LumenBinary(lib) => lib.dependencies(),
             BuildRule::Noop => vec![],
         }
     }
@@ -77,6 +81,7 @@ impl BuildRule {
             BuildRule::GleamLibrary(lib) => lib.run(plan, toolchains),
             BuildRule::CaramelLibrary(lib) => lib.run(plan, toolchains),
             BuildRule::BeamArchive(lib) => lib.run(plan, toolchains),
+            BuildRule::LumenBinary(lib) => lib.run(plan, toolchains),
             BuildRule::Noop => Ok(()),
         }
     }
@@ -94,6 +99,7 @@ impl BuildRule {
             BuildRule::GleamLibrary(lib) => lib.build(plan, toolchains),
             BuildRule::CaramelLibrary(lib) => lib.build(plan, toolchains),
             BuildRule::BeamArchive(lib) => lib.build(plan, toolchains),
+            BuildRule::LumenBinary(lib) => lib.build(plan, toolchains),
             BuildRule::Noop => Ok(()),
         }
     }
@@ -107,6 +113,7 @@ impl BuildRule {
             BuildRule::GleamLibrary(lib) => lib.inputs(deps),
             BuildRule::CaramelLibrary(lib) => lib.inputs(deps),
             BuildRule::BeamArchive(lib) => lib.inputs(deps),
+            BuildRule::LumenBinary(lib) => lib.inputs(deps),
             BuildRule::Noop => vec![],
         }
     }
@@ -120,6 +127,7 @@ impl BuildRule {
             BuildRule::GleamLibrary(lib) => BuildRule::GleamLibrary(lib.set_inputs(inputs)),
             BuildRule::CaramelLibrary(lib) => BuildRule::CaramelLibrary(lib.set_inputs(inputs)),
             BuildRule::BeamArchive(lib) => BuildRule::BeamArchive(lib.set_inputs(inputs)),
+            BuildRule::LumenBinary(lib) => BuildRule::LumenBinary(lib.set_inputs(inputs)),
             BuildRule::Noop => BuildRule::Noop,
         }
     }
@@ -133,6 +141,7 @@ impl BuildRule {
             BuildRule::GleamLibrary(lib) => lib.outputs(deps),
             BuildRule::CaramelLibrary(lib) => lib.outputs(deps),
             BuildRule::BeamArchive(lib) => lib.outputs(deps),
+            BuildRule::LumenBinary(lib) => lib.outputs(deps),
             BuildRule::Noop => vec![],
         }
     }
