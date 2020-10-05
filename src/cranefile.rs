@@ -1,6 +1,7 @@
 use crate::build::{BuildRule, Rule};
 use crate::rules::{
-    CaramelLibrary, ClojureLibrary, ElixirLibrary, ErlangLibrary, ErlangShell, GleamLibrary,
+    BeamArchive, CaramelLibrary, ClojureLibrary, ElixirLibrary, ErlangLibrary, ErlangShell,
+    GleamLibrary,
 };
 use anyhow::{Context, Error};
 use std::convert::TryFrom;
@@ -98,7 +99,18 @@ impl Cranefile {
             .collect();
         let caramel_libraries = caramel_libraries?;
 
+        let beam_archives: Result<Vec<BuildRule>, anyhow::Error> = contents
+            .get("beam_archive")
+            .and_then(|m| m.as_array())
+            .unwrap_or(&vec![])
+            .iter()
+            .cloned()
+            .map(|x| BeamArchive::try_from((x, parent)).map(Rule::as_rule))
+            .collect();
+        let beam_archives = beam_archives?;
+
         let rules: Vec<BuildRule> = vec![
+            beam_archives,
             caramel_libraries,
             clojure_libraries,
             elixir_libraries,
