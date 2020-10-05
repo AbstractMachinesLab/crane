@@ -25,3 +25,9 @@ deps = [":from_caramel", ":elixir", ":clojerl"]
 [[erlang_shell]]
 name = "shell"
 deps = [ ":erlang" ]
+
+[[beam_archive]]
+name = "mathlib"
+deps = [ ":erlang" ]
+
+
