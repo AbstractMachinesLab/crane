@@ -13,5 +13,5 @@ pub trait Rule {
     ///
     /// For `*_library` rules this will be build steps, for `*_test` rules this will be execution.
     ///
-    fn execute(&mut self) -> Result<(), anyhow::Error>;
+    fn execute(&self) -> Result<(), anyhow::Error>;
 }

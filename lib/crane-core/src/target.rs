@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 /// A target in the Crane build plan.
 ///
-pub trait Target {
+pub trait Target: CloneUnsized {
     fn name(&self) -> &Label;
 
     fn rule(&self) -> &dyn Rule;
@@ -51,6 +51,16 @@ pub trait Target {
     fn outputs(&self, _deps: &[Artifact]) -> &[Artifact];
 }
 
+pub trait CloneUnsized {
+    fn clone_boxed(&self) -> Box<dyn Target>;
+}
+
+impl<T: Clone + Target + 'static> CloneUnsized for T {
+    fn clone_boxed(&self) -> Box<dyn Target> {
+        Box::new(self.clone())
+    }
+}
+
 impl Default for Box<dyn Target> {
     fn default() -> Self {
         panic!("Oops! We have attempted to create a default target. This means the DepGraph was somehow incomplete. This is a bug!");
@@ -72,7 +82,7 @@ impl std::fmt::Debug for dyn Target {
 mod tests {
     use super::*;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct TestRule {}
     impl Rule for TestRule {
         fn name(&self) -> &str {
@@ -81,12 +91,12 @@ mod tests {
         fn toolchains(&self) -> Vec<Label> {
             vec![]
         }
-        fn execute(&mut self) -> Result<(), anyhow::Error> {
+        fn execute(&self) -> Result<(), anyhow::Error> {
             Ok(())
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct TestTarget {
         label: Label,
         deps: Vec<Label>,

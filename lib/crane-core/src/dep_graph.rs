@@ -30,21 +30,21 @@ use std::collections::HashMap;
 #[derive(Debug)]
 pub struct DepGraph {
     /// The build graph from all of the Targets, linked by their Labels
-    dep_graph: Graph<Box<dyn Target>, Label>,
+    pub _inner_graph: Graph<Box<dyn Target>, Label>,
 
     /// A lookup map used to find a node in the graph by its label alone
-    nodes: HashMap<Label, NodeIndex>,
+    pub nodes: HashMap<Label, NodeIndex>,
 }
 
 impl DepGraph {
     pub fn from_targets(targets: Vec<Box<dyn Target>>) -> Result<DepGraph, anyhow::Error> {
-        let mut dep_graph: Graph<Box<dyn Target>, Label> = Graph::new();
+        let mut _inner_graph: Graph<Box<dyn Target>, Label> = Graph::new();
         let mut nodes: HashMap<Label, NodeIndex> = HashMap::new();
 
         debug!("Building table of labels to node indices...");
         for target in targets {
             let label = target.name().clone();
-            let node = dep_graph.add_node(target);
+            let node = _inner_graph.add_node(target);
             debug!("{:?} -> {:?}", &label, &node);
             nodes.insert(label, node);
         }
@@ -53,7 +53,7 @@ impl DepGraph {
         let mut edges = vec![];
         debug!("Building dependency adjacency matrix...");
         for node_idx in nodes.values() {
-            let node = dep_graph.node_weight(*node_idx).unwrap();
+            let node = _inner_graph.node_weight(*node_idx).unwrap();
             debug!("{:?} depends on:", node.name());
             for label in node.deps().iter().cloned() {
                 let dep = nodes.get(&label);
@@ -72,14 +72,17 @@ impl DepGraph {
         }
         edges.sort();
         debug!("Adding {} edges to graph...", edges.len());
-        dep_graph.extend_with_edges(&edges);
+        _inner_graph.extend_with_edges(&edges);
         debug!(
             "Build graph completed with {} nodes and {} edges",
             &nodes.len(),
             &edges.len()
         );
 
-        Ok(DepGraph { dep_graph, nodes })
+        Ok(DepGraph {
+            _inner_graph,
+            nodes,
+        })
     }
 
     pub fn scoped(self, target: Label) -> Result<DepGraph, anyhow::Error> {
@@ -92,9 +95,9 @@ impl DepGraph {
                 .nodes
                 .get(&target)
                 .context(format!("Could not find node: {:?}", &target))?;
-            let nodes_to_keep = DepGraph::subgraph(&mut build_plan.dep_graph, *node_index);
+            let nodes_to_keep = DepGraph::subgraph(&mut build_plan._inner_graph, *node_index);
             build_plan
-                .dep_graph
+                ._inner_graph
                 .retain_nodes(|_g, node| nodes_to_keep.contains_key(&node));
             Ok(build_plan)
         }
@@ -121,7 +124,7 @@ impl DepGraph {
         format!(
             "{:?}",
             dot::Dot::with_attr_getters(
-                &self.dep_graph,
+                &self._inner_graph,
                 &[dot::Config::EdgeNoLabel, dot::Config::NodeNoLabel],
                 &|_graph, _edge| "".to_string(),
                 &|_graph, (_idx, target)| format!("label = \"{}\"", target.name().to_string())
@@ -135,19 +138,19 @@ impl DepGraph {
 
     pub fn find_node(&self, label: &Label) -> Option<&dyn Target> {
         let node_index = *self.nodes.get(label)?;
-        Some(&*self.dep_graph[node_index])
+        Some(&*self._inner_graph[node_index])
     }
 
     pub fn target_names(&mut self) -> Vec<String> {
-        self.dep_graph.reverse();
-        let mut walker = Topo::new(&self.dep_graph);
+        self._inner_graph.reverse();
+        let mut walker = Topo::new(&self._inner_graph);
 
         let mut nodes: Vec<String> = vec![];
-        while let Some(idx) = walker.next(&self.dep_graph) {
-            nodes.push(self.dep_graph[idx].name().to_string());
+        while let Some(idx) = walker.next(&self._inner_graph) {
+            nodes.push(self._inner_graph[idx].name().to_string());
         }
 
-        self.dep_graph.reverse();
+        self._inner_graph.reverse();
 
         nodes
     }
@@ -160,7 +163,7 @@ mod tests {
     use crate::{Artifact, Rule};
     use std::path::PathBuf;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct TestRule {}
     impl Rule for TestRule {
         fn name(&self) -> &str {
@@ -169,12 +172,12 @@ mod tests {
         fn toolchains(&self) -> Vec<Label> {
             vec![]
         }
-        fn execute(&mut self) -> Result<(), anyhow::Error> {
+        fn execute(&self) -> Result<(), anyhow::Error> {
             Ok(())
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct TestTarget {
         label: Label,
         deps: Vec<Label>,
