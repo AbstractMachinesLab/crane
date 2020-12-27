@@ -1,0 +1,15 @@
+[package]
+name = "crane-build-engine"
+version = "0.3.9"
+authors = ["Leandro Ostera <leandro@ostera.io>"]
+edition = "2018"
+
+[dependencies]
+crane-core = { path = "../crane-core" }
+
+anyhow = "1.0"
+log = "0.4"
+chrono = "0.4"
+
+petgraph = "0.5"
+rust-crypto = "0.2"
