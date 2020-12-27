@@ -1,0 +1,19 @@
+[package]
+name = "crane-bin"
+version = "0.3.9"
+authors = ["Leandro Ostera <leandro@ostera.io>"]
+edition = "2018"
+
+[[bin]]
+name = "crane"
+path = "src/main.rs"
+
+[dependencies]
+crane-project = { path = "../crane-project" } 
+
+anyhow = "1.0"
+chrono = "0.4"
+log = "0.4"
+env_logger="0.8"
+structopt = "0.3"
+guess_host_triple = "0.1"
