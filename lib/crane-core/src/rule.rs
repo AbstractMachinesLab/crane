@@ -5,6 +5,8 @@ use super::Label;
 /// Some examples of rules are `ErlangLibrary` or `ElixirTest`.
 ///
 pub trait Rule {
+    fn name(&self) -> &str;
+
     fn toolchains(&self) -> Vec<Label>;
 
     /// The execution of this rule is captured in this function.

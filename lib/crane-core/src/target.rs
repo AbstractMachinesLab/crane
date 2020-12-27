@@ -15,7 +15,7 @@ pub trait Target {
     /// With the support of a dependency graph, retrieve the list of transitive
     /// dependencies in build order.
     ///
-    fn transitive_deps<'a>(&self, plan: &'a DepGraph) -> Vec<&'a Box<dyn Target>> {
+    fn transitive_deps<'a>(&self, plan: &'a DepGraph) -> Vec<&'a dyn Target> {
         plan.find_nodes(&self.deps())
     }
 
@@ -53,12 +53,84 @@ pub trait Target {
 
 impl Default for Box<dyn Target> {
     fn default() -> Self {
-        todo!()
+        panic!("Oops! We have attempted to create a default target. This means the DepGraph was somehow incomplete. This is a bug!");
     }
 }
 
-impl std::fmt::Debug for Box<dyn Target> {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        todo!()
+impl std::fmt::Debug for dyn Target {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        write!(
+            fmt,
+            "{}(name = \"{}\")",
+            self.rule().name(),
+            self.name().to_string()
+        )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Debug)]
+    struct TestRule {}
+    impl Rule for TestRule {
+        fn name(&self) -> &str {
+            "test_rule"
+        }
+        fn toolchains(&self) -> Vec<Label> {
+            vec![]
+        }
+        fn execute(&mut self) -> Result<(), anyhow::Error> {
+            Ok(())
+        }
+    }
+
+    #[derive(Debug)]
+    struct TestTarget {
+        label: Label,
+        deps: Vec<Label>,
+        srcs: Vec<PathBuf>,
+        outs: Vec<Artifact>,
+        rule: TestRule,
+    }
+    impl TestTarget {
+        fn new() -> TestTarget {
+            TestTarget {
+                label: "test_target".into(),
+                deps: vec![],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }
+        }
+    }
+    impl Target for TestTarget {
+        fn name(&self) -> &Label {
+            &self.label
+        }
+        fn rule(&self) -> &dyn Rule {
+            &self.rule
+        }
+        fn deps(&self) -> &[Label] {
+            &self.deps
+        }
+        fn set_deps(&mut self, _deps: &[Label]) {}
+        fn srcs(&self, _deps: &[Artifact]) -> &[PathBuf] {
+            &self.srcs
+        }
+        fn set_srcs(&mut self, _srcs: &[PathBuf]) {}
+        fn outputs(&self, _deps: &[Artifact]) -> &[Artifact] {
+            &self.outs
+        }
+    }
+
+    #[test]
+    fn can_debug_print() {
+        let target: Box<dyn Target> = Box::new(TestTarget::new());
+        assert_eq!(
+            "test_rule(name = \":test_target\")",
+            format!("{:?}", target)
+        );
     }
 }

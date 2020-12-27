@@ -12,3 +12,4 @@ log = "0.4"
 
 petgraph = "0.5"
 rust-crypto = "0.2"
+crossbeam = "0.8"

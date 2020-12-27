@@ -25,8 +25,8 @@ impl Artifact {
         &self.outputs
     }
 
-    pub fn hash_with_prefix(self, path_prefix: PathBuf) -> HashedArtifact {
-        HashedArtifact::new(self, path_prefix)
+    pub fn hash_with_prefix(&self, path_prefix: PathBuf) -> HashedArtifact {
+        HashedArtifact::new(self.clone(), path_prefix)
     }
 }
 
@@ -49,6 +49,7 @@ impl HashedArtifact {
         let outputs = artifact.outputs;
         let hash = {
             let mut hasher = Sha1::new();
+            hasher.input_str(prefix.to_str().unwrap());
             for path in inputs.iter() {
                 let path = prefix.join(path);
                 let contents = fs::read_to_string(&path)
@@ -80,14 +81,14 @@ pub struct ArtifactBuilder {
 }
 
 impl ArtifactBuilder {
-    pub fn set_inputs(&mut self, inputs: &[PathBuf]) -> &mut ArtifactBuilder {
-        self.inputs = Some(inputs.to_vec());
-        self
+    pub fn set_inputs(self, inputs: &[PathBuf]) -> ArtifactBuilder {
+        let inputs = Some(inputs.to_vec());
+        ArtifactBuilder { inputs, ..self }
     }
 
-    pub fn set_outputs(&mut self, outputs: &[PathBuf]) -> &mut ArtifactBuilder {
-        self.outputs = Some(outputs.to_vec());
-        self
+    pub fn set_outputs(self, outputs: &[PathBuf]) -> ArtifactBuilder {
+        let outputs = Some(outputs.to_vec());
+        ArtifactBuilder { outputs, ..self }
     }
 
     pub fn build(self) -> Result<Artifact, anyhow::Error> {
@@ -110,8 +111,36 @@ impl ArtifactBuilder {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn can_hash_an_empty_artifact() {
+        let artifact = Artifact::builder()
+            .set_inputs(&vec![])
+            .set_outputs(&vec![])
+            .build()
+            .unwrap();
+        let hashed_artifact = artifact.hash_with_prefix(PathBuf::from(""));
+        let hash = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
+        assert_eq!(hash, hashed_artifact.hash());
+    }
+
+    #[test]
+    fn prefix_is_part_of_hash() {
+        let artifact = Artifact::builder()
+            .set_inputs(&vec![])
+            .set_outputs(&vec![])
+            .build()
+            .unwrap();
+        let hashed_artifact_0 = artifact.hash_with_prefix(PathBuf::from("."));
+        let hashed_artifact_1 = artifact.hash_with_prefix(PathBuf::from("./some/path"));
+        assert_eq!(
+            "3a52ce780950d4d969792a2559cd519d7ee8c727",
+            hashed_artifact_0.hash()
+        );
+        assert_eq!(
+            "0e1be165e3e4a885eb846d37d46fdcf56fa7372d",
+            hashed_artifact_1.hash()
+        );
     }
 }

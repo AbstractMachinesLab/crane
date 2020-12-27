@@ -3,6 +3,7 @@ use anyhow::Context;
 use log::debug;
 use petgraph::dot;
 use petgraph::graph::{Graph, NodeIndex};
+use petgraph::visit::Topo;
 use petgraph::Direction;
 use std::collections::HashMap;
 
@@ -69,6 +70,7 @@ impl DepGraph {
                 }
             }
         }
+        edges.sort();
         debug!("Adding {} edges to graph...", edges.len());
         dep_graph.extend_with_edges(&edges);
         debug!(
@@ -127,12 +129,217 @@ impl DepGraph {
         )
     }
 
-    pub fn find_nodes(&self, labels: &[Label]) -> Vec<&Box<dyn Target>> {
+    pub fn find_nodes(&self, labels: &[Label]) -> Vec<&dyn Target> {
         labels.iter().flat_map(|l| self.find_node(l)).collect()
     }
 
-    pub fn find_node(&self, label: &Label) -> Option<&Box<dyn Target>> {
+    pub fn find_node(&self, label: &Label) -> Option<&dyn Target> {
         let node_index = *self.nodes.get(label)?;
-        Some(&self.dep_graph[node_index])
+        Some(&*self.dep_graph[node_index])
+    }
+
+    pub fn target_names(&mut self) -> Vec<String> {
+        self.dep_graph.reverse();
+        let mut walker = Topo::new(&self.dep_graph);
+
+        let mut nodes: Vec<String> = vec![];
+        while let Some(idx) = walker.next(&self.dep_graph) {
+            nodes.push(self.dep_graph[idx].name().to_string());
+        }
+
+        self.dep_graph.reverse();
+
+        nodes
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{Artifact, Rule};
+    use std::path::PathBuf;
+
+    #[derive(Debug)]
+    struct TestRule {}
+    impl Rule for TestRule {
+        fn name(&self) -> &str {
+            "test_rule"
+        }
+        fn toolchains(&self) -> Vec<Label> {
+            vec![]
+        }
+        fn execute(&mut self) -> Result<(), anyhow::Error> {
+            Ok(())
+        }
+    }
+
+    #[derive(Debug)]
+    struct TestTarget {
+        label: Label,
+        deps: Vec<Label>,
+        srcs: Vec<PathBuf>,
+        outs: Vec<Artifact>,
+        rule: TestRule,
+    }
+    impl Target for TestTarget {
+        fn name(&self) -> &Label {
+            &self.label
+        }
+        fn rule(&self) -> &dyn Rule {
+            &self.rule
+        }
+        fn deps(&self) -> &[Label] {
+            &self.deps
+        }
+        fn set_deps(&mut self, _deps: &[Label]) {}
+        fn srcs(&self, _deps: &[Artifact]) -> &[PathBuf] {
+            &self.srcs
+        }
+        fn set_srcs(&mut self, _srcs: &[PathBuf]) {}
+        fn outputs(&self, _deps: &[Artifact]) -> &[Artifact] {
+            &self.outs
+        }
+    }
+
+    #[test]
+    fn does_not_create_graphs_with_cycles() {
+        let targets: Vec<Box<dyn Target>> = vec![
+            Box::new(TestTarget {
+                label: "z".into(),
+                deps: vec![Label::new(":z")],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+            Box::new(TestTarget {
+                label: "a".into(),
+                deps: vec![Label::new(":b")],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+            Box::new(TestTarget {
+                label: "b".into(),
+                deps: vec![Label::new(":a")],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+        ];
+
+        assert_eq!(false, DepGraph::from_targets(targets).is_ok());
+    }
+
+    #[test]
+    fn respects_dependencies() {
+        let targets: Vec<Box<dyn Target>> = vec![
+            Box::new(TestTarget {
+                label: "a".into(),
+                deps: vec![],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+            Box::new(TestTarget {
+                label: "b".into(),
+                deps: vec![Label::new(":c")],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+            Box::new(TestTarget {
+                label: "c".into(),
+                deps: vec![Label::new(":a")],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+        ];
+
+        let mut depgraph = DepGraph::from_targets(targets).unwrap();
+
+        let work = depgraph.target_names();
+
+        assert_eq!("[\":a\", \":c\", \":b\"]", format!("{:?}", work));
+    }
+
+    #[test]
+    fn respects_scoping() {
+        let targets: Vec<Box<dyn Target>> = vec![
+            Box::new(TestTarget {
+                label: "a".into(),
+                deps: vec![],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+            Box::new(TestTarget {
+                label: "b".into(),
+                deps: vec![Label::new(":c")],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+            Box::new(TestTarget {
+                label: "c".into(),
+                deps: vec![Label::new(":a")],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+        ];
+
+        let mut depgraph = DepGraph::from_targets(targets)
+            .unwrap()
+            .scoped(Label::new(":c"))
+            .unwrap();
+
+        let work = depgraph.target_names();
+
+        // We do not expect to see B since our scope is C, and C only depends
+        // on A
+        assert_eq!("[\":a\", \":c\"]", format!("{:?}", work));
+    }
+
+    #[test]
+    fn can_be_printed_as_graphviz() {
+        let targets: Vec<Box<dyn Target>> = vec![
+            Box::new(TestTarget {
+                label: "a".into(),
+                deps: vec![],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+            Box::new(TestTarget {
+                label: "b".into(),
+                deps: vec![Label::new(":c")],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+            Box::new(TestTarget {
+                label: "c".into(),
+                deps: vec![Label::new(":a")],
+                srcs: vec![],
+                outs: vec![],
+                rule: TestRule {},
+            }),
+        ];
+
+        let depgraph = DepGraph::from_targets(targets).unwrap();
+
+        assert_eq!(
+            r#"digraph {
+    0 [ label = ":a"]
+    1 [ label = ":b"]
+    2 [ label = ":c"]
+    1 -> 2 [ ]
+    2 -> 0 [ ]
+}
+"#,
+            depgraph.to_graphviz()
+        );
     }
 }

@@ -16,13 +16,13 @@ impl Eq for Label {}
 
 impl From<&str> for Label {
     fn from(name: &str) -> Label {
-        Label::new(name.to_string())
+        Label::new(name)
     }
 }
 
 impl From<String> for Label {
     fn from(name: String) -> Label {
-        Label::new(name)
+        Label::new(&name)
     }
 }
 
@@ -43,7 +43,7 @@ impl Default for Label {
 }
 
 impl Label {
-    pub fn new(name: String) -> Label {
+    pub fn new(name: &str) -> Label {
         let name = name.replace("\"", "");
 
         let is_wildcard = name.starts_with("//") && name.ends_with("...");
@@ -95,7 +95,7 @@ impl Label {
 
     pub fn is_absolute(&self) -> bool {
         match self {
-            Label::Absolute { .. } => true,
+            Label::Absolute { .. } | Label::Wildcard => true,
             _ => false,
         }
     }
@@ -124,8 +124,56 @@ impl Label {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn parses_relative_paths() {
+        let path = ":hello";
+        let l1 = Label::new(&path);
+        let l2: Label = path.into();
+        let l3: Label = path.to_string().into();
+        assert_eq!(path, l1.to_string());
+        assert_eq!(false, l1.is_absolute());
+        assert_eq!(false, l1.is_all());
+        assert_eq!(path, l2.to_string());
+        assert_eq!(false, l2.is_absolute());
+        assert_eq!(false, l2.is_all());
+        assert_eq!(path, l3.to_string());
+        assert_eq!(false, l3.is_absolute());
+        assert_eq!(false, l3.is_all());
+    }
+
+    #[test]
+    fn parses_absolute_paths() {
+        let path = "//my/path:hello";
+        let l1 = Label::new(&path);
+        let l2: Label = path.into();
+        let l3: Label = path.to_string().into();
+        assert_eq!(path, l1.to_string());
+        assert_eq!(true, l1.is_absolute());
+        assert_eq!(false, l1.is_all());
+        assert_eq!(path, l2.to_string());
+        assert_eq!(true, l2.is_absolute());
+        assert_eq!(false, l2.is_all());
+        assert_eq!(path, l3.to_string());
+        assert_eq!(true, l3.is_absolute());
+        assert_eq!(false, l3.is_all());
+    }
+
+    #[test]
+    fn parses_wildcard_path() {
+        let path = "//...";
+        let l1 = Label::new(&path);
+        let l2: Label = path.into();
+        let l3: Label = path.to_string().into();
+        assert_eq!(path, l1.to_string());
+        assert_eq!(true, l1.is_absolute());
+        assert_eq!(true, l1.is_all());
+        assert_eq!(path, l2.to_string());
+        assert_eq!(true, l2.is_absolute());
+        assert_eq!(true, l2.is_all());
+        assert_eq!(path, l3.to_string());
+        assert_eq!(true, l3.is_absolute());
+        assert_eq!(true, l3.is_all());
     }
 }
