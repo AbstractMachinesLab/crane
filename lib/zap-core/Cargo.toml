@@ -1,0 +1,23 @@
+[package]
+name = "zap-core"
+version = "0.4.0"
+authors = ["Leandro Ostera <leandro@ostera.io>"]
+edition = "2018"
+
+[dependencies]
+zap-buildscript = { path = "../zap-buildscript" }
+
+anyhow = "1.0"
+chrono = "0.4"
+log = "0.4"
+
+crossbeam = "0.8"
+daggy = "*"
+dashmap = "4.0"
+deno_core = "0.75"
+directories = "3.0"
+guess_host_triple = "0.1"
+petgraph = "0.5"
+rust-crypto = "0.2"
+whoami = "1.0"
+serde_json = "1.0"
