@@ -1,0 +1,18 @@
+[package]
+name = "zap-build-engine"
+version = "0.4.0"
+authors = ["Leandro Ostera <leandro@ostera.io>"]
+edition = "2018"
+
+[dependencies]
+zap-buildscript = { path = "../zap-buildscript" }
+zap-core = { path = "../zap-core" }
+zap-project = { path = "../zap-project" }
+
+anyhow = "1.0"
+log = "0.4"
+chrono = "0.4"
+
+dashmap = "4.0"
+petgraph = "0.5"
+rust-crypto = "0.2"
