@@ -1,11 +1,11 @@
-# Simplest Crane Example
+# Simplest Zap Example
 
 Just a tiny example.
 
-You can run `crane run //:shell`
+You can run `zap run //:shell`
 
 ```erlang
-examples/basic λ crane run //:shell
+examples/basic λ zap run //:shell
 10:03:51 INFO :: Workspace: basic
 10:03:51 INFO :: Target: //:shell
 10:03:51 INFO :: Planning build...

@@ -4,7 +4,7 @@ First of all, Rebar3, Erlang.mk, and Mix are all fantastic tools with tons of
 great engineering and TLC put into them by their communities. I sincerely thank
 you all for them.
 
-I'm building Crane because I've got a few itches that these tools have not
+I'm building Zap because I've got a few itches that these tools have not
 helped me scratch, and I've decided that I'd start anew rather than nudge any
 of them in some direction, because I'd like to rethink a few things from zero.
 
@@ -42,7 +42,7 @@ So I intend to do them.
 
 ## Ok, so how exactly is this different than Rebar3/Mix/Erlang.mk/etc?
 
-Crane is built in the image of [dune](https://dune.build) and
+Zap is built in the image of [dune](https://dune.build) and
 [bazel](https://bazel.build), and some of the buzzwords that those carry have
 implications across the board:
 
@@ -55,21 +55,21 @@ implications across the board:
 
 #### Scalable, Incremental, and Fast
 
-For example, Crane is built with **support for humongous repositories of code**.
+For example, Zap is built with **support for humongous repositories of code**.
 This is baked into the nature of the build system, rather than a post-hoc
 add-on, and it shows.
 
-Crane doesn't lean towards splitting projects into several repositories with
+Zap doesn't lean towards splitting projects into several repositories with
 their own entire build config and inter-repo versioning. Instead, you are
 encouraged to have a single repo, define a workspace only once and just mark
 what directories are libraries/binaries/releases of what kind, and what
 dependencies they have on each other.
 
-With this explicit build graph, we can ask Crane to build specific things, and
-it'll know just exactly what graph paths need building. Crane is lazy, and so
+With this explicit build graph, we can ask Zap to build specific things, and
+it'll know just exactly what graph paths need building. Zap is lazy, and so
 it **only does the minimum amount of work needed to satisfy your build goal**.
 
-What's more, Crane is so lazy, it **uses a content-addressable cache** of every
+What's more, Zap is so lazy, it **uses a content-addressable cache** of every
 node in the build graph so if the inputs haven't changed, the output is just a
 cache hit. While the cache is now local, I'm working to make it distributed for
 large teams to share build artifacts.
@@ -81,7 +81,7 @@ tests and releases too. Every build target.
 #### Ecosystem Aware
 
 The BEAM is a platform for several languages, and we've done an adequate job at
-supporting polyglot projects. Crane **supports polyglot BEAM projects with
+supporting polyglot projects. Zap **supports polyglot BEAM projects with
 seamless interop**, to the extent that they may make some names wonky for each
 other (looking at you Elixir), by already integrating the language toolchains
 or making it very easy to integrate new ones.
@@ -91,7 +91,7 @@ able to include it as a dependency on some of your libraries, tests, shells, or
 releases.
 
 Dependency resolution and versioning are also issues that when we're working
-with smaller repositories are just not as obvious. Crane brings this up and
+with smaller repositories are just not as obvious. Zap brings this up and
 front by making the **entire workspace shares a dependency tree**. This
 ensures we're not accidentally running multiple conflicting versions of
 anything, and allows us to do some cool things like fuzzying out dependencies
@@ -99,20 +99,20 @@ to keep our workspaces clean.
 
 Typically we reach outside of our usual BEAM build tools to pack our released
 code, but, whether you're running kubernetes or docker-compose, you're likely
-running your code in a container. Crane aims to **support distroless
+running your code in a container. Zap aims to **support distroless
 containerized releases** without even depending on Docker.
 
 #### Hermetic
 
-Crane aims to support **fully reproducible builds**, including deterministic
+Zap aims to support **fully reproducible builds**, including deterministic
 container images, to **support differential deployments**. So if the source
 hasn't changed, the image hash shouldn't either. Whatever CI deploys should
 have the exact same hash that you came up with in your machine.
 
-This means that Crane won't let system-wide pre-installed tools do any work,
+This means that Zap won't let system-wide pre-installed tools do any work,
 and it will manage and version any language toolchains necessaries to do these
 builds. If it doesn't right now, it is just a matter of time until it does.
 
-In fact, Crane will be distributed as a single binary, compiled for several
+In fact, Zap will be distributed as a single binary, compiled for several
 architectures. So you don't even need to have the BEAM installed to use it.
 

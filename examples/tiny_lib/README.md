@@ -10,10 +10,10 @@ This little example showcases how to write a polyglot BEAM library, using:
 
 ## Building
 
-We can build all of the targets by calling `crane build`:
+We can build all of the targets by calling `zap build`:
 
 ```
-examples/tiny_lib λ crane build
+examples/tiny_lib λ zap build
 23:27:09 INFO :: Planning build...
 23:27:09 INFO :: Readying toolchains: [Erlang, Gleam, Clojure, Elixir]
 23:27:09 INFO :: Building target: //...
@@ -23,7 +23,7 @@ examples/tiny_lib λ crane build
 Subsequent builds after the clean one are heavily and correctly cached:
 
 ```
-examples/tiny_lib λ crane build
+examples/tiny_lib λ zap build
 23:27:29 INFO :: Planning build...
 23:27:29 INFO :: Readying toolchains: [Erlang, Elixir, Clojure, Gleam]
 23:27:29 INFO :: Building target: //...
@@ -36,7 +36,7 @@ We can run the `//math:shell` target to get an open REPL where we can use all of
 the dependency BEAM files:
 
 ```
-examples/tiny_lib λ crane run //math:shell
+examples/tiny_lib λ zap run //math:shell
 23:27:43 INFO :: Workspace: tiny_lib
 23:27:43 INFO :: Target: //math:shell
 23:27:43 INFO :: Planning build...

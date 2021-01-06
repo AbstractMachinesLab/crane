@@ -3,6 +3,6 @@
 [[caramel_library]]
 name = "hello_world"
 
-[[lumen_binary]]
+[[lam_binary]]
 name = "bin"
 deps = [":hello_world"]
