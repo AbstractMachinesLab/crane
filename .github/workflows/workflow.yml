@@ -139,22 +139,22 @@ jobs:
         if: ${{ success() && runner.os != 'Windows' }}
         run: make release
 
-      - name: Upload Crane build artifact
+      - name: Upload Zap build artifact
         if: ${{ success() }}
         uses: actions/upload-artifact@v2
         with:
           path: release.tar.gz
-          name: crane-${{ env.GITHUB_TAG }}-${{ matrix.target }}.tar.gz
+          name: zap-${{ env.GITHUB_TAG }}-${{ matrix.target }}.tar.gz
           if-no-files-found: error
 
-      - name: Upload Crane release tarball
+      - name: Upload Zap release tarball
         if: ${{ success() && startsWith(github.ref, 'refs/tags/') }}
-        id: upload-crane-release-tarball
+        id: upload-zap-release-tarball
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create_draft_release.outputs.upload_url }}
           asset_path: release.tar.gz
-          asset_name: crane-${{ env.GITHUB_TAG }}-${{ matrix.target }}.tar.gz
+          asset_name: zap-${{ env.GITHUB_TAG }}-${{ matrix.target }}.tar.gz
           asset_content_type: application/zip

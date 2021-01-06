@@ -1,21 +1,8 @@
-[package]
-name = "crane"
-version = "0.3.9"
-authors = ["Leandro Ostera <leandro@ostera.io>"]
-edition = "2018"
-publish = false
-
-[dependencies]
-anyhow = "1.0"
-chrono = "0.4"
-fern = { version = "0.6", features = [ "colored" ] }
-flate2 = "1.0"
-glob = "0.3"
-guess_host_triple = "0.1"
-home = "0.5"
-log = "0.4"
-petgraph = "0.5"
-rust-crypto = "0.2"
-structopt = "0.3"
-tar = "0.4"
-toml = "0.5"
+[workspace]
+members = [
+  "lib/zap-bin",
+  "lib/zap-build-engine",
+  "lib/zap-buildscript",
+  "lib/zap-core",
+  "lib/zap-errors",
+]
