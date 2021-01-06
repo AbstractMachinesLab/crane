@@ -1,0 +1,5 @@
+[workspace]
+name = "sample_project"
+
+[dependencies]
+c = "0.1"

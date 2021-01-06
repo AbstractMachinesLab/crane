@@ -1,0 +1,24 @@
+[package]
+name = "zap-bin"
+version = "0.4.0"
+authors = ["Leandro Ostera <leandro@ostera.io>"]
+edition = "2018"
+
+[[bin]]
+name = "zap"
+path = "src/main.rs"
+
+[dependencies]
+zap-build-engine = { path = "../zap-build-engine" }
+zap-core = { path = "../zap-core" }
+zap-project = { path = "../zap-project" }
+
+anyhow = "1.0"
+chrono = "0.4"
+env_logger="0.8"
+futures = "0.3"
+guess_host_triple = "0.1"
+log = "0.4"
+structopt = "0.3"
+termcolor = "1.1"
+tokio = { version = "1", features = ["full"] }

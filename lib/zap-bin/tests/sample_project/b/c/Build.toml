@@ -1,0 +1,3 @@
+[[erlang_library]]
+name = "lib"
+deps = [ "//a:lib" ]
