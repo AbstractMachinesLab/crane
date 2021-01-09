@@ -2621,10 +2621,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "zap-errors"
-version = "0.4.0"
-
-[[package]]
 name = "zap-project"
 version = "0.4.0"
 dependencies = [
