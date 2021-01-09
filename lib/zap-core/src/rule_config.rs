@@ -1,4 +1,4 @@
-use super::{Action, ComputedTarget, Label, ToolchainManager};
+use super::Label;
 use anyhow::*;
 use dashmap::DashMap;
 use std::collections::HashMap;
@@ -81,6 +81,14 @@ impl RuleConfig {
     pub fn insert(&self, key: String, val: CfgValue) -> &RuleConfig {
         self.0.insert(key, val);
         self
+    }
+
+    pub fn insert_str(&self, key: String, val: &str) -> &RuleConfig {
+        self.insert(key, CfgValue::String(val.to_string()))
+    }
+
+    pub fn insert_path(&self, key: String, val: &PathBuf) -> &RuleConfig {
+        self.insert(key, CfgValue::File(val.clone()))
     }
 
     pub fn get_label_list(&self, key: &str) -> Result<Vec<Label>, anyhow::Error> {

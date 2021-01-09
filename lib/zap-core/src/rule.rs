@@ -1,7 +1,4 @@
-use super::{Action, ComputedTarget, ConfigSpec, Label, RuleConfig, ToolchainManager};
-use anyhow::*;
-use std::collections::HashMap;
-use std::path::PathBuf;
+use super::{ConfigSpec, Label, RuleConfig};
 
 pub type RuleName = String;
 
@@ -57,6 +54,10 @@ impl Rule {
 
     pub fn mnemonic(&self) -> &str {
         &self.mnemonic
+    }
+
+    pub fn toolchains(&self) -> &[Label] {
+        &self.toolchains
     }
 
     pub fn config(&self) -> &ConfigSpec {

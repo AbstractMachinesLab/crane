@@ -1,5 +1,4 @@
-use super::{CfgValue, Label, Rule, RuleConfig};
-use std::path::PathBuf;
+use super::{Label, Rule, RuleConfig};
 
 /// A Target in the Zap dependency graph is a labeled instantiation of a rule plus a configuration
 /// object.
@@ -21,8 +20,11 @@ pub struct Target {
 
 impl Target {
     pub fn new(label: Label, rule: &Rule, cfg: RuleConfig) -> Target {
+        let mut deps = cfg.get_label_list("deps").unwrap_or(vec![]);
+        deps.extend_from_slice(rule.toolchains());
+
         Target {
-            deps: cfg.get_label_list("deps").unwrap(),
+            deps,
             cfg,
             label,
             rule: rule.clone(),

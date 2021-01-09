@@ -1,4 +1,4 @@
-use super::{Action, Label, Target, ToolchainManager};
+use super::{Action, Label, Target};
 use anyhow::*;
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
@@ -15,7 +15,7 @@ pub struct Dependency {
     pub outs: Vec<PathBuf>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ComputedTarget {
     pub target: Target,
 
@@ -146,17 +146,36 @@ impl ComputedTarget {
         bs_ctx: &mut BuildScript,
     ) -> Result<(), anyhow::Error> {
         let label = self.target.label().clone();
-        let dep_outs: Vec<PathBuf> = deps.iter().flat_map(|dep| dep.outs.clone()).collect();
-
-        self.deps = Some(deps.to_vec());
+        trace!("Sealing Computed Target {:?}", label.to_string());
 
         let config: serde_json::Value = self.target.config().clone().into();
 
+        let transitive_deps: serde_json::Value = serde_json::Value::Array(
+            deps.iter()
+                .map(|dep| {
+                    let mut map = serde_json::Map::new();
+                    map.insert(
+                        "label".to_string(),
+                        serde_json::Value::String(dep.label.to_string()),
+                    );
+                    map.insert(
+                        "outs".to_string(),
+                        serde_json::Value::Array(
+                            dep.outs
+                                .iter()
+                                .map(|p| serde_json::Value::String(p.to_str().unwrap().to_string()))
+                                .collect(),
+                        ),
+                    );
+                    serde_json::Value::Object(map)
+                })
+                .collect(),
+        );
         let compute_program = include_str!("compute_target.js")
             .replace("{LABEL_NAME}", &label.to_string())
             .replace("{RULE_NAME}", self.target.rule().name())
             .replace("{CONFIG}", &config.to_string())
-            .replace("{TRANSITIVE_DEPS}", "[]");
+            .replace("{TRANSITIVE_DEPS}", &transitive_deps.to_string());
 
         trace!("Executing: {}", &compute_program);
 
@@ -165,15 +184,10 @@ impl ComputedTarget {
             &compute_program,
         )?;
 
-        self.srcs = Some(self.target.config().get_file_list("srcs")?);
-
         let actions = action_map
             .get(&label)
-            .context(format!(
-                "Could not find declared actions for target  {:?}  - ",
-                &label.to_string()
-            ))?
-            .clone();
+            .map(|entry| entry.value().clone())
+            .unwrap_or(vec![]);
 
         let outs = output_map
             .get(&label)
@@ -183,6 +197,10 @@ impl ComputedTarget {
             ))?
             .clone();
 
+        let srcs = self.target.config().get_file_list("srcs").unwrap_or(vec![]);
+
+        self.deps = Some(deps.to_vec());
+        self.srcs = Some(srcs);
         self.outs = Some(outs);
         self.actions = Some(actions);
 

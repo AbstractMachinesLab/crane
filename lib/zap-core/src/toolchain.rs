@@ -1,59 +1,41 @@
 use super::*;
 
-/*
- *
-use std::collections::HashMap;
-use std::fmt::Debug;
-use std::path::PathBuf;
-pub trait Toolchain: CloneUnsized + Debug {
-    fn tools(&self) -> &HashMap<String, PathBuf>;
-
-    fn into_target(&self) -> &dyn Target;
+#[derive(Clone, Debug)]
+pub struct Toolchain {
+    target: Target,
+    rule: Rule,
+    archive: Archive,
 }
 
-pub trait CloneUnsized {
-    fn clone_boxed(&self) -> Box<dyn Toolchain>;
-}
-
-impl<T: Clone + Toolchain + 'static> CloneUnsized for T {
-    fn clone_boxed(&self) -> Box<dyn Toolchain> {
-        Box::new(self.clone())
-    }
-}
-
-*/
-
-#[derive(Default, Clone, Debug)]
-pub struct Toolchain {}
-
-#[derive(Default, Clone, Debug)]
-pub struct ToolchainManager {}
-
-impl ToolchainManager {
-    pub fn new() -> ToolchainManager {
-        ToolchainManager {}
+impl Toolchain {
+    pub fn new(rule: Rule, archive: Archive) -> Toolchain {
+        let cfg = Toolchain::archive_to_config(&archive);
+        let target = Target::new(Label::new(rule.name()), &rule, cfg);
+        Toolchain {
+            rule,
+            archive,
+            target,
+        }
     }
 
-    pub fn toolchains_as_targets(&self) -> Vec<Target> {
-        vec![]
-        /*
-        self.toolchains
-            .values()
-            .into_iter()
-            .map(|t| t.into_target().clone_boxed())
-            .collect()
-            */
+    pub fn label(&self) -> &Label {
+        &self.target.label()
     }
 
-    pub fn register(&mut self, _toolchain: Toolchain) -> &mut ToolchainManager {
-        /* self.toolchains
-            .insert(toolchain.into_target().label().clone(), toolchain);
-        o*/
-        self
+    pub fn as_target(&self) -> &Target {
+        &self.target
     }
 
-    pub fn get(&self, _label: &Label) -> &Toolchain {
-        todo!();
-        // &self.toolchains.get(&label).unwrap()
+    pub fn archive_to_config(archive: &Archive) -> RuleConfig {
+        let cfg = RuleConfig::default();
+
+        cfg.insert_str("name".to_string(), archive.name());
+        cfg.insert_str("prefix".to_string(), archive.prefix());
+        cfg.insert_str("sha1".to_string(), archive.sha1());
+        cfg.insert_str("tag".to_string(), archive.tag());
+        cfg.insert_path("unarchivedRoot".to_string(), archive.unarchived_root());
+        cfg.insert_str("url".to_string(), &archive.url());
+
+        cfg
     }
 }
