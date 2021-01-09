@@ -64,16 +64,20 @@ impl Archive {
         &self.unarchived_root
     }
 
-    pub fn sha1(&self) -> String {
-        self.sha1.clone()
+    pub fn tag(&self) -> &str {
+        &self.tag
     }
 
-    pub fn prefix(&self) -> String {
-        self.prefix.clone()
+    pub fn sha1(&self) -> &str {
+        &self.sha1
     }
 
-    pub fn name(&self) -> String {
-        self.name.clone()
+    pub fn prefix(&self) -> &str {
+        &self.prefix
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     pub fn file_name(&self) -> String {
