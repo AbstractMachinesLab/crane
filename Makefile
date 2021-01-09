@@ -24,7 +24,7 @@ release:
 	tar czf release.tar.gz -C ./target/release/ $(ZAP_EXE)
 
 .PHONY: install
-install: release
+install:
 	cargo install --path ./lib/zap-bin
 
 .PHONY: setup
