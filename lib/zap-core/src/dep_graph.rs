@@ -1,10 +1,10 @@
-use super::{Action, ComputedTarget, Dependency, Label, Target, ToolchainManager};
+use super::{Action, ComputedTarget, Dependency, Label, Target};
 use anyhow::{anyhow, Context};
 use daggy::{Dag, NodeIndex};
 use dashmap::DashMap;
 use log::debug;
 use petgraph::dot;
-use petgraph::{graph::DiGraph, Direction};
+use petgraph::{stable_graph::StableDiGraph, Direction};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use zap_buildscript::*;
@@ -32,7 +32,7 @@ use zap_buildscript::*;
 #[derive(Debug, Default)]
 pub struct DepGraph {
     /// The build graph from all of the Targets, linked by their Labels
-    pub _inner_graph: DiGraph<ComputedTarget, u32, u32>,
+    pub _inner_graph: StableDiGraph<ComputedTarget, ()>,
 
     /// A lookup map used to find a node in the graph by its label alone
     pub nodes: HashMap<Label, NodeIndex>,
@@ -40,7 +40,7 @@ pub struct DepGraph {
 
 impl DepGraph {
     pub fn from_targets(targets: &[Target]) -> Result<DepGraph, anyhow::Error> {
-        let mut dag: Dag<ComputedTarget, u32, u32> = Dag::new();
+        let mut dag: Dag<ComputedTarget, (), u32> = Dag::new();
         let mut nodes: HashMap<Label, NodeIndex> = HashMap::new();
 
         debug!("Building table of labels to node indices...");
@@ -59,9 +59,9 @@ impl DepGraph {
             debug!("{:?} depends on:", node.label());
             for label in node.target.deps().iter().cloned() {
                 let dep = nodes.get(&label);
-                debug!("\t-> {:?} ({:?})", &label, &dep);
+                debug!("-> {:?} ({:?})", &label, &dep);
                 if let Some(dep) = dep {
-                    let edge = (*node_idx, *dep);
+                    let edge = (*dep, *node_idx);
                     edges.push(edge);
                 } else {
                     return Err(anyhow!(format!(
@@ -83,41 +83,47 @@ impl DepGraph {
             &edges.len()
         );
 
+        let mut _inner_graph: StableDiGraph<ComputedTarget, ()> = dag.into_graph().into();
+        let mut nodes: HashMap<Label, NodeIndex> = HashMap::new();
+
+        let mut walker = petgraph::visit::Topo::new(&_inner_graph);
+        while let Some(idx) = walker.next(&_inner_graph) {
+            let label = _inner_graph[idx].target.label().clone();
+            nodes.insert(label, idx);
+        }
+
         Ok(DepGraph {
-            _inner_graph: dag.into_graph(),
+            _inner_graph,
             nodes,
         })
     }
 
-    pub fn scoped(self, target: Label) -> Result<DepGraph, anyhow::Error> {
-        let mut build_plan = self;
-
+    pub fn scoped(&mut self, target: &Label) -> Result<&mut DepGraph, anyhow::Error> {
         if target.is_all() {
-            Ok(build_plan)
+            Ok(self)
         } else {
-            let node_index = build_plan
+            let node_index = self
                 .nodes
                 .get(&target)
                 .context(format!("Could not find node: {:?}", &target))?;
-            let nodes_to_keep = DepGraph::subgraph(&mut build_plan._inner_graph, *node_index);
-            build_plan
-                ._inner_graph
+            let nodes_to_keep = DepGraph::subgraph(&mut self._inner_graph, *node_index);
+            self._inner_graph
                 .retain_nodes(|_g, node| nodes_to_keep.contains_key(&node));
-            Ok(build_plan)
+
+            Ok(self)
         }
     }
 
     fn subgraph(
-        mut graph: &mut DiGraph<ComputedTarget, u32, u32>,
+        mut graph: &mut StableDiGraph<ComputedTarget, ()>,
         node: NodeIndex,
-    ) -> HashMap<NodeIndex, ()> {
+    ) -> HashMap<NodeIndex, Label> {
         let mut nodes = HashMap::new();
-        nodes.insert(node, ());
-        nodes.insert(node, ());
+        nodes.insert(node, graph[node].target.label().clone());
 
-        let mut walker = graph.neighbors_directed(node, Direction::Outgoing).detach();
+        let mut walker = graph.neighbors_directed(node, Direction::Incoming).detach();
         while let Some(neighbor) = walker.next_node(&graph) {
-            nodes.insert(neighbor, ());
+            nodes.insert(neighbor, graph[neighbor].target.label().clone());
             nodes.extend(DepGraph::subgraph(&mut graph, neighbor));
         }
 
@@ -178,16 +184,38 @@ impl DepGraph {
         Ok(&self._inner_graph[node_index])
     }
 
+    pub fn seal(
+        &mut self,
+        action_map: &DashMap<Label, Vec<Action>>,
+        output_map: &DashMap<Label, Vec<PathBuf>>,
+        mut bs_ctx: &mut BuildScript,
+    ) -> Result<&mut DepGraph, anyhow::Error> {
+        let mut walker = petgraph::visit::Topo::new(&self._inner_graph);
+        while let Some(idx) = walker.next(&self._inner_graph) {
+            &mut self.seal_target(idx, action_map, output_map, &mut bs_ctx)?;
+        }
+
+        Ok(self)
+    }
+
+    pub fn targets(&mut self) -> Vec<ComputedTarget> {
+        let mut walker = petgraph::visit::Topo::new(&self._inner_graph);
+
+        let mut nodes = vec![];
+        while let Some(idx) = walker.next(&self._inner_graph) {
+            nodes.push(self._inner_graph[idx].clone());
+        }
+
+        nodes
+    }
+
     pub fn target_names(&mut self) -> Vec<String> {
-        self._inner_graph.reverse();
         let mut walker = petgraph::visit::Topo::new(&self._inner_graph);
 
         let mut nodes: Vec<String> = vec![];
         while let Some(idx) = walker.next(&self._inner_graph) {
             nodes.push(self._inner_graph[idx].label().to_string());
         }
-
-        self._inner_graph.reverse();
 
         nodes
     }
@@ -506,5 +534,4 @@ Caused by:
         assert_eq!(":a", deps[0].label.to_string());
         assert_eq!("[]", format!("{:?}", deps[0].outs));
     }
-}
 */
