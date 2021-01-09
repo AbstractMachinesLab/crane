@@ -1,4 +1,4 @@
-use super::{parsers, Buildfile, RuleManager, ZAPFILE};
+use super::{parsers, Buildfile, RuleManager, ToolchainManager, ZAPFILE};
 use anyhow::Context;
 use log::*;
 use std::fs;
@@ -8,7 +8,10 @@ use zap_core::{Workspace, WORKSPACE};
 pub struct WorkspaceScanner {}
 
 impl WorkspaceScanner {
-    pub fn scan(root: &PathBuf) -> Result<Workspace, anyhow::Error> {
+    pub fn scan(
+        root: &PathBuf,
+        toolchain_manager: &ToolchainManager,
+    ) -> Result<Workspace, anyhow::Error> {
         let cwd = fs::canonicalize(&root)?;
         debug!("Scanning workspace at: {:?}", cwd);
 
@@ -17,7 +20,7 @@ impl WorkspaceScanner {
             .parent()
             .context("Could not get parent dir for the workspace file path")?
             .to_path_buf();
-        WorkspaceScanner::from_toml_file(workspace_file, &workspace_root)
+        WorkspaceScanner::from_toml_file(workspace_file, &workspace_root, &toolchain_manager)
     }
 
     pub fn collect_targets<'a>(
@@ -30,7 +33,6 @@ impl WorkspaceScanner {
         let mut targets = vec![];
         for path in paths {
             let buildfile = Buildfile::from_file(&workspace.root(), &path, &rule_manager)?;
-            trace!("Read buildfile: {:#?}", buildfile);
             for target in buildfile.targets() {
                 targets.push(target);
             }
@@ -40,14 +42,18 @@ impl WorkspaceScanner {
         Ok(workspace.with_targets(targets))
     }
 
-    pub fn from_toml_file(path: PathBuf, root: &PathBuf) -> Result<Workspace, anyhow::Error> {
+    pub fn from_toml_file(
+        path: PathBuf,
+        root: &PathBuf,
+        toolchain_manager: &ToolchainManager,
+    ) -> Result<Workspace, anyhow::Error> {
         let toml = fs::read_to_string(&path)
             .context(format!("Could not read file {:?}", &path))?
             .parse::<toml::Value>()
             .context(format!("Could not parse file {:?} as TOML", &path))?;
 
         debug!("Loading workspace file from {:?}", &path);
-        parsers::workspace::parse(toml, root)
+        parsers::workspace::parse(toml, root, toolchain_manager)
     }
 
     fn find_workspace_file_upwards(cwd: &PathBuf) -> Result<PathBuf, anyhow::Error> {

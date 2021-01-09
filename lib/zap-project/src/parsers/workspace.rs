@@ -1,8 +1,14 @@
+use crate::*;
 use anyhow::Context;
+use log::*;
 use std::path::PathBuf;
-use zap_core::Workspace;
+use zap_core::*;
 
-pub fn parse(toml: toml::Value, root: &PathBuf) -> Result<Workspace, anyhow::Error> {
+pub fn parse(
+    toml: toml::Value,
+    root: &PathBuf,
+    toolchain_manager: &ToolchainManager,
+) -> Result<Workspace, anyhow::Error> {
     let workspace = toml
         .get("workspace")
         .context("Workspace file must have a workspace section")?;
@@ -15,39 +21,32 @@ pub fn parse(toml: toml::Value, root: &PathBuf) -> Result<Workspace, anyhow::Err
 
     let workspace = Workspace::new(name, root)?;
 
-    /*
-    let toolchains = if let Some(toolchains) = toml.get("toolchains") {
+    let toolchain_archives = if let Some(toolchains) = toml.get("toolchains") {
         let table = toolchains.as_table().context(format!("Expected the [toolchains] section in your Workspace.toml to be a TOML table, but instead found a {}", toolchains.type_str()))?;
-        parse_toolchains(*table)?
+        parse_archives(table)?
     } else {
         vec![]
     };
 
-    debug!("Found {} Toolchains: {:?}", toolchains.len(), toolchains);
-    for toolchain in toolchains {
-        workspace.toolchain_manager_mut().register(toolchain);
+    debug!("Found {} Toolchains:", toolchain_archives.len());
+    for archive in toolchain_archives {
+        debug!("* {:?}", archive);
+        toolchain_manager.register_archive(archive);
     }
-    */
 
     Ok(workspace)
 }
 
-/*
-pub fn parse_toolchains(
-    toolchains: toml::value::Table,
-) -> Result<Vec<Box<dyn Toolchain>>, anyhow::Error> {
+pub fn parse_archives(archives: &toml::value::Table) -> Result<Vec<Archive>, anyhow::Error> {
     let mut t = vec![];
-    for (name, config) in toolchains {
-        t.push(parse_toolchain(name, config)?);
+    for (name, config) in archives {
+        t.push(parse_archive(name.to_string(), config)?);
     }
     Ok(t)
 }
 
-pub fn parse_toolchain(
-    name: String,
-    cfg: toml::Value,
-) -> Result<Box<dyn Toolchain>, inyhow::Error> {
-    let archive = Archive::new();
+pub fn parse_archive(name: String, cfg: &toml::Value) -> Result<Archive, anyhow::Error> {
+    let archive = Archive::new().with_name(name);
     let archive = cfg
         .get("archive_url")
         .and_then(|x| x.as_str())
@@ -75,7 +74,6 @@ pub fn parse_toolchain(
         .unwrap_or(archive);
     Ok(archive)
 }
-*/
 
 #[cfg(test)]
 mod tests {
