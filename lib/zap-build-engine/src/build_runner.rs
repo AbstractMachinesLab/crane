@@ -49,7 +49,6 @@ impl BuildRunner {
     ) -> Result<u32, anyhow::Error> {
         let mut targets = 0;
 
-        self.dep_graph._inner_graph.reverse();
         let mut walker = Topo::new(&self.dep_graph._inner_graph);
 
         while let Some(idx) = walker.next(&self.dep_graph._inner_graph) {
