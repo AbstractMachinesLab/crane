@@ -1,9 +1,13 @@
+pub mod depgraph;
 pub mod rules;
 pub mod target;
+pub mod toolchain;
 pub mod workspace;
 
+pub use depgraph::*;
 pub use rules::*;
 pub use target::*;
+pub use toolchain::*;
 pub use workspace::*;
 
 // pub mod build;

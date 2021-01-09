@@ -39,8 +39,10 @@ impl Zap {
 
 #[derive(StructOpt, Debug, Clone)]
 enum Goal {
+    Depgraph(DepGraphGoal),
     Rules(RulesGoal),
     Target(TargetGoal),
+    Toolchain(ToolchainGoal),
     Workspace(WorkspaceGoal),
     // Build(BuildGoal),
     // Clean(CleanGoal),
@@ -56,8 +58,10 @@ enum Goal {
 impl Goal {
     async fn run(self) -> Result<(), anyhow::Error> {
         match self {
+            Goal::Depgraph(x) => x.run().await,
             Goal::Rules(x) => x.run().await,
             Goal::Target(x) => x.run().await,
+            Goal::Toolchain(x) => x.run().await,
             Goal::Workspace(x) => x.run().await,
             // Goal::Build(x) => x.run(),
             // Goal::Clean(x) => x.run(),

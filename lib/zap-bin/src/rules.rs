@@ -7,22 +7,14 @@ use zap_project::*;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(
-    name = "rules",
+    name = "rule",
     setting = structopt::clap::AppSettings::ColoredHelp,
     about = "managing rules"
 )]
-pub struct RulesGoal {
-    #[structopt(subcommand, help = "the command to run")]
-    cmd: Action,
-}
-
-#[derive(StructOpt, Debug, Clone)]
-#[structopt(
-    setting = structopt::clap::AppSettings::ColoredHelp,
-)]
-enum Action {
+pub enum RulesGoal {
     #[structopt(help = r"List all the local and global Zap rules.")]
     List,
+
     DumpActions {
         #[structopt(help = r"The target to dump actions for.
 
@@ -33,6 +25,7 @@ enum Action {
     ")]
         target: String,
     },
+
     DumpOutputs {
         #[structopt(help = r"The target to dump outputs for.
 
@@ -51,10 +44,10 @@ impl RulesGoal {
         let mut zap = ZapWorker::new(config)?;
         zap.load(&PathBuf::from(&".")).await?;
 
-        match self.cmd {
-            Action::List => self.list_rules(&mut zap),
-            Action::DumpActions { ref target } => self.dump_actions(&target, &mut zap),
-            Action::DumpOutputs { ref target } => self.dump_outputs(&target, &mut zap),
+        match self {
+            RulesGoal::List => self.list_rules(&mut zap),
+            RulesGoal::DumpActions { ref target } => self.dump_actions(&target, &mut zap),
+            RulesGoal::DumpOutputs { ref target } => self.dump_outputs(&target, &mut zap),
         }
     }
 
@@ -69,20 +62,16 @@ impl RulesGoal {
 
     fn dump_outputs(&self, target: &str, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
         let label: Label = target.into();
-        let dep_graph = &mut zap.dep_graph;
-        dep_graph.seal_target_by_label(
-            &label,
+        let dep_graph = &mut zap.dep_graph.scoped(&label)?.seal(
             &zap.action_map,
             &zap.output_map,
             &mut zap.bs_ctx,
         )?;
-        let computed_target = dep_graph.find_node(&label).context(format!(
-            "Could not find target with label {}",
-            label.to_string()
-        ))?;
 
-        for output in computed_target.outs() {
-            info!("{:?}", output);
+        for computed_target in dep_graph.targets() {
+            for output in computed_target.outs() {
+                println!("{}", output.to_str().unwrap());
+            }
         }
 
         Ok(())
@@ -90,20 +79,16 @@ impl RulesGoal {
 
     fn dump_actions(&self, target: &str, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
         let label: Label = target.into();
-        let dep_graph = &mut zap.dep_graph;
-        dep_graph.seal_target_by_label(
-            &label,
+        let dep_graph = &mut zap.dep_graph.scoped(&label)?.seal(
             &zap.action_map,
             &zap.output_map,
             &mut zap.bs_ctx,
         )?;
-        let computed_target = dep_graph.find_node(&label).context(format!(
-            "Could not find target with label {}",
-            label.to_string()
-        ))?;
 
-        for action in computed_target.actions() {
-            info!("{:?}", action);
+        for computed_target in dep_graph.targets() {
+            for action in computed_target.actions() {
+                println!("{:?}", action);
+            }
         }
 
         Ok(())
