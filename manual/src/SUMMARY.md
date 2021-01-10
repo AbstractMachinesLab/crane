@@ -1,15 +1,16 @@
 # Summary
 
 - [Introduction](./introduction.md)
-- [Getting Started](./getting-started.md)
-  - [Installation](./installation.md)
-  - [First steps](./first-steps.md)
-  - [How Zap Works](./how-zap-works.md)
+- [Getting Started](./getting-started/index.md)
+  - [Installation](./getting-started/installation.md)
+  - [First steps](./getting-started/first-steps.md)
+  - [How Zap Works](./getting-started/how-zap-works.md)
 
 --------------------------------------------------------------------------------
 
 - [Guides](./guides/index.md)
   - [Migrating from Rebar3](./guides/rebar3.md)
+  - [Writing custom Rules](./guides/custom-rules.md)
 - [Examples](./examples/index.md)
   - [Hello World in Erlang / Elixir](./examples/hello-world.md)
 

@@ -6,9 +6,12 @@ It's built on Deno and Rust.
 
 ## Features
 
-* Fast by default &mdash; never wait on work that didn't need to be done.
-* Built to be Extended &mdash; write new rules and toolchains in Javascript.
-* Automatic Toolchains &mdash; manage language installations per project.
+* Fast by default. Every build action is cached and reused, and all builds are
+  reproducible.
+* Ships only a single executable.
+* Designed to be extended. New rules and toolchains can be written quickly and
+  easily in Javascript.
+* Automatically manages language installations per project for you.
 
 ## Philosophy
 
