@@ -108,61 +108,37 @@ name = "tiny_lib"
         assert_eq!(workspace.name(), "tiny_lib");
     }
 
-    /*
-        #[test]
-        fn uses_defaults() {
-            let toml: toml::Value = r#"
+    #[test]
+    fn allows_for_custom_toolchains() {
+        let toml: toml::Value = r#"
     [workspace]
     name = "tiny_lib"
 
     [toolchains]
+    erlang = { archive_url = "official", prefix = "otp-prefix" }
+    gleam = { archive_url = "https://github.com/forked/gleam", sha1 = "sha1-test" }
 
     [dependencies]
             "#
-            .parse::<toml::Value>()
-            .unwrap();
-            let workspace = Workspace::try_from(toml).unwrap();
-            assert_eq!(
-                workspace.toolchains().erlang().archive().url(),
-                toolchains::erlang::Toolchain::default().archive().url()
-            );
-            assert_eq!(
-                workspace.toolchains().erlang().archive().sha1(),
-                toolchains::erlang::Toolchain::default().archive().sha1()
-            );
-            assert_eq!(
-                workspace.toolchains().erlang().archive().prefix(),
-                toolchains::erlang::Toolchain::default().archive().prefix()
-            );
-            assert_eq!(workspace.dependencies().len(), 0);
-        }
-
-        #[test]
-        fn allows_for_custom_toolchains() {
-            let toml: toml::Value = r#"
-    [workspace]
-    name = "tiny_lib"
-
-    [toolchains]
-    erlang = { archive_url = "master", prefix = "otp-master" }
-    gleam = { archive_url = "https://github.com/forked/gleam", sha1 = "test" }
-
-    [dependencies]
-            "#
-            .parse::<toml::Value>()
-            .unwrap();
-            let workspace = Workspace::try_from(toml).unwrap();
-            assert_eq!(workspace.toolchains().erlang().archive().url(), "master");
-            assert_eq!(
-                workspace.toolchains().erlang().archive().prefix(),
-                "otp-master"
-            );
-            assert_eq!(
-                workspace.toolchains().gleam().archive().url(),
-                "https://github.com/forked/gleam"
-            );
-            assert_eq!(workspace.toolchains().gleam().archive().sha1(), "test");
-            assert_eq!(workspace.dependencies().len(), 0);
-        }
-        */
+        .parse::<toml::Value>()
+        .unwrap();
+        let toolchain_manager = ToolchainManager::default();
+        let workspace = parse(toml, &PathBuf::from("."), &toolchain_manager).unwrap();
+        assert_eq!(
+            "official",
+            toolchain_manager.get_archive("erlang").unwrap().url()
+        );
+        assert_eq!(
+            "otp-prefix",
+            toolchain_manager.get_archive("erlang").unwrap().prefix()
+        );
+        assert_eq!(
+            "https://github.com/forked/gleam",
+            toolchain_manager.get_archive("gleam").unwrap().url()
+        );
+        assert_eq!(
+            "sha1-test",
+            toolchain_manager.get_archive("gleam").unwrap().sha1()
+        );
+    }
 }

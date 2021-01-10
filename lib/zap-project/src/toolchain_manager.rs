@@ -56,6 +56,10 @@ impl ToolchainManager {
         self.toolchains.get(label).map(|r| r.value().clone())
     }
 
+    pub fn get_archive(&self, name: &str) -> Option<Archive> {
+        self.archives.get(name).map(|r| r.value().clone())
+    }
+
     pub fn targets(&self) -> Vec<Target> {
         let mut targets = vec![];
         for entry in self.toolchains.iter() {
