@@ -243,7 +243,6 @@ impl<'a> Sandbox<'a> {
         for src in inputs {
             // find in cache
             let dst = self.root.join(&src);
-            let src = self.node.label().path().join(&src);
             if let Some(dst_parent) = &dst.parent() {
                 std::fs::create_dir_all(dst_parent)
                     .context(format!(

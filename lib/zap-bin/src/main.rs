@@ -16,7 +16,7 @@ struct Zap {
     quiet: bool,
 
     #[structopt(subcommand, help = "the command to run")]
-    cmd: Goal,
+    cmd: Option<Goal>,
 }
 
 impl Zap {
@@ -27,10 +27,8 @@ impl Zap {
             .parse_env("ZAP_LOG")
             .try_init()
             .unwrap();
-        /* NOTE(@ostera): restore build all as default target
         let cmd = self.cmd.unwrap_or(Goal::Build(BuildGoal::all()));
-        */
-        match self.cmd.run().await {
+        match cmd.run().await {
             Ok(()) => (),
             Err(err) => error!("{:?}", &err),
         }
@@ -39,12 +37,12 @@ impl Zap {
 
 #[derive(StructOpt, Debug, Clone)]
 enum Goal {
+    Build(BuildGoal),
     Depgraph(DepGraphGoal),
     Rules(RulesGoal),
     Target(TargetGoal),
     Toolchain(ToolchainGoal),
     Workspace(WorkspaceGoal),
-    // Build(BuildGoal),
     // Clean(CleanGoal),
     // Deps(DepsGoal),
     // Fmt(FmtGoal),
@@ -58,12 +56,12 @@ enum Goal {
 impl Goal {
     async fn run(self) -> Result<(), anyhow::Error> {
         match self {
+            Goal::Build(x) => x.run().await,
             Goal::Depgraph(x) => x.run().await,
             Goal::Rules(x) => x.run().await,
             Goal::Target(x) => x.run().await,
             Goal::Toolchain(x) => x.run().await,
             Goal::Workspace(x) => x.run().await,
-            // Goal::Build(x) => x.run(),
             // Goal::Clean(x) => x.run(),
             // Goal::Deps(x) => x.run(),
             // Goal::Fmt(x) => x.run(),

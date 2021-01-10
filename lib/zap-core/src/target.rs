@@ -1,11 +1,28 @@
-use super::{Label, Rule, RuleConfig};
+use super::{Archive, Label, Rule, RuleConfig};
 
 /// A Target in the Zap dependency graph is a labeled instantiation of a rule plus a configuration
 /// object.
 ///
+/// Global targets normally have an Archive as well, such as for Toolchains that need to be
+/// downloaded and compiled.
+///
 #[derive(Debug, Clone)]
-pub struct Target {
-    /// The name of this rule instance.
+pub enum Target {
+    /// Local targets are created via build files in a workspace.
+    ///
+    /// These are not shared with any workspace.
+    ///
+    Local(LocalTarget),
+
+    /// Global targets are created via toolchains and archives and are built once
+    /// and cached across workspaces.
+    ///
+    Global(GlobalTarget),
+}
+
+#[derive(Debug, Clone)]
+pub struct LocalTarget {
+    /// The name of this local target.
     label: Label,
 
     /// The dependencies of this target.
@@ -18,33 +35,90 @@ pub struct Target {
     cfg: RuleConfig,
 }
 
+#[derive(Debug, Clone)]
+pub struct GlobalTarget {
+    /// The name of this global target.
+    label: Label,
+
+    /// The rule used to build this target.
+    rule: Rule,
+
+    /// The target's configuration. To be type-checked against the rule.
+    cfg: RuleConfig,
+
+    /// Toolchain targets will have an archive that we need to download
+    archive: Archive,
+}
+
 impl Target {
-    pub fn new(label: Label, rule: &Rule, cfg: RuleConfig) -> Target {
+    pub fn global(label: Label, rule: &Rule, cfg: RuleConfig, archive: Archive) -> Target {
+        Target::Global(GlobalTarget {
+            cfg,
+            label,
+            archive,
+            rule: rule.clone(),
+        })
+    }
+
+    pub fn local(label: Label, rule: &Rule, cfg: RuleConfig) -> Target {
         let mut deps = cfg.get_label_list("deps").unwrap_or(vec![]);
         deps.extend_from_slice(rule.toolchains());
 
-        Target {
+        Target::Local(LocalTarget {
             deps,
             cfg,
             label,
             rule: rule.clone(),
+        })
+    }
+
+    pub fn is_local(&self) -> bool {
+        match self {
+            Target::Local(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_global(&self) -> bool {
+        match self {
+            Target::Global(_) => true,
+            _ => false,
         }
     }
 
     pub fn config(&self) -> &RuleConfig {
-        &self.cfg
+        match self {
+            Target::Global(t) => &t.cfg,
+            Target::Local(t) => &t.cfg,
+        }
     }
 
     pub fn rule(&self) -> &Rule {
-        &self.rule
+        match self {
+            Target::Global(t) => &t.rule,
+            Target::Local(t) => &t.rule,
+        }
     }
 
     pub fn label(&self) -> &Label {
-        &self.label
+        match self {
+            Target::Global(t) => &t.label,
+            Target::Local(t) => &t.label,
+        }
     }
 
-    pub fn deps(&self) -> &[Label] {
-        &self.deps
+    pub fn deps(&self) -> Vec<Label> {
+        match self {
+            Target::Global(_) => vec![],
+            Target::Local(t) => t.deps.clone(),
+        }
+    }
+
+    pub fn archive(&self) -> Option<&Archive> {
+        match self {
+            Target::Global(t) => Some(&t.archive),
+            Target::Local(_) => None,
+        }
     }
 }
 
@@ -53,8 +127,8 @@ impl std::fmt::Display for Target {
         write!(
             fmt,
             "{}(name = \"{}\")",
-            self.rule.mnemonic(),
-            self.label.to_string()
+            self.rule().mnemonic(),
+            self.label().to_string()
         )
     }
 }

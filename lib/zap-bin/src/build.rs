@@ -1,9 +1,9 @@
 use anyhow::Context;
-use zap_build_engine::BuildRunner;
-use zap_core::{DepGraph, Label};
-use zap_project::WorkspaceScanner;
 use log::*;
 use structopt::StructOpt;
+use zap_build_engine::*;
+use zap_core::*;
+use zap_project::*;
 
 use std::path::PathBuf;
 
@@ -14,13 +14,6 @@ use std::path::PathBuf;
     about = "Build a target in this Workspace",
 )]
 pub struct BuildGoal {
-    #[structopt(
-        short = "p",
-        long = "print-graph",
-        help = "prints the build graph in GraphViz format"
-    )]
-    print_graph: bool,
-
     #[structopt(
         help = r"The target to build.
 
@@ -39,38 +32,34 @@ Use //... to build the entire project.
 impl BuildGoal {
     pub fn all() -> BuildGoal {
         BuildGoal {
-            print_graph: false,
             target: "//...".to_string(),
         }
     }
 
-    pub fn run(self) -> Result<(), anyhow::Error> {
+    pub async fn run(self) -> Result<(), anyhow::Error> {
         let t0 = std::time::Instant::now();
         let target: Label = self.target.into();
         debug!("Host: {}", guess_host_triple::guess_host_triple().unwrap());
         debug!("Target: {}", &target.to_string());
 
-        let root = PathBuf::from(&".");
-        let workspace = WorkspaceScanner::scan(&root).context("Could not create a workspace.")?;
-        debug!("Workspace: {}", &workspace.name());
+        let config = ZapConfig::new()?;
+        let mut zap = ZapWorker::new(config)?;
+        zap.load(&PathBuf::from(&".")).await?;
 
-        info!("Planning build...");
-        let dep_graph = DepGraph::from_targets(&workspace.targets())?.scoped(target.clone())?;
+        let mut runner = BuildRunner::new(zap);
 
-        if self.print_graph {
-            info!("Printing build graph as GraphViz Dot...");
-            println!("{}", dep_graph.to_graphviz());
-            let t1 = t0.elapsed().as_millis();
-            info!("Printed {} in {}ms", target.to_string(), t1);
+        let name = if target.is_all() {
+            "workspace".to_string()
         } else {
-            let mut runner = BuildRunner::new(workspace, dep_graph);
+            target.to_string()
+        };
+        print!("🔨 Building {}", name);
 
-            info!("Building target: {}", &target.to_string());
-            let artifacts = runner.execute()?;
+        runner.execute()?;
 
-            let t1 = t0.elapsed().as_millis();
-            info!("Built {} artifacts in {}ms", artifacts, t1);
-        }
+        let t1 = t0.elapsed().as_millis();
+        println!("\x1B[1000D\x1B[K\r⚡ done in {}ms", t1);
+
         Ok(())
     }
 }

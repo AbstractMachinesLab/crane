@@ -9,6 +9,10 @@ impl RuleScanner {
     pub fn scan(root: &PathBuf) -> Result<Vec<PathBuf>, anyhow::Error> {
         let root = fs::canonicalize(&root)?;
         debug!("Scanning for rules in {:?}", root);
-        FileScanner::new().find_with_pattern(&root, ".*\\.js$")
+        let mut fs = FileScanner::new();
+
+        fs.starting_from(root).matching_path("\\.js$")?;
+
+        fs.find_files()
     }
 }

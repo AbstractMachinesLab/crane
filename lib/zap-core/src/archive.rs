@@ -20,14 +20,14 @@ impl Default for ArchiveKind {
 
 #[derive(Debug, Clone, Default)]
 pub struct Archive {
-    /// The path to the unarchived contents
-    unarchived_root: PathBuf,
+    /// The root of the cache used to compute paths
+    cache_root: PathBuf,
 
+    /// The path to the unarchived contents
     kind: ArchiveKind,
     url: String,
     sha1: String,
     name: String,
-    tag: String,
     prefix: String,
 }
 
@@ -38,9 +38,16 @@ impl Archive {
 
     pub fn hash(&self) -> String {
         let mut hasher = Sha1::new();
-        let archive = format!("{}:{}", &self.url, &self.sha1);
+        let archive = format!("{}:{}:{}", &self.url(), &self.sha1(), &self.prefix());
         hasher.input_str(&archive.as_str());
         hasher.result_str()
+    }
+
+    pub fn kind(&self) -> String {
+        match self.kind {
+            ArchiveKind::Source => "source".to_string(),
+            ArchiveKind::Release => "release".to_string(),
+        }
     }
 
     pub fn url(&self) -> String {
@@ -48,24 +55,15 @@ impl Archive {
             ArchiveKind::Source => self.url.clone(),
             ArchiveKind::Release => {
                 let host_triple = guess_host_triple::guess_host_triple().unwrap();
-                format!(
-                    "{prefix}/releases/download/{tag}/{name}-{host_triple}.{ext}",
-                    prefix = self.url.clone(),
-                    tag = self.tag.clone(),
-                    name = self.name.clone(),
-                    host_triple = host_triple,
-                    ext = "tar.gz",
-                )
+                self.url.replace("{HOST_TRIPLE}", host_triple)
             }
         }
     }
 
-    pub fn unarchived_root(&self) -> &PathBuf {
-        &self.unarchived_root
-    }
-
-    pub fn tag(&self) -> &str {
-        &self.tag
+    pub fn unarchived_root(&self) -> PathBuf {
+        self.cache_root
+            .join(format!("{}-{}", self.name(), self.hash()))
+            .join(self.prefix())
     }
 
     pub fn sha1(&self) -> &str {
@@ -84,12 +82,12 @@ impl Archive {
         "toolchain.tar.gz".to_string()
     }
 
-    pub fn with_url(self, url: String) -> Archive {
-        Archive { url, ..self }
+    pub fn with_cache_root(self, cache_root: PathBuf) -> Archive {
+        Archive { cache_root, ..self }
     }
 
-    pub fn with_tag(self, tag: String) -> Archive {
-        Archive { tag, ..self }
+    pub fn with_url(self, url: String) -> Archive {
+        Archive { url, ..self }
     }
 
     pub fn with_sha1(self, sha1: String) -> Archive {
@@ -155,11 +153,31 @@ impl Archive {
             Ok(true)
         } else {
             Err(anyhow!(
-                "Expected archive to have SHA1 {} but found {} instead",
-                self.sha1,
-                hash
+                r#"The archive we tried to download had a different SHA-1 than what we expected. Is the SHA-1 wrong?
+
+We expected "{expected_sha}"
+
+But found "{found_sha}"
+
+If this is the right SHA-1 you can fix this in your Workspace.toml file
+under [toolchains.{name}] by changing the `sha1` key to this:
+
+sha1 = "{found_sha}"
+
+"#,
+                expected_sha = self.sha1,
+                found_sha = hash,
+                name = self.name
             ))
         }
+    }
+
+    pub fn clean(&self, outdir: &PathBuf) -> Result<(), anyhow::Error> {
+        info!("Cleaning archive {:?}", &outdir);
+
+        let _ = std::fs::remove_dir_all(&outdir);
+
+        Ok(())
     }
 
     pub fn download(&self, outdir: &PathBuf) -> Result<(), anyhow::Error> {

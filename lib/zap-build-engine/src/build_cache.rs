@@ -86,13 +86,30 @@ impl BuildCache {
     /// hash of the files to determine if the cache is corrupted.
     pub fn is_cached(&mut self, node: &ComputedTarget) -> Result<bool, anyhow::Error> {
         let hash = node.hash();
-        let cache_path = self.root.join(&hash);
-        if std::fs::metadata(&cache_path).is_ok() {
-            debug!("Cache hit for {:?} at {:?}", node.label(), cache_path);
-            Ok(true)
-        } else {
-            debug!("No cache hit for {:?}", node.label());
-            Ok(false)
+
+        let hash_path = self.root.join(&hash);
+        debug!("Checking if {:?} is in the cache...", hash_path);
+        if std::fs::metadata(&hash_path).is_ok() {
+            debug!(
+                "Cache hit for {} at {:?}",
+                node.label().to_string(),
+                hash_path
+            );
+            return Ok(true);
         }
+
+        let named_path = self.root.join(format!("{}-{}", node.label().name(), &hash));
+        debug!("Checking if {:?} is in the cache...", named_path);
+        if std::fs::metadata(&named_path).is_ok() {
+            debug!(
+                "Cache hit for {} at {:?}",
+                node.label().to_string(),
+                named_path
+            );
+            return Ok(true);
+        }
+
+        debug!("No cache hit for {}", node.label().to_string());
+        Ok(false)
     }
 }

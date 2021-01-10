@@ -190,7 +190,17 @@ impl ZapWorker {
                     args
                 );
 
-                let action = Action::exec(cmd).args(&args).clone().build();
+                let cwd: Option<PathBuf> = obj
+                    .get("cwd")
+                    .and_then(|val| val.as_str())
+                    .map(|cwd| PathBuf::from(cwd.to_string()));
+
+                let mut action = Action::exec(cmd);
+                action.args(&args);
+                if let Some(cwd) = cwd {
+                    action.cwd(&cwd);
+                }
+                let action = action.build();
 
                 match action_map.get(&label) {
                     None => action_map.insert(label, vec![action]),
@@ -208,6 +218,7 @@ impl ZapWorker {
         );
 
         let toolchain_manager = self.toolchain_manager.clone();
+        let cache_root = self.config.cache_root.clone();
         self.bs_ctx.runtime.register_op(
             "Zap.Toolchain",
             deno_core::json_op_sync(move |_state, json, _zero_copy| {
@@ -217,7 +228,7 @@ impl ZapWorker {
                 (*toolchain_manager)
                     .read()
                     .unwrap()
-                    .register_toolchain(rule);
+                    .register_toolchain(rule, cache_root.clone());
 
                 Ok(Value::from(""))
             }),
@@ -287,7 +298,10 @@ impl ZapWorker {
             .context(format!("Expected 'defaults' to be an Object"))?
             .iter()
         {
-            let typed_value = (v.clone(), config.get(k).unwrap().clone()).into();
+            let t = config
+                .get(k)
+                .context(format!("Could not find type for key {:?}", k))?;
+            let typed_value = (v.clone(), t.clone()).into();
             default_cfg.insert(k.to_string(), typed_value);
         }
         let defaults = RuleConfig(default_cfg);

@@ -39,10 +39,11 @@ impl ToolchainManager {
         Ok(())
     }
 
-    pub fn register_toolchain(&self, rule: Rule) {
+    pub fn register_toolchain(&self, rule: Rule, cache_root: PathBuf) {
         let name = rule.name().to_string();
         if let Some(archive) = self.archives.get(rule.name()) {
-            let toolchain = Toolchain::new(rule, archive.value().clone());
+            let toolchain =
+                Toolchain::new(rule, archive.value().clone().with_cache_root(cache_root));
             self.toolchains.insert(name, toolchain);
         }
     }

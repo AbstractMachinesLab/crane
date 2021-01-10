@@ -83,12 +83,16 @@ impl ComputedTarget {
     }
 
     pub fn hash(&self) -> String {
-        self.hash.clone().unwrap_or_else(|| {
-            panic!(
-                "ComputedTarget {:?} has not been hashed yet!",
-                self.label().to_string()
-            )
-        })
+        if self.target.is_local() {
+            self.hash.clone().unwrap_or_else(|| {
+                panic!(
+                    "ComputedTarget {:?} has not been hashed yet!",
+                    self.label().to_string()
+                )
+            })
+        } else {
+            self.target.archive().unwrap().hash()
+        }
     }
 
     pub fn label(&self) -> &Label {
@@ -144,9 +148,28 @@ impl ComputedTarget {
         action_map: &DashMap<Label, Vec<Action>>,
         output_map: &DashMap<Label, Vec<PathBuf>>,
         bs_ctx: &mut BuildScript,
+        archive_root: &PathBuf,
     ) -> Result<(), anyhow::Error> {
         let label = self.target.label().clone();
         trace!("Sealing Computed Target {:?}", label.to_string());
+
+        if let Some(archive) = &self.target.archive() {
+            trace!("Target has an archive, preparing...");
+
+            // TODO(@ostera): move this _into_ the Archive
+            let archive_root = archive_root.join(format!("{}-{}", archive.name(), archive.hash()));
+
+            if !archive.is_cached(&archive_root)? {
+                archive.download(&archive_root)?;
+                match archive.checksum(&archive_root) {
+                    Ok(_) => archive.unpack(&archive_root),
+                    Err(e) => {
+                        archive.clean(&archive_root)?;
+                        Err(e)
+                    }
+                }?
+            }
+        }
 
         let config: serde_json::Value = self.target.config().clone().into();
 

@@ -1,16 +1,17 @@
+pub mod build;
 pub mod depgraph;
 pub mod rules;
 pub mod target;
 pub mod toolchain;
 pub mod workspace;
 
+pub use build::*;
 pub use depgraph::*;
 pub use rules::*;
 pub use target::*;
 pub use toolchain::*;
 pub use workspace::*;
 
-// pub mod build;
 // pub mod clean;
 // pub mod deps;
 // pub mod fmt;
@@ -20,7 +21,6 @@ pub use workspace::*;
 // pub mod run;
 // pub mod test;
 //
-// pub use build::*;
 // pub use clean::*;
 // pub use deps::*;
 // pub use fmt::*;

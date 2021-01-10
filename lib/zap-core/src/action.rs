@@ -11,7 +11,11 @@ pub enum Action {
 
 impl Action {
     pub fn exec(cmd: PathBuf) -> ExecAction {
-        ExecAction { cmd, args: vec![] }
+        ExecAction {
+            cmd,
+            args: vec![],
+            cwd: None,
+        }
     }
 
     pub fn run(self) -> Result<(), anyhow::Error> {
@@ -25,14 +29,20 @@ impl Action {
 pub struct ExecAction {
     cmd: PathBuf,
     args: Vec<String>,
+    cwd: Option<PathBuf>,
 }
 
 impl ExecAction {
     fn run(self) -> Result<(), anyhow::Error> {
         let mut cmd = Command::new(&self.cmd);
+        cmd.stdout(Stdio::piped()).args(&self.args);
+        if let Some(cwd) = self.cwd {
+            cmd.current_dir(cwd);
+        }
+
+        trace!("Executing {:#?}", &cmd,);
+
         let output = cmd
-            .stdout(Stdio::piped())
-            .args(&self.args)
             .output()
             .context(format!("Could not spawn {:?}", self.cmd))?;
 
@@ -49,6 +59,11 @@ impl ExecAction {
             std::io::stderr().write_all(&output.stderr).unwrap();
             Err(anyhow!("Error running {:?}", self.cmd))
         }
+    }
+
+    pub fn cwd(&mut self, cwd: &PathBuf) -> &mut ExecAction {
+        self.cwd = Some(cwd.to_path_buf());
+        self
     }
 
     pub fn args(&mut self, args: &[&str]) -> &mut ExecAction {
