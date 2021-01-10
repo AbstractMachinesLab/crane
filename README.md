@@ -1,6 +1,6 @@
 # :zap: Zap
 
-[![Build Status](https://travis-ci.org/AbstractMachinesLab/zap.svg?branch=main)](https://travis-ci.org/AbstractMachinesLab/zap)
+![Main workflow](https://github.com/AbstractMachinesLab/zap/workflows/Main%20workflow/badge.svg)
 
 Zap is a _simple_, _fast_, and _correct_ build system for any programming
 language, that uses Deno and is built in Rust.
