@@ -1,15 +1,11 @@
-# Contributing to Zap :building_construction: 
+# Contributing to :zap: Zap
 
 First of all, thanks for taking the time to contribute! :heart::tada::+1:
 
 ## Getting started
 
-Zap is built with Rust at the moment. There's plans to bootstrap it in
-Erlangn in a way that yields a single binary, and that project will be built
-with Zap, but this is a little down the road.
-
-For the time being, this means you need the Rust toolchain to work on it. You
-can get it here: https://rustup.rs
+Zap is built with Rust, so you need the Rust toolchain to work on it. You can
+get it here: https://rustup.rs
 
 The `stable` toolchain should be enough.
 
