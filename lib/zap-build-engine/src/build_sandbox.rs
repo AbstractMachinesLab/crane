@@ -230,8 +230,8 @@ impl<'a> Sandbox<'a> {
                     .map(|_| ())?;
             };
 
-            std::os::unix::fs::symlink(&src, &dst).context(format!(
-            "When building {:?}, could not link transitive dependency {:?} into sandbox at {:?}",
+            std::fs::copy(&src, &dst).context(format!(
+            "When building {:?}, could not copy transitive dependency {:?} into sandbox at {:?}",
             self.node.label().to_string(),
             &src,
             &dst
