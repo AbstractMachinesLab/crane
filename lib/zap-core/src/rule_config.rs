@@ -57,7 +57,7 @@ impl Into<serde_json::Value> for CfgValue {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ConfigSpec(pub HashMap<String, CfgValueType>);
 
 impl ConfigSpec {

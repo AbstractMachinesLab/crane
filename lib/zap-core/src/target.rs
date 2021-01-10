@@ -133,20 +133,39 @@ impl std::fmt::Display for Target {
     }
 }
 
-/*
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Action, ComputedTarget};
-    use std::path::PathBuf;
+    use crate::*;
 
     #[test]
-    fn can_debug_print() {
-        let target: Box<dyn Target> = Box::new(TestTarget::new());
-        assert_eq!(
-            "test_rule(name = \":test_target\")",
-            format!("{:?}", target)
+    fn uses_rule_mnemonic_to_print_itself() {
+        let label = Label::new("test_target");
+        let rule = Rule::new(
+            "test_rule".to_string(),
+            "TestRule".to_string(),
+            vec![],
+            ConfigSpec::default(),
+            RuleConfig::default(),
         );
+        let cfg = RuleConfig::default();
+        let target = Target::local(label, &rule, cfg);
+        assert_eq!("TestRule(name = \":test_target\")", format!("{}", target));
+    }
+
+    #[test]
+    fn includes_rule_toolchains_in_dependencies() {
+        let label = Label::new("test_target");
+        let rule = Rule::new(
+            "test_rule".to_string(),
+            "TestRule".to_string(),
+            vec![Label::new("dep")],
+            ConfigSpec::default(),
+            RuleConfig::default(),
+        );
+        let cfg = RuleConfig::default();
+        let target = Target::local(label, &rule, cfg);
+        assert_eq!(1, target.deps().len());
+        assert_eq!(Label::new("dep"), target.deps()[0]);
     }
 }
-*/
