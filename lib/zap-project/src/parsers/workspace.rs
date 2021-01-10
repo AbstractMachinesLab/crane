@@ -88,7 +88,7 @@ mod tests {
         "#
         .parse::<toml::Value>()
         .unwrap();
-        let workspace = parse(toml);
+        let workspace = parse(toml, &PathBuf::from("."), &ToolchainManager::default());
         assert_eq!(true, workspace.is_err());
     }
 
@@ -104,7 +104,7 @@ name = "tiny_lib"
         "#
         .parse::<toml::Value>()
         .unwrap();
-        let workspace = parse(toml).unwrap();
+        let workspace = parse(toml, &PathBuf::from("."), &ToolchainManager::default()).unwrap();
         assert_eq!(workspace.name(), "tiny_lib");
     }
 
