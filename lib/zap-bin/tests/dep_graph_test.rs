@@ -47,9 +47,35 @@ async fn build_dependency_graph_from_workspace() {
     // NOTE(@ostera): we alphabetically to be able to assert deterministically
     target_names_in_order.sort();
 
+    let mut expected = vec![
+        format!(
+            "{}:{}",
+            PathBuf::from("//").join("a").to_str().unwrap(),
+            "lib"
+        ),
+        format!(
+            "{}:{}",
+            PathBuf::from("//").join("b").join("c").to_str().unwrap(),
+            "lib"
+        ),
+        format!(
+            "{}:{}",
+            PathBuf::from("//").join("b").join("c").to_str().unwrap(),
+            "my_archive"
+        ),
+        format!(
+            "{}:{}",
+            PathBuf::from("//").join("b").to_str().unwrap(),
+            "lib"
+        ),
+        ":caramel".to_string(),
+        ":erlang".to_string(),
+    ];
+    expected.sort();
+
     assert_eq!(6, target_names_in_order.len());
     assert_eq!(
-        r#"["//a:lib", "//b/c:lib", "//b/c:my_archive", "//b:lib", ":caramel", ":erlang"]"#,
+        format!("{:?}", expected),
         format!("{:?}", target_names_in_order)
     );
 }
