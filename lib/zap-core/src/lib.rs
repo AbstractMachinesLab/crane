@@ -1,6 +1,5 @@
 pub mod action;
 pub mod archive;
-pub mod artifact;
 pub mod computed_target;
 pub mod config;
 pub mod dep_graph;
@@ -13,7 +12,6 @@ pub mod workspace;
 
 pub use action::*;
 pub use archive::*;
-pub use artifact::*;
 pub use computed_target::*;
 pub use config::*;
 pub use dep_graph::*;
