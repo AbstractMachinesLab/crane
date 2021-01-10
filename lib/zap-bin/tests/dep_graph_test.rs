@@ -90,10 +90,32 @@ async fn build_dependency_graph_from_workspace_and_scope() {
 
     let dep_graph = zap.dep_graph.scoped(&Label::new("//b/c:lib")).unwrap();
 
-    let target_names_in_order = dep_graph.target_names();
+    let mut target_names_in_order = dep_graph.target_names();
+    target_names_in_order.sort();
+
+    let mut expected = vec![
+        format!(
+            "{}:{}",
+            PathBuf::from("//").join("a").to_str().unwrap(),
+            "lib"
+        ),
+        format!(
+            "{}:{}",
+            PathBuf::from("//").join("b").join("c").to_str().unwrap(),
+            "lib"
+        ),
+        format!(
+            "{}:{}",
+            PathBuf::from("//").join("b").to_str().unwrap(),
+            "lib"
+        ),
+        ":erlang".to_string(),
+    ];
+    expected.sort();
+
     assert_eq!(4, target_names_in_order.len());
     assert_eq!(
-        r#"[":erlang", "//a:lib", "//b:lib", "//b/c:lib"]"#,
+        format!("{:?}", expected),
         format!("{:?}", target_names_in_order)
     );
 }
