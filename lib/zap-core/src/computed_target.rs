@@ -220,7 +220,7 @@ impl ComputedTarget {
             ))?
             .clone();
 
-        let srcs = self.target.config().get_file_list("srcs").unwrap_or(vec![]);
+        let srcs = self.target.config().get_file_lists().unwrap_or(vec![]);
 
         self.deps = Some(deps.to_vec());
         self.srcs = Some(srcs);
@@ -229,7 +229,7 @@ impl ComputedTarget {
 
         self.update_hash();
 
-        trace!(
+        debug!(
             "Sealed ComputedTarget {} with Hash {:?}",
             label.to_string(),
             self.hash.as_ref().unwrap()

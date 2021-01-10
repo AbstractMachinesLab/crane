@@ -79,17 +79,14 @@ impl Buildfile {
                     // the same key!
                     let values: RuleConfig = rule.defaults().clone();
 
-                    for entry in rule.defaults().as_map().iter() {
-                        let key = entry.key();
-                        let default_value = entry.value();
-
-                        let value_type = rule.config().get(key).context(
-                            format!("It looks like the target {} specifies a config key ({}) that shouldn't be there? Valid keys are: {:?}", label.to_string(), key, rule.config().keys())
-                        )?;
-
+                    for (key, value_type) in rule.config().as_map().iter() {
                         let value = match table.get(key) {
                             Some(value) => Buildfile::parse_config_value(value, value_type)?,
-                            None => default_value.clone()
+                            None => values.get(key).context(format!("When building   {}  I did not find the attribute {:?} on the Build.toml, which is mandatory. You can add it like this:
+
+{} = <value>
+
+", label.to_string(), key, key))?
                         };
 
                         let expanded_value = Buildfile::expand_value(value, &pkg_prefix)?;

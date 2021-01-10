@@ -135,15 +135,20 @@ impl<'a> Sandbox<'a> {
             return Ok(());
         }
 
-        // All files found - Inputs
+        // All files found minus Inputs
         let actual_outputs: HashSet<PathBuf> = all_outputs
             .iter()
-            .filter(|path| !inputs.contains(&path.to_path_buf()))
+            .filter(|path| {
+                !inputs.contains(&path.to_path_buf())
+                    || expected_outputs.contains(&path.to_path_buf())
+            })
             .cloned()
             .collect();
 
-        let diff: Vec<&PathBuf> = actual_outputs
-            .difference(&expected_outputs)
+        debug!("Sandboxed Node Outputs: {:?}", &actual_outputs);
+
+        let diff: Vec<&PathBuf> = expected_outputs
+            .difference(&actual_outputs)
             .into_iter()
             .collect();
 

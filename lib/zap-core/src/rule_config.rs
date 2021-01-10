@@ -68,6 +68,10 @@ impl ConfigSpec {
     pub fn keys(&self) -> Vec<String> {
         self.0.keys().into_iter().map(|k| k.to_string()).collect()
     }
+
+    pub fn as_map(&self) -> &HashMap<String, CfgValueType> {
+        &self.0
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -76,6 +80,10 @@ pub struct RuleConfig(pub DashMap<String, CfgValue>);
 impl RuleConfig {
     pub fn as_map(&self) -> &DashMap<String, CfgValue> {
         &self.0
+    }
+
+    pub fn get(&self, key: &str) -> Option<CfgValue> {
+        self.0.get(key).map(|entry| entry.value().clone())
     }
 
     pub fn insert(&self, key: String, val: CfgValue) -> &RuleConfig {
@@ -118,6 +126,20 @@ impl RuleConfig {
                 entry.value()
             ))
         }
+    }
+
+    pub fn get_file_lists(&self) -> Result<Vec<PathBuf>, anyhow::Error> {
+        let mut files = vec![];
+        for entry in self.0.iter() {
+            if let CfgValue::List(elements) = entry.value() {
+                for el in elements {
+                    if let CfgValue::File(path) = el {
+                        files.push(path.clone());
+                    }
+                }
+            }
+        }
+        Ok(files)
     }
 
     pub fn get_file_list(&self, key: &str) -> Result<Vec<PathBuf>, anyhow::Error> {

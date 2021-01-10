@@ -54,7 +54,9 @@ impl BuildRunner {
         }
     }
 
-    pub fn execute(&mut self) -> Result<u32, anyhow::Error> {
+    pub fn execute(&mut self, target: &Label) -> Result<u32, anyhow::Error> {
+        &mut self.dep_graph.scoped(&target)?;
+
         let mut targets = 0;
 
         let mut walker = Topo::new(&self.dep_graph._inner_graph);

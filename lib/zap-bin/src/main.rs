@@ -38,6 +38,7 @@ impl Zap {
 #[derive(StructOpt, Debug, Clone)]
 enum Goal {
     Build(BuildGoal),
+    Cache(CacheGoal),
     Depgraph(DepGraphGoal),
     Rules(RulesGoal),
     Target(TargetGoal),
@@ -57,6 +58,7 @@ impl Goal {
     async fn run(self) -> Result<(), anyhow::Error> {
         match self {
             Goal::Build(x) => x.run().await,
+            Goal::Cache(x) => x.run().await,
             Goal::Depgraph(x) => x.run().await,
             Goal::Rules(x) => x.run().await,
             Goal::Target(x) => x.run().await,

@@ -1,4 +1,5 @@
 pub mod build;
+pub mod cache;
 pub mod depgraph;
 pub mod rules;
 pub mod target;
@@ -6,6 +7,7 @@ pub mod toolchain;
 pub mod workspace;
 
 pub use build::*;
+pub use cache::*;
 pub use depgraph::*;
 pub use rules::*;
 pub use target::*;

@@ -1,5 +1,7 @@
 use anyhow::Context;
 use log::*;
+use std::io;
+use std::io::Write;
 use structopt::StructOpt;
 use zap_build_engine::*;
 use zap_core::*;
@@ -53,9 +55,11 @@ impl BuildGoal {
         } else {
             target.to_string()
         };
-        print!("🔨 Building {}", name);
 
-        runner.execute()?;
+        print!("🔨 Building {}...", name);
+        io::stdout().flush().unwrap();
+
+        runner.execute(&target)?;
 
         let t1 = t0.elapsed().as_millis();
         println!("\x1B[1000D\x1B[K\r⚡ done in {}ms", t1);
