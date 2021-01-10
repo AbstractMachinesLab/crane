@@ -1,6 +1,7 @@
 /target
-.crane
+.zap
 spec/*.toolbox
 .cmo
 .cmi
 .cma
+manual/book
