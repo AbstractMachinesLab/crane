@@ -4,9 +4,9 @@ ZAP_EXE=zap
 build:
 	cargo build
 
-.PHONY: docs
-docs:
-	cargo doc --target-dir ./docs --workspace --no-deps
+.PHONY: manual
+manual:
+	mdbook build --dest-dir ../docs ./manual
 
 .PHONY: test
 test:
