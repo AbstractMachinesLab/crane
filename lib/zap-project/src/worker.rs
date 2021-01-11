@@ -39,9 +39,9 @@ impl ZapWorker {
     pub async fn load(&mut self, root: &PathBuf) -> Result<(), anyhow::Error> {
         self.scan(&root)?;
         self.configure_bs_ctx()?;
-        self.load_global_toolchains().await?;
+        self.load_default_toolchains().await?;
         self.load_local_toolchains().await?;
-        self.load_global_rules().await?;
+        self.load_default_rules().await?;
         self.load_local_rules().await?;
         self.create_dep_graph()?;
         Ok(())
@@ -73,12 +73,12 @@ impl ZapWorker {
         Ok(self)
     }
 
-    async fn load_global_toolchains(&mut self) -> Result<(), anyhow::Error> {
-        (*self.toolchain_manager)
-            .read()
-            .unwrap()
-            .load(&self.config.toolchains_root, &mut self.bs_ctx)
-            .await
+    async fn load_default_toolchains(&mut self) -> Result<(), anyhow::Error> {
+        let mgr = (*self.toolchain_manager).read().unwrap();
+        for (name, src) in zap_toolchains::TOOLCHAINS.iter() {
+            mgr.load_from_str(&name, &src, &mut self.bs_ctx).await?;
+        }
+        Ok(())
     }
 
     async fn load_local_toolchains(&mut self) -> Result<(), anyhow::Error> {
@@ -89,12 +89,12 @@ impl ZapWorker {
             .await
     }
 
-    async fn load_global_rules(&mut self) -> Result<(), anyhow::Error> {
-        (*self.rule_manager)
-            .read()
-            .unwrap()
-            .load(&self.config.rules_root, &mut self.bs_ctx)
-            .await
+    async fn load_default_rules(&mut self) -> Result<(), anyhow::Error> {
+        let mgr = (*self.rule_manager).read().unwrap();
+        for (name, src) in zap_rules::RULES.iter() {
+            mgr.load_from_str(&name, &src, &mut self.bs_ctx).await?;
+        }
+        Ok(())
     }
 
     async fn load_local_rules(&mut self) -> Result<(), anyhow::Error> {

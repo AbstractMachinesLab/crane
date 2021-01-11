@@ -2635,4 +2635,14 @@ dependencies = [
  "toml",
  "zap-buildscript",
  "zap-core",
+ "zap-rules",
+ "zap-toolchains",
 ]
+
+[[package]]
+name = "zap-rules"
+version = "0.1.0"
+
+[[package]]
+name = "zap-toolchains"
+version = "0.1.0"

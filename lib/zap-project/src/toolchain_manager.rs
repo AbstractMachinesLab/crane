@@ -17,6 +17,18 @@ impl ToolchainManager {
         ToolchainManager::default()
     }
 
+    pub async fn load_from_str(
+        &self,
+        toolchain_name: &str,
+        toolchain_code: &str,
+        bs_ctx: &mut BuildScript,
+    ) -> Result<(), anyhow::Error> {
+        bs_ctx
+            .load_from_str(&toolchain_name, &toolchain_code)
+            .await?;
+        Ok(())
+    }
+
     pub async fn load_from_workspace(
         &self,
         workspace: &Workspace,

@@ -15,6 +15,16 @@ impl RuleManager {
         RuleManager::default()
     }
 
+    pub async fn load_from_str(
+        &self,
+        rule_name: &str,
+        rule_code: &str,
+        bs_ctx: &mut BuildScript,
+    ) -> Result<(), anyhow::Error> {
+        bs_ctx.load_from_str(&rule_name, &rule_code).await?;
+        Ok(())
+    }
+
     pub async fn load_from_workspace(
         &self,
         workspace: &Workspace,
