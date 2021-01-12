@@ -7,7 +7,7 @@
   - [How Zap Works](./getting-started/how-zap-works.md)
 
 - [CHANGELOG](./changelog/v0.4.0.md)
-  - [0.4.0](./changelog/v0.4.0.md)
+  - [v0.4.0](./changelog/v0.4.0.md)
 
 --------------------------------------------------------------------------------
 
