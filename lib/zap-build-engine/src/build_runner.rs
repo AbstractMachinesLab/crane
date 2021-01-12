@@ -6,8 +6,7 @@ use petgraph::visit::Topo;
 use std::path::PathBuf;
 use std::sync::Arc;
 use zap_buildscript::*;
-use zap_core::{Action, DepGraph, Label, Workspace, ZapConfig};
-use zap_project::ZapWorker;
+use zap_core::{Action, DepGraph, Label, Workspace, ZapConfig, ZapWorker};
 
 /// The BuildRunner is in charge of actually executing a BuildGraph in the
 /// context of a Workspace, using a given Toolchain, and a given BuildCache.

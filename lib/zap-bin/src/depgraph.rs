@@ -2,7 +2,6 @@ use anyhow::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use zap_core::*;
-use zap_project::*;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(

@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 use zap_core::*;
-use zap_project::*;
 
 #[tokio::test]
 async fn it_reads_the_project_from_an_absolute_path() {

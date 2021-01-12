@@ -3,7 +3,6 @@ use dashmap::DashMap;
 use log::*;
 use std::path::PathBuf;
 use zap_buildscript::*;
-use zap_core::*;
 
 #[derive(Debug, Clone, Default)]
 pub struct RuleManager {

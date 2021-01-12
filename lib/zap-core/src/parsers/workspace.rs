@@ -2,7 +2,6 @@ use crate::*;
 use anyhow::Context;
 use log::*;
 use std::path::PathBuf;
-use zap_core::*;
 
 pub fn parse(
     toml: toml::Value,

@@ -2569,7 +2569,6 @@ dependencies = [
  "tokio 1.0.1",
  "zap-build-engine",
  "zap-core",
- "zap-project",
 ]
 
 [[package]]
@@ -2584,7 +2583,6 @@ dependencies = [
  "rust-crypto",
  "zap-buildscript",
  "zap-core",
- "zap-project",
 ]
 
 [[package]]
@@ -2611,28 +2609,15 @@ dependencies = [
  "dashmap",
  "deno_core",
  "directories",
+ "env_logger 0.8.2",
+ "glob",
  "guess_host_triple",
  "log",
  "petgraph",
+ "regex",
  "rust-crypto",
  "serde_json",
+ "toml",
  "whoami",
  "zap-buildscript",
-]
-
-[[package]]
-name = "zap-project"
-version = "0.4.0"
-dependencies = [
- "anyhow",
- "dashmap",
- "directories",
- "env_logger 0.8.2",
- "glob",
- "log",
- "regex",
- "serde_json",
- "toml",
- "zap-buildscript",
- "zap-core",
 ]

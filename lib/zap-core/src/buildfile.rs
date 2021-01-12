@@ -5,7 +5,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::vec::Vec;
 use toml::Value;
-use zap_core::*;
 
 pub const ZAPFILE: &str = "Build.toml";
 

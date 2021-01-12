@@ -3,7 +3,7 @@ use anyhow::Context;
 use log::*;
 use std::fs;
 use std::path::PathBuf;
-use zap_core::{Workspace, WORKSPACE};
+use super::{Workspace, WORKSPACE};
 
 pub struct WorkspaceScanner {}
 

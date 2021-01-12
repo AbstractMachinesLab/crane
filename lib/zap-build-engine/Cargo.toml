@@ -7,7 +7,6 @@ edition = "2018"
 [dependencies]
 zap-buildscript = { path = "../zap-buildscript", version = "0.4.0" }
 zap-core = { path = "../zap-core", version = "0.4.0" }
-zap-project = { path = "../zap-project", version = "0.4.0" }
 
 anyhow = "1.0"
 log = "0.4"

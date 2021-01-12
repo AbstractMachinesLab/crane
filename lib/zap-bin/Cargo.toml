@@ -11,7 +11,6 @@ path = "src/main.rs"
 [dependencies]
 zap-build-engine = { path = "../zap-build-engine", version = "0.4.0" }
 zap-core = { path = "../zap-core", version = "0.4.0" }
-zap-project = { path = "../zap-project", version = "0.4.0" }
 
 anyhow = "1.0"
 chrono = "0.4"
