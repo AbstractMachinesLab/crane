@@ -1,4 +1,5 @@
 use super::*;
+use anyhow::Context;
 use std::path::PathBuf;
 
 pub const WORKSPACE: &str = "Workspace.toml";
@@ -36,6 +37,7 @@ impl Workspace {
         };
 
         workspace.ensure_dirs()?;
+        workspace.setup_links()?;
 
         Ok(workspace)
     }
@@ -45,7 +47,28 @@ impl Workspace {
         std::fs::create_dir_all(&self.local_rules_root)?;
         std::fs::create_dir_all(&self.local_toolchains_root)?;
         std::fs::create_dir_all(&self.local_sandbox_root)?;
+        std::fs::create_dir_all(&self.local_outputs_root)?;
         Ok(())
+    }
+
+    #[cfg(target_os = "windows")]
+    fn setup_links(&self) -> Result<(), anyhow::Error> {
+        let _ = std::fs::remove_file(self.workspace_root.join("zap-outputs"));
+        std::os::windows::fs::symlink_dir(
+            self.local_outputs_root,
+            self.workspace_root.join("zap-outputs"),
+        )
+        .context("Could not symlink outputs folder to workspace root")
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn setup_links(&self) -> Result<(), anyhow::Error> {
+        let _ = std::fs::remove_file(self.workspace_root.join("zap-outputs"));
+        std::os::unix::fs::symlink(
+            self.local_outputs_root.clone(),
+            self.workspace_root.join("zap-outputs"),
+        )
+        .context("Could not symlink outputs folder to workspace root")
     }
 
     pub fn with_targets(&mut self, targets: Vec<Target>) -> &mut Workspace {
