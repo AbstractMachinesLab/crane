@@ -1,8 +1,0 @@
-# vim: ft=toml
-
-[[caramel_library]]
-name = "hello_world"
-
-[[lam_binary]]
-name = "bin"
-deps = [":hello_world"]

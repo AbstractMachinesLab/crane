@@ -1,0 +1,10 @@
+# vim: ft=toml
+
+[[erlang_library]]
+name = "from_caramel"
+deps = []
+
+[[archive]]
+name = "mathlib"
+srcs = []
+deps = [ ":from_caramel" ]

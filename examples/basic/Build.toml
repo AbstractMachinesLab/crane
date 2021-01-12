@@ -1,0 +1,4 @@
+# vim: ft=toml
+
+[[erlang_library]]
+name = "hello_world"
