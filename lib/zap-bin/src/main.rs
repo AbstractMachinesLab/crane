@@ -27,7 +27,7 @@ impl Zap {
             .parse_env("ZAP_LOG")
             .try_init()
             .unwrap();
-        let cmd = self.cmd.unwrap_or(Goal::Build(BuildGoal::all()));
+        let cmd = self.cmd.unwrap_or_else(|| Goal::Build(BuildGoal::all()));
         match cmd.run().await {
             Ok(()) => (),
             Err(err) => error!("{:?}", &err),

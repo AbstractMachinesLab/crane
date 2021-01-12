@@ -10,6 +10,12 @@ pub struct FileScanner {
     match_pattern: Regex,
 }
 
+impl Default for FileScanner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileScanner {
     pub fn new() -> FileScanner {
         FileScanner {
@@ -19,7 +25,7 @@ impl FileScanner {
     }
 
     pub fn starting_from(&mut self, root: PathBuf) -> &mut FileScanner {
-        self.root = root.clone();
+        self.root = root;
         self
     }
 

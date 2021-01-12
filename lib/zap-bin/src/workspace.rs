@@ -29,18 +29,18 @@ impl WorkspaceGoal {
                 let workspace = zap.workspace();
                 println!("Name: {:?}", workspace.name());
                 println!("Workspace Root: {:?}", workspace.root());
-                println!("");
+                println!();
                 println!("Global Zap Directories:");
                 println!("* Cache: {:?}", zap.config().cache_root);
                 println!("* Rules: {:?}", zap.config().rules_root);
                 println!("* Toolchains: {:?}", zap.config().toolchains_root);
-                println!("");
+                println!();
                 println!("Local Zap Directories:");
                 println!("* Outputs: {:?}", workspace.outputs_root());
                 println!("* Rules: {:?}", workspace.rules_root());
                 println!("* Sandbox: {:?}", workspace.sandbox_root());
                 println!("* Toolchains: {:?}", workspace.toolchains_root());
-                println!("");
+                println!();
                 println!("# of Targets: {:?}", workspace.targets().len());
                 Ok(())
             }

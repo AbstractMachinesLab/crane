@@ -64,7 +64,7 @@ impl ToolchainManager {
         self.archives.insert(archive.name().to_string(), archive);
     }
 
-    pub fn get(&self, label: &String) -> Option<Toolchain> {
+    pub fn get(&self, label: &str) -> Option<Toolchain> {
         self.toolchains.get(label).map(|r| r.value().clone())
     }
 

@@ -50,17 +50,22 @@ pub fn parse_archive(name: String, cfg: &toml::Value) -> Result<Archive, anyhow:
     let archive = cfg
         .get("archive_url")
         .and_then(|x| x.as_str())
-        .map(|url| archive.clone().with_url(url.to_string()).as_source())
+        .map(|url| archive.clone().with_url(url.to_string()).mark_as_source())
         .unwrap_or(archive);
     let archive = cfg
         .get("release_url")
         .and_then(|x| x.as_str())
-        .map(|url| archive.clone().with_url(url.to_string()).as_release())
+        .map(|url| archive.clone().with_url(url.to_string()).mark_as_release())
         .unwrap_or(archive);
     let archive = cfg
         .get("release_name")
         .and_then(|x| x.as_str())
-        .map(|name| archive.clone().with_name(name.to_string()).as_release())
+        .map(|name| {
+            archive
+                .clone()
+                .with_name(name.to_string())
+                .mark_as_release()
+        })
         .unwrap_or(archive);
     let archive = cfg
         .get("prefix")
@@ -123,7 +128,7 @@ name = "tiny_lib"
         .parse::<toml::Value>()
         .unwrap();
         let toolchain_manager = ToolchainManager::default();
-        let workspace = parse(toml, &PathBuf::from("."), &toolchain_manager).unwrap();
+        let _workspace = parse(toml, &PathBuf::from("."), &toolchain_manager).unwrap();
         assert_eq!(
             "official",
             toolchain_manager.get_archive("erlang").unwrap().url()

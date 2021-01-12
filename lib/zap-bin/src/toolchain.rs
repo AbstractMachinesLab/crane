@@ -1,5 +1,4 @@
 use anyhow::*;
-use log::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use zap_core::*;

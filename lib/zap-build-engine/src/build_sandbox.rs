@@ -147,10 +147,7 @@ impl<'a> Sandbox<'a> {
 
         debug!("Sandboxed Node Outputs: {:?}", &actual_outputs);
 
-        let diff: Vec<&PathBuf> = expected_outputs
-            .difference(&actual_outputs)
-            .into_iter()
-            .collect();
+        let diff: Vec<&PathBuf> = expected_outputs.difference(&actual_outputs).collect();
 
         // No diff means we have the outputs we expected!
         if diff.is_empty() {
@@ -160,12 +157,10 @@ impl<'a> Sandbox<'a> {
             let unexpected_but_present = diff.into_iter().cloned().collect();
             let expected_but_missing = expected_outputs
                 .difference(&actual_outputs)
-                .into_iter()
                 .cloned()
                 .collect();
             let expected_and_present = actual_outputs
                 .intersection(&expected_outputs)
-                .into_iter()
                 .cloned()
                 .collect();
 

@@ -185,7 +185,7 @@ impl DepGraph {
             .map(|computed_target| computed_target.as_dep())
             .collect();
 
-        &mut self._inner_graph[node_index].seal(
+        self._inner_graph[node_index].seal(
             &deps,
             &action_map,
             &output_map,
@@ -205,7 +205,7 @@ impl DepGraph {
     ) -> Result<&mut DepGraph, anyhow::Error> {
         let mut walker = petgraph::visit::Topo::new(&self._inner_graph);
         while let Some(idx) = walker.next(&self._inner_graph) {
-            &mut self.seal_target(idx, action_map, output_map, &mut bs_ctx, &archive_root)?;
+            self.seal_target(idx, action_map, output_map, &mut bs_ctx, &archive_root)?;
         }
 
         Ok(self)

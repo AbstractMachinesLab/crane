@@ -56,7 +56,7 @@ impl Default for ComputeStatus {
 impl ComputedTarget {
     pub fn from_target(target: Target) -> ComputedTarget {
         ComputedTarget {
-            target: target,
+            target,
             status: ComputeStatus::Pending,
             actions: None,
             deps: None,
@@ -210,7 +210,7 @@ impl ComputedTarget {
         let actions = action_map
             .get(&label)
             .map(|entry| entry.value().clone())
-            .unwrap_or(vec![]);
+            .unwrap_or_default();
 
         let outs = output_map
             .get(&label)
@@ -220,7 +220,7 @@ impl ComputedTarget {
             ))?
             .clone();
 
-        let srcs = self.target.config().get_file_lists().unwrap_or(vec![]);
+        let srcs = self.target.config().get_file_lists().unwrap_or_default();
 
         self.deps = Some(deps.to_vec());
         self.srcs = Some(srcs);

@@ -70,12 +70,14 @@ impl BuildCache {
             .collect::<Result<(), anyhow::Error>>()
     }
 
-    pub fn absolute_path_by_hash(&self, hash: &String) -> PathBuf {
+    pub fn absolute_path_by_hash(&self, hash: &str) -> PathBuf {
         let path = self.root.join(hash);
-        std::fs::canonicalize(&path).expect(&format!(
-            "Could not find {:?} in disk, has the cache been modified manually?",
-            &path
-        ))
+        std::fs::canonicalize(&path).unwrap_or_else(|_| {
+            panic!(
+                "Could not find {:?} in disk, has the cache been modified manually?",
+                &path
+            )
+        })
     }
 
     /// Determine if a given node has been cached already or not.

@@ -51,7 +51,7 @@ impl RuleManager {
         self.rules.insert(rule.name().to_string(), rule);
     }
 
-    pub fn get(&self, name: &RuleName) -> Option<Rule> {
+    pub fn get(&self, name: &str) -> Option<Rule> {
         self.rules.get(name).map(|r| r.value().clone())
     }
 

@@ -1,7 +1,3 @@
-use std::path::PathBuf;
-use zap_core::*;
-use zap_project::*;
-
 /*
 #[tokio::test]
 async fn test_workspace_info() {

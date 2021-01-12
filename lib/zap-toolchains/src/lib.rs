@@ -1,4 +1,4 @@
-pub const TOOLCHAINS: [(&'static str, &'static str); 4] = [
+pub const TOOLCHAINS: [(&str, &str); 4] = [
     (
         "https://zap.build/toolchains/archive",
         include_str!("archive.js"),

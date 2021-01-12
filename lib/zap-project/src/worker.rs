@@ -148,7 +148,7 @@ impl ZapWorker {
                     .as_array()
                     .unwrap()
                     .iter()
-                    .map(|o| PathBuf::from(o.as_str().unwrap()).clone())
+                    .map(|o| PathBuf::from(o.as_str().unwrap()))
                     .collect();
                 trace!(
                     "Zap.Targets.compute::ctx.actions.declareOutputs({}, {:?})",
@@ -295,7 +295,7 @@ impl ZapWorker {
         let default_cfg = DashMap::new();
         for (k, v) in rule_spec["defaults"]
             .as_object()
-            .context(format!("Expected 'defaults' to be an Object"))?
+            .context("Expected 'defaults' to be an Object".to_string())?
             .iter()
         {
             let t = config

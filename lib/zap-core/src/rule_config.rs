@@ -66,7 +66,7 @@ impl ConfigSpec {
     }
 
     pub fn keys(&self) -> Vec<String> {
-        self.0.keys().into_iter().map(|k| k.to_string()).collect()
+        self.0.keys().map(|k| k.to_string()).collect()
     }
 
     pub fn as_map(&self) -> &HashMap<String, CfgValueType> {

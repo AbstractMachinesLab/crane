@@ -55,7 +55,7 @@ impl BuildRunner {
     }
 
     pub fn execute(&mut self, target: &Label) -> Result<u32, anyhow::Error> {
-        &mut self.dep_graph.scoped(&target)?;
+        self.dep_graph.scoped(&target)?;
 
         let mut targets = 0;
 
@@ -89,7 +89,7 @@ impl BuildRunner {
                         targets += 1;
                         Ok(())
                     }
-                    ValidationStatus::NoOutputs if node.outs().len() == 0 => {
+                    ValidationStatus::NoOutputs if node.outs().is_empty() => {
                         sandbox.clear_sandbox()?;
                         targets += 1;
                         Ok(())

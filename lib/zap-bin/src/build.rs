@@ -1,4 +1,3 @@
-use anyhow::Context;
 use log::*;
 use std::io;
 use std::io::Write;

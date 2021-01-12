@@ -102,14 +102,14 @@ impl Archive {
         Archive { name, ..self }
     }
 
-    pub fn as_source(self) -> Archive {
+    pub fn mark_as_source(self) -> Archive {
         Archive {
             kind: ArchiveKind::Source,
             ..self
         }
     }
 
-    pub fn as_release(self) -> Archive {
+    pub fn mark_as_release(self) -> Archive {
         Archive {
             kind: ArchiveKind::Release,
             ..self
@@ -117,13 +117,10 @@ impl Archive {
     }
 
     pub fn validate(&self) {
-        match self.kind {
-            ArchiveKind::Release => {
-                if self.name.is_empty() {
-                    panic!("Release Archives MUST specify a name attribute!")
-                }
+        if let ArchiveKind::Release = self.kind {
+            if self.name.is_empty() {
+                panic!("Release Archives MUST specify a name attribute!")
             }
-            _ => (),
         }
     }
 
