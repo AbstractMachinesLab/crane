@@ -7,9 +7,19 @@ use std::process::{Command, Stdio};
 #[derive(Debug, Clone)]
 pub enum Action {
     Exec(ExecAction),
+    Copy(CopyAction),
+    WriteFile(WriteFileAction),
 }
 
 impl Action {
+    pub fn write_file(contents: String, dst: PathBuf) -> Action {
+        Action::WriteFile(WriteFileAction { contents, dst })
+    }
+
+    pub fn copy(src: PathBuf, dst: PathBuf) -> Action {
+        Action::Copy(CopyAction { src, dst })
+    }
+
     pub fn exec(cmd: PathBuf) -> ExecAction {
         ExecAction {
             cmd,
@@ -21,7 +31,43 @@ impl Action {
     pub fn run(self) -> Result<(), anyhow::Error> {
         match self {
             Action::Exec(e) => e.run(),
+            Action::Copy(e) => e.run(),
+            Action::WriteFile(e) => e.run(),
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct WriteFileAction {
+    contents: String,
+    dst: PathBuf,
+}
+
+impl WriteFileAction {
+    fn run(self) -> Result<(), anyhow::Error> {
+        if let Some(parent) = self.dst.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(&self.dst, &self.contents)
+            .map(|_| ())
+            .context(format!("Could not run action {:#?}", &self))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CopyAction {
+    src: PathBuf,
+    dst: PathBuf,
+}
+
+impl CopyAction {
+    fn run(self) -> Result<(), anyhow::Error> {
+        if let Some(parent) = self.dst.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::copy(&self.src, &self.dst)
+            .map(|_| ())
+            .context(format!("Could not run action {:#?}", &self))
     }
 }
 

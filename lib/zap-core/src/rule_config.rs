@@ -138,6 +138,9 @@ impl RuleConfig {
                     }
                 }
             }
+            if let CfgValue::File(path) = entry.value() {
+                files.push(path.clone());
+            }
         }
         Ok(files)
     }

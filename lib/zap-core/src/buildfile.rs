@@ -163,19 +163,23 @@ impl Buildfile {
         trace!("Expanding {:?}", value);
         match value {
             CfgValue::File(path) => {
-                let entries = glob::glob(zapfile_path.join(&path).to_str().unwrap())
-                    .context("Could not read glob pattern")?;
+                if path.to_str().unwrap().contains("*") {
+                    let entries = glob::glob(zapfile_path.join(&path).to_str().unwrap())
+                        .context("Could not read glob pattern")?;
 
-                let mut files = vec![];
-                for entry in entries {
-                    files.push(CfgValue::File(entry?));
+                    let mut files = vec![];
+                    for entry in entries {
+                        files.push(CfgValue::File(entry?));
+                    }
+                    trace!(
+                        "Expanded glob {:?} into: {:?}",
+                        zapfile_path.join(path),
+                        files
+                    );
+                    Ok(CfgValue::List(files))
+                } else {
+                    Ok(CfgValue::File(zapfile_path.join(&path)))
                 }
-                trace!(
-                    "Expanded glob {:?} into: {:?}",
-                    zapfile_path.join(path),
-                    files
-                );
-                Ok(CfgValue::List(files))
             }
             CfgValue::List(parts) => {
                 let mut elements = vec![];

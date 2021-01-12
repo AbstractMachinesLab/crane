@@ -144,6 +144,16 @@ impl ZapWorker {
         );
 
         self.bs_ctx.runtime.register_op(
+            "File.filename",
+            deno_core::json_op_sync(|_state, json, _zero_copy| {
+                let file_path = json.as_str().unwrap();
+                let path = PathBuf::from(file_path);
+                let file_name = path.file_name().unwrap().to_str().unwrap();
+                Ok(Value::from(file_name))
+            }),
+        );
+
+        self.bs_ctx.runtime.register_op(
             "File.withExtension",
             deno_core::json_op_sync(|_state, json, _zero_copy| {
                 let obj = json.as_object().unwrap();
@@ -174,17 +184,86 @@ impl ZapWorker {
                     label.to_string(),
                     outs
                 );
-                match output_map.get(&label) {
-                    None => output_map.insert(label, outs),
+                let new_outs = match output_map.get(&label) {
+                    None => outs,
                     Some(entry) => {
                         let last_outs = entry.value();
                         let mut new_outs = vec![];
-                        new_outs.extend_from_slice(&last_outs);
-                        new_outs.extend_from_slice(&outs);
+                        new_outs.extend(last_outs.to_vec());
+                        new_outs.extend(outs);
                         debug!("Updating output_map: {:?}", &new_outs);
-                        output_map.insert(label, new_outs)
+                        new_outs
                     }
                 };
+                output_map.insert(label, new_outs);
+                Ok(Value::from(""))
+            }),
+        );
+
+        let action_map = self.action_map.clone();
+        self.bs_ctx.runtime.register_op(
+            "Zap.Targets.compute::ctx.actions.writeFile",
+            deno_core::json_op_sync(move |_state, json, _zero_copy| {
+                let obj = json.as_object().unwrap();
+                let label: Label = obj["label"].as_str().unwrap().into();
+                let data: String = obj["data"].as_str().unwrap().to_string();
+                let dst: PathBuf = PathBuf::from(obj["dst"].as_str().unwrap());
+                trace!(
+                    "Zap.Targets.compute::ctx.actions.writeFile({}, {:?}, {:?})",
+                    label.to_string(),
+                    data,
+                    dst
+                );
+
+                let action = Action::write_file(data, dst);
+
+                let new_actions = if let Some(entry) = action_map.get(&label) {
+                    let last_actions = entry.value();
+                    let mut new_actions = vec![];
+                    new_actions.extend(last_actions.to_vec());
+                    new_actions.push(action);
+                    debug!("Updating action_map: {:?}", &new_actions);
+                    new_actions
+                } else {
+                    vec![action]
+                };
+
+                action_map.insert(label, new_actions);
+
+                Ok(Value::from(""))
+            }),
+        );
+
+        let action_map = self.action_map.clone();
+        self.bs_ctx.runtime.register_op(
+            "Zap.Targets.compute::ctx.actions.copy",
+            deno_core::json_op_sync(move |_state, json, _zero_copy| {
+                let obj = json.as_object().unwrap();
+                let label: Label = obj["label"].as_str().unwrap().into();
+                let src: PathBuf = PathBuf::from(obj["src"].as_str().unwrap());
+                let dst: PathBuf = PathBuf::from(obj["dst"].as_str().unwrap());
+                trace!(
+                    "Zap.Targets.compute::ctx.actions.copy({}, {:?}, {:?})",
+                    label.to_string(),
+                    src,
+                    dst
+                );
+
+                let action = Action::copy(src, dst);
+
+                let new_actions = if let Some(entry) = action_map.get(&label) {
+                    let last_actions = entry.value();
+                    let mut new_actions = vec![];
+                    new_actions.extend(last_actions.to_vec());
+                    new_actions.push(action);
+                    debug!("Updating action_map: {:?}", &new_actions);
+                    new_actions
+                } else {
+                    vec![action]
+                };
+
+                action_map.insert(label, new_actions);
+
                 Ok(Value::from(""))
             }),
         );
@@ -221,17 +300,19 @@ impl ZapWorker {
                 }
                 let action = action.build();
 
-                match action_map.get(&label) {
-                    None => action_map.insert(label, vec![action]),
-                    Some(entry) => {
-                        let last_actions = entry.value();
-                        let mut new_actions = vec![];
-                        new_actions.extend_from_slice(&last_actions);
-                        new_actions.extend_from_slice(&[action]);
-                        debug!("Updating action_map: {:?}", &new_actions);
-                        action_map.insert(label, new_actions)
-                    }
+                let new_actions = if let Some(entry) = action_map.get(&label) {
+                    let last_actions = entry.value();
+                    let mut new_actions = vec![];
+                    new_actions.extend(last_actions.to_vec());
+                    new_actions.push(action);
+                    debug!("Updating action_map: {:?}", &new_actions);
+                    new_actions
+                } else {
+                    vec![action]
                 };
+
+                action_map.insert(label, new_actions);
+
                 Ok(Value::from(""))
             }),
         );

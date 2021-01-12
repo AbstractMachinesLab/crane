@@ -178,6 +178,10 @@ impl ComputedTarget {
                 .map(|dep| {
                     let mut map = serde_json::Map::new();
                     map.insert(
+                        "name".to_string(),
+                        serde_json::Value::String(dep.label.name().to_string()),
+                    );
+                    map.insert(
                         "label".to_string(),
                         serde_json::Value::String(dep.label.to_string()),
                     );
@@ -220,7 +224,11 @@ impl ComputedTarget {
             ))?
             .clone();
 
-        let srcs = self.target.config().get_file_lists().unwrap_or_default();
+        let srcs = if self.target.is_local() {
+            self.target.config().get_file_lists().unwrap_or_default()
+        } else {
+            vec![]
+        };
 
         self.deps = Some(deps.to_vec());
         self.srcs = Some(srcs);
