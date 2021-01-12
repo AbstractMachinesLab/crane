@@ -6,6 +6,9 @@
   - [First steps](./getting-started/first-steps.md)
   - [How Zap Works](./getting-started/how-zap-works.md)
 
+- [CHANGELOG](./changelog/v0.4.0.md)
+  - [0.4.0](./changelog/v0.4.0.md)
+
 --------------------------------------------------------------------------------
 
 - [Guides](./guides/index.md)
@@ -30,20 +33,15 @@
   - [Workspace](./ref/workspace.md)
   - [Rules](./ref/rules.md)
     - [`archive`](./ref/rules/archive.md)
-    - [`deno_binary`](./ref/rules/deno_binary.md)
-    - [`deno_image`](./ref/rules/deno_image.md)
-    - [`deno_repl`](./ref/rules/deno_repl.md)
     - [`erlang_application`](./ref/rules/erlang_application.md)
-    - [`erlang_image`](./ref/rules/erlang_image.md)
     - [`erlang_library`](./ref/rules/erlang_library.md)
-    - [`erlang_release`](./ref/rules/erlang_release.md)
-    - [`erlang_shell`](./ref/rules/erlang_shell.md)
-    - [`file_group`](./ref/rules/file_group.md)
+    - [`otp_release`](./ref/rules/erlang_release.md)
   - [Toolchains](./ref/toolchains.md)
-    - [`deno`](./ref/toolchains/deno.md)
-    - [`docker`](./ref/toolchains/docker.md)
-    - [`elixir`](./ref/toolchains/elixir.md)
     - [`erlang`](./ref/toolchains/erlang.md)
+  - [Actions](./ref/actions.md)
+    - [`ctx.action().exec`](./ref/actions/exec.md)
+    - [`ctx.action().copy`](./ref/actions/copy.md)
+    - [`ctx.action().writeFile`](./ref/actions/writeFile.md)
 
 --------------------------------------------------------------------------------
 

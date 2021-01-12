@@ -4,10 +4,11 @@
 
 It's built on Deno and Rust.
 
+Check out the [CHANGELOG](./changelog/v0.4.0.md) to see what's new.
+
 ## Features
 
-* Fast by default. Every build action is cached and reused, and all builds are
-  reproducible.
+* Fast by default. Every step of the build is cached and reused.
 * Ships only a single executable.
 * Designed to be extended. New rules and toolchains can be written quickly and
   easily in Javascript.
@@ -31,9 +32,3 @@ Zap aims to be a drop-in solution.
   * build, test, and distribute polyglot projects
 * Never hear "it works on my machine" again
 * Extending it with Toolchains and Rules should be easy
-
-## Comparisons
-
-### Zap and rebar3
-
-### Zap and mix
