@@ -118,7 +118,7 @@ jobs:
         run: |
           echo "GITHUB_TAG=$(git describe --always --tags)" >> $Env:GITHUB_ENV
 
-      - name: Setup Rust targets
+      - name: Setup Rust environment
         run: make setup
 
       - name: Build project

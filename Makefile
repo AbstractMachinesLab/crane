@@ -21,6 +21,7 @@ release.win: release
 .PHONY: release
 release:
 	cargo build --release
+	cargo strip
 	tar czf release.tar.gz -C ./target/release/ $(ZAP_EXE)
 
 .PHONY: install
@@ -29,6 +30,7 @@ install:
 
 .PHONY: setup
 setup:
+	cargo install cargo-strip
 
 .PHONY: clean
 clean:
