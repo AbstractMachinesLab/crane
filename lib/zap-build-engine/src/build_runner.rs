@@ -1,4 +1,4 @@
-use super::{BuildCache, Sandbox, ValidationStatus};
+use super::{BuildCache, CacheHitType, Sandbox, ValidationStatus};
 use anyhow::anyhow;
 use dashmap::DashMap;
 use log::debug;
@@ -74,9 +74,20 @@ impl BuildRunner {
             debug!("with sources {:?}...", &node.srcs());
             debug!("with dependencies {:?}...", &node.deps());
 
-            if self.build_cache.is_cached(&node)? {
-                debug!("Skipping {}. Nothing to do.", name.to_string());
-                continue;
+            match self.build_cache.is_cached(&node)? {
+                CacheHitType::Global => {
+                    debug!("Skipping {}. Nothing to do.", name.to_string());
+                    continue;
+                }
+                CacheHitType::Local => {
+                    debug!("Skipping {}. Nothing to do.", name.to_string());
+                    self.build_cache
+                        .promote_outputs(&node, &self.workspace.local_outputs_root)?;
+                    continue;
+                }
+                CacheHitType::Miss => {
+                    debug!("Cache miss! Proceeding to build...");
+                }
             }
 
             let result = if node.target.is_local() {

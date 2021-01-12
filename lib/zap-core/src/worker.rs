@@ -124,6 +124,16 @@ impl ZapWorker {
         );
 
         self.bs_ctx.runtime.register_op(
+            "Label.path",
+            deno_core::json_op_sync(|_state, json, _zero_copy| {
+                let label_string = json.as_str().unwrap();
+                let label = Label::new(label_string);
+                let path = label.path();
+                Ok(Value::from(path.to_str().unwrap()))
+            }),
+        );
+
+        self.bs_ctx.runtime.register_op(
             "File.parent",
             deno_core::json_op_sync(|_state, json, _zero_copy| {
                 let file_path = json.as_str().unwrap();

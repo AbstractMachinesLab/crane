@@ -14,6 +14,13 @@ pub struct BuildCache {
     memcache: HashMap<String, Label>,
 }
 
+#[derive(Debug, Clone)]
+pub enum CacheHitType {
+    Miss,
+    Global,
+    Local,
+}
+
 impl BuildCache {
     pub fn new(config: &ZapConfig) -> BuildCache {
         BuildCache {
@@ -70,6 +77,30 @@ impl BuildCache {
             .collect::<Result<(), anyhow::Error>>()
     }
 
+    pub fn promote_outputs(
+        &self,
+        node: &ComputedTarget,
+        dst: &PathBuf,
+    ) -> Result<(), anyhow::Error> {
+        let hash = node.hash();
+        let hash_path = self.root.join(&hash);
+
+        let mut outputs = vec![];
+        for entry in std::fs::read_dir(hash_path)? {
+            let path = entry?.path();
+            outputs.push(path);
+        }
+
+        let mut opts = fs_extra::dir::CopyOptions::new();
+        opts.skip_exist = true;
+        opts.overwrite = true;
+        opts.copy_inside = true;
+
+        fs_extra::copy_items(&outputs, dst, &opts)
+            .map(|_| ())
+            .context("Could not promote outputs from the cache")
+    }
+
     pub fn absolute_path_by_hash(&self, hash: &str) -> PathBuf {
         let path = self.root.join(hash);
         std::fs::canonicalize(&path).unwrap_or_else(|_| {
@@ -86,7 +117,7 @@ impl BuildCache {
     ///
     /// FIXME: check if the expected hashes of the inputs match the actual
     /// hash of the files to determine if the cache is corrupted.
-    pub fn is_cached(&mut self, node: &ComputedTarget) -> Result<bool, anyhow::Error> {
+    pub fn is_cached(&mut self, node: &ComputedTarget) -> Result<CacheHitType, anyhow::Error> {
         let hash = node.hash();
 
         let hash_path = self.root.join(&hash);
@@ -97,7 +128,7 @@ impl BuildCache {
                 node.label().to_string(),
                 hash_path
             );
-            return Ok(true);
+            return Ok(CacheHitType::Local);
         }
 
         let named_path = self.root.join(format!("{}-{}", node.label().name(), &hash));
@@ -108,10 +139,10 @@ impl BuildCache {
                 node.label().to_string(),
                 named_path
             );
-            return Ok(true);
+            return Ok(CacheHitType::Global);
         }
 
         debug!("No cache hit for {}", node.label().to_string());
-        Ok(false)
+        Ok(CacheHitType::Miss)
     }
 }

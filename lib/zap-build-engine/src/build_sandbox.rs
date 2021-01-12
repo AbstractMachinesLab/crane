@@ -1,6 +1,6 @@
 use super::BuildCache;
 use anyhow::{anyhow, Context};
-use log::debug;
+use log::*;
 use std::collections::HashSet;
 use std::path::PathBuf;
 use zap_core::{ComputedTarget, Workspace};
@@ -34,6 +34,7 @@ pub struct Sandbox<'a> {
 
     /// The path to this sandbox on disk
     root: PathBuf,
+    outputs_root: PathBuf,
 
     /// The outputs created during this build
     outputs: Vec<PathBuf>,
@@ -56,11 +57,13 @@ pub enum ValidationStatus {
 impl<'a> Sandbox<'a> {
     pub fn for_node(workspace: &Workspace, node: &'a ComputedTarget) -> Sandbox<'a> {
         let root = workspace.sandbox_root().join(node.hash());
+        let outputs_root = workspace.local_outputs_root.clone();
         Sandbox {
             name: node.hash(),
             node,
             outputs: vec![],
             root,
+            outputs_root,
             status: ValidationStatus::Pending,
         }
     }
@@ -316,6 +319,31 @@ impl<'a> Sandbox<'a> {
         }
     }
 
+    fn promote_outputs(&mut self) -> Result<(), anyhow::Error> {
+        for out in &self.outputs {
+            let src = self.root.join(&out);
+            let dst = self.outputs_root.join(&out);
+
+            let dst_dir = dst.parent().context("Could not find parent dir")?;
+            std::fs::create_dir_all(&dst_dir)
+                .context(format!(
+                    "Could not create sandbox directory for node {:?} at: {:?}",
+                    self.node.label().to_string(),
+                    &self.root
+                ))
+                .map(|_| ())?;
+
+            trace!("Promoting {:?} to {:?}", src, dst);
+            std::fs::copy(&src, &dst).context(format!(
+                "When promoting outputs for target {:?}, could not copy {:?} into outputs at {:?}",
+                self.node.label().to_string(),
+                &src,
+                &dst
+            ))?;
+        }
+        Ok(())
+    }
+
     /// Run a build rule within a sandboxed environment.
     ///
     /// NOTE(@ostera): wouldn't this be nice as a free monad?
@@ -337,6 +365,10 @@ impl<'a> Sandbox<'a> {
         self.exit_sandbox(working_directory)?;
 
         self.validate_outputs()?;
+
+        if let ValidationStatus::Valid = self.status {
+            self.promote_outputs()?;
+        }
 
         debug!(
             "Sandbox status updated to: {:?} {:?}",
