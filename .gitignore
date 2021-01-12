@@ -4,3 +4,4 @@ spec/*.toolbox
 .cmi
 .cma
 manual/book
+release.tar.gz
