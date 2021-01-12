@@ -39,10 +39,20 @@ impl ZapWorker {
         self.scan(&root)?;
         self.configure_bs_ctx()?;
         self.load_default_toolchains().await?;
-        self.load_local_toolchains().await?;
         self.load_default_rules().await?;
+        self.load_local_toolchains().await?;
         self.load_local_rules().await?;
-        self.create_dep_graph()?;
+        Ok(())
+    }
+
+    pub fn build_dep_graph(&mut self) -> Result<(), anyhow::Error> {
+        WorkspaceScanner::collect_targets(
+            &mut self.workspace,
+            &(*self.rule_manager).read().unwrap(),
+        )?;
+        let mut targets = self.workspace.targets().to_vec();
+        targets.extend((*self.toolchain_manager).read().unwrap().targets());
+        self.dep_graph = DepGraph::from_targets(&targets)?;
         Ok(())
     }
 
@@ -250,17 +260,6 @@ impl ZapWorker {
             .runtime
             .execute("<prelude>", include_str!("prelude.js"))?;
 
-        Ok(())
-    }
-
-    fn create_dep_graph(&mut self) -> Result<(), anyhow::Error> {
-        WorkspaceScanner::collect_targets(
-            &mut self.workspace,
-            &(*self.rule_manager).read().unwrap(),
-        )?;
-        let mut targets = self.workspace.targets().to_vec();
-        targets.extend((*self.toolchain_manager).read().unwrap().targets());
-        self.dep_graph = DepGraph::from_targets(&targets)?;
         Ok(())
     }
 

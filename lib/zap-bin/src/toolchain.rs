@@ -18,11 +18,18 @@ pub enum ToolchainGoal {
     ListArchives,
 
     #[structopt(
-        name = "list",
+        name = "list-active",
         setting = structopt::clap::AppSettings::ColoredHelp,
         about = "lists active toolchain"
     )]
-    ListToolchains,
+    ListActive,
+
+    #[structopt(
+        name = "list-available",
+        setting = structopt::clap::AppSettings::ColoredHelp,
+        about = "lists available toolchain"
+    )]
+    ListAvailable,
 }
 
 impl ToolchainGoal {
@@ -33,7 +40,8 @@ impl ToolchainGoal {
 
         match self {
             ToolchainGoal::ListArchives => self.list_archives(&mut zap),
-            ToolchainGoal::ListToolchains => self.list_toolchains(&mut zap),
+            ToolchainGoal::ListAvailable => self.list_available_toolchains(&mut zap),
+            ToolchainGoal::ListActive => self.list_active_toolchains(&mut zap),
         }
     }
 
@@ -60,9 +68,24 @@ impl ToolchainGoal {
         Ok(())
     }
 
-    pub fn list_toolchains(&self, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
+    pub fn list_available_toolchains(&self, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
         let toolchain_manager = zap.toolchain_manager();
-        let toolchains = toolchain_manager.read().unwrap().toolchains();
+        let toolchains = toolchain_manager.read().unwrap().available_toolchains();
+
+        if toolchains.is_empty() {
+            println!("No available toolchains.");
+        } else {
+            println!("Available Toolchains: ");
+            for toolchain in toolchains {
+                println!(r#"* {}"#, toolchain.to_string());
+            }
+        }
+        Ok(())
+    }
+
+    pub fn list_active_toolchains(&self, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
+        let toolchain_manager = zap.toolchain_manager();
+        let toolchains = toolchain_manager.read().unwrap().active_toolchains();
 
         if toolchains.is_empty() {
             println!("No active toolchains.");

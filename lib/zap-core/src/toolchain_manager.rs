@@ -9,6 +9,7 @@ use zap_buildscript::*;
 pub struct ToolchainManager {
     toolchains: DashMap<String, Toolchain>,
     archives: DashMap<String, Archive>,
+    available_toolchains: DashMap<Label, ()>,
 }
 
 impl ToolchainManager {
@@ -56,6 +57,8 @@ impl ToolchainManager {
             let toolchain =
                 Toolchain::new(rule, archive.value().clone().with_cache_root(cache_root));
             self.toolchains.insert(label.to_string(), toolchain);
+        } else {
+            self.available_toolchains.insert(label, ());
         }
     }
 
@@ -86,10 +89,17 @@ impl ToolchainManager {
             .collect()
     }
 
-    pub fn toolchains(&self) -> Vec<Toolchain> {
+    pub fn active_toolchains(&self) -> Vec<Toolchain> {
         self.toolchains
             .iter()
             .map(|entry| entry.value().clone())
+            .collect()
+    }
+
+    pub fn available_toolchains(&self) -> Vec<Label> {
+        self.available_toolchains
+            .iter()
+            .map(|entry| entry.key().clone())
             .collect()
     }
 }
