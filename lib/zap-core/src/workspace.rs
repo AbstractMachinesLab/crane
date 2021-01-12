@@ -55,7 +55,7 @@ impl Workspace {
     fn setup_links(&self) -> Result<(), anyhow::Error> {
         let _ = std::fs::remove_file(self.workspace_root.join("zap-outputs"));
         match std::os::windows::fs::symlink_dir(
-            self.local_outputs_root,
+            self.local_outputs_root.clone(),
             self.workspace_root.join("zap-outputs"),
         ) {
             Ok(_) => Ok(()),
