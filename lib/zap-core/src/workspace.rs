@@ -1,5 +1,5 @@
 use super::*;
-use anyhow::Context;
+use anyhow::*;
 use std::path::PathBuf;
 
 pub const WORKSPACE: &str = "Workspace.toml";
@@ -54,21 +54,27 @@ impl Workspace {
     #[cfg(target_os = "windows")]
     fn setup_links(&self) -> Result<(), anyhow::Error> {
         let _ = std::fs::remove_file(self.workspace_root.join("zap-outputs"));
-        std::os::windows::fs::symlink_dir(
+        match std::os::windows::fs::symlink_dir(
             self.local_outputs_root,
             self.workspace_root.join("zap-outputs"),
-        )
-        .context("Could not symlink outputs folder to workspace root")
+        ) {
+            Ok(_) => Ok(()),
+            Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => Ok(()),
+            err => Err(anyhow!("Could not create symlink because of: {:?}", err)),
+        }
     }
 
     #[cfg(not(target_os = "windows"))]
     fn setup_links(&self) -> Result<(), anyhow::Error> {
         let _ = std::fs::remove_file(self.workspace_root.join("zap-outputs"));
-        std::os::unix::fs::symlink(
+        match std::os::unix::fs::symlink(
             self.local_outputs_root.clone(),
             self.workspace_root.join("zap-outputs"),
-        )
-        .context("Could not symlink outputs folder to workspace root")
+        ) {
+            Ok(_) => Ok(()),
+            Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => Ok(()),
+            err => Err(anyhow!("Could not create symlink because of: {:?}", err)),
+        }
     }
 
     pub fn with_targets(&mut self, targets: Vec<Target>) -> &mut Workspace {

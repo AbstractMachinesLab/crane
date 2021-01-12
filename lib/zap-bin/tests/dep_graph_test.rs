@@ -13,7 +13,7 @@ async fn it_reads_the_project_from_an_absolute_path() {
     let workspace = zap.workspace;
     assert_eq!("sample_project", workspace.name());
     assert_eq!(root.to_str(), workspace.root().to_str());
-    assert_eq!(4, workspace.targets().len());
+    assert_eq!(8, workspace.targets().len());
 }
 
 #[tokio::test]
@@ -31,7 +31,7 @@ async fn it_reads_the_project_from_a_relative_path() {
         std::fs::canonicalize(root).unwrap().to_str(),
         workspace.root().to_str()
     );
-    assert_eq!(4, workspace.targets().len());
+    assert_eq!(8, workspace.targets().len());
 }
 
 #[tokio::test]
@@ -49,33 +49,26 @@ async fn build_dependency_graph_from_workspace() {
     // NOTE(@ostera): we alphabetically to be able to assert deterministically
     target_names_in_order.sort();
 
+    let root = PathBuf::from("//");
     let mut expected = vec![
-        format!(
-            "{}:{}",
-            PathBuf::from("//").join("a").to_str().unwrap(),
-            "lib"
-        ),
-        format!(
-            "{}:{}",
-            PathBuf::from("//").join("b").join("c").to_str().unwrap(),
-            "lib"
-        ),
-        format!(
-            "{}:{}",
-            PathBuf::from("//").join("b").join("c").to_str().unwrap(),
-            "my_archive"
-        ),
-        format!(
-            "{}:{}",
-            PathBuf::from("//").join("b").to_str().unwrap(),
-            "lib"
-        ),
         "//zap.build/test/toolchains:caramel".to_string(),
         "//zap.build/toolchains:erlang".to_string(),
+        format!("{}:{}", root.join("a").to_str().unwrap(), "a_app"),
+        format!("{}:{}", root.join("a").to_str().unwrap(), "lib"),
+        format!("{}:{}", root.join("b").join("c").to_str().unwrap(), "lib"),
+        format!(
+            "{}:{}",
+            root.join("b").join("c").to_str().unwrap(),
+            "my_archive"
+        ),
+        format!("{}:{}", root.join("b").to_str().unwrap(), "b_app"),
+        format!("{}:{}", root.join("b").to_str().unwrap(), "lib"),
+        format!("{}:{}", root.join("b").to_str().unwrap(), "my_release"),
+        format!("{}:{}", root.join("b").to_str().unwrap(), "rel"),
     ];
     expected.sort();
 
-    assert_eq!(6, target_names_in_order.len());
+    assert_eq!(10, target_names_in_order.len());
     assert_eq!(
         format!("{:?}", expected),
         format!("{:?}", target_names_in_order)
