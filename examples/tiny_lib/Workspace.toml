@@ -4,12 +4,10 @@
 name = "tiny_lib"
 
 [toolchains.erlang]
-archive_url = "https://github.com/erlang/otp/archive/OTP-23.1.tar.gz"
-sha1 = "2d6eaefe960f52cc79d7614c11256b73174e4161"
-prefix = "otp-OTP-23.1"
+archive_url = "https://github.com/erlang/otp/archive/OTP-23.2.1.tar.gz"
+sha1 = "b89dec86e41ce0cb696caab8420f652b339b0b25"
+prefix = "otp-OTP-23.2.1"
 
 [toolchains.caramel]
-release_url = "https://github.com/AbstractMachinesLab/caramel/releases/tag/v0.0.4"
-sha1 = "eb14a3d2ec697d42a6ea7cf565d79141846aa538"
-
-[dependencies]
+release_url = "https://github.com/AbstractMachinesLab/caramel/releases/download/v0.0.14/caramel-v0.0.14-{HOST_TRIPLE}.tar.gz"
+sha1 = "a990682b3c7db16986f3b1c70b2ed09264fdb4a7"

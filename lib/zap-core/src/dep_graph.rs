@@ -58,11 +58,7 @@ impl DepGraph {
             let node = dag.node_weight(*node_idx).unwrap();
             debug!("{:?} depends on:", node.label());
             for label in node.target.deps().iter().cloned() {
-                let dep = if label.is_relative() {
-                    nodes.get(&label.canonicalize(&node.target.label().path()))
-                } else {
-                    nodes.get(&label)
-                };
+                let dep = nodes.get(&label);
                 debug!("-> {:?} ({:?})", &label, &dep);
                 if let Some(dep) = dep {
                     let edge = (*dep, *node_idx);
@@ -179,6 +175,7 @@ impl DepGraph {
         archive_root: &PathBuf,
     ) -> Result<&ComputedTarget, anyhow::Error> {
         let labels = self._inner_graph[node_index].target.deps();
+
         let deps: Vec<Dependency> = self
             .find_nodes(&labels)
             .iter()

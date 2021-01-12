@@ -42,6 +42,7 @@ impl RulesGoal {
         let config = ZapConfig::new()?;
         let mut zap = ZapWorker::new(config)?;
         zap.load(&PathBuf::from(&".")).await?;
+        zap.build_dep_graph()?;
 
         match self {
             RulesGoal::List => self.list_rules(&mut zap),

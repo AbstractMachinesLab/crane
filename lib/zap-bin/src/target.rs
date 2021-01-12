@@ -28,6 +28,7 @@ impl TargetGoal {
         let config = ZapConfig::new()?;
         let mut zap = ZapWorker::new(config)?;
         zap.load(&PathBuf::from(&".")).await?;
+        zap.build_dep_graph()?;
 
         match self.cmd {
             Action::List => self.list_targets(&mut zap),

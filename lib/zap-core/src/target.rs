@@ -61,7 +61,12 @@ impl Target {
     }
 
     pub fn local(label: Label, rule: &Rule, cfg: RuleConfig) -> Target {
-        let mut deps = cfg.get_label_list("deps").unwrap_or_default();
+        let mut deps: Vec<Label> = cfg
+            .get_label_list("deps")
+            .unwrap_or_default()
+            .iter()
+            .map(|dep| dep.canonicalize(&label.path()))
+            .collect();
         deps.extend_from_slice(rule.toolchains());
 
         Target::Local(LocalTarget {

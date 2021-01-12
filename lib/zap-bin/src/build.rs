@@ -45,6 +45,7 @@ impl BuildGoal {
         let config = ZapConfig::new()?;
         let mut zap = ZapWorker::new(config)?;
         zap.load(&PathBuf::from(&".")).await?;
+        zap.build_dep_graph()?;
 
         let mut runner = BuildRunner::new(zap);
 

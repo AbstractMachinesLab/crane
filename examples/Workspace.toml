@@ -1,2 +1,11 @@
 [workspace]
 name = "meta"
+
+[toolchains.erlang]
+archive_url = "https://github.com/erlang/otp/archive/OTP-23.2.1.tar.gz"
+sha1 = "b89dec86e41ce0cb696caab8420f652b339b0b25"
+prefix = "otp-OTP-23.2.1"
+
+[toolchains.caramel]
+release_url = "https://github.com/AbstractMachinesLab/caramel/releases/download/v0.0.14/caramel-v0.0.14-{HOST_TRIPLE}.tar.gz"
+sha1 = "a990682b3c7db16986f3b1c70b2ed09264fdb4a7"

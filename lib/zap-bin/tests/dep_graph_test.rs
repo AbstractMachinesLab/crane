@@ -8,6 +8,7 @@ async fn it_reads_the_project_from_an_absolute_path() {
     let config = ZapConfig::new().unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
+    zap.build_dep_graph().unwrap();
 
     let workspace = zap.workspace;
     assert_eq!("sample_project", workspace.name());
@@ -22,6 +23,7 @@ async fn it_reads_the_project_from_a_relative_path() {
     let config = ZapConfig::new().unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
+    zap.build_dep_graph().unwrap();
 
     let workspace = zap.workspace;
     assert_eq!("sample_project", workspace.name());
@@ -39,6 +41,7 @@ async fn build_dependency_graph_from_workspace() {
     let config = ZapConfig::new().unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
+    zap.build_dep_graph().unwrap();
 
     let mut dep_graph = zap.dep_graph;
 
@@ -86,6 +89,7 @@ async fn build_dependency_graph_from_workspace_and_scope() {
     let config = ZapConfig::new().unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
+    zap.build_dep_graph().unwrap();
 
     let dep_graph = zap.dep_graph.scoped(&Label::new("//b/c:lib")).unwrap();
 
@@ -126,6 +130,7 @@ async fn configure_toolchain_manager_when_reading_workspace() {
     let config = ZapConfig::new().unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
+    zap.build_dep_graph().unwrap();
 
     assert_eq!(2, (*zap.toolchain_manager).read().unwrap().targets().len());
 }
