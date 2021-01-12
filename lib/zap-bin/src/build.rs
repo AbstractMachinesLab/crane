@@ -37,7 +37,6 @@ impl BuildGoal {
     }
 
     pub async fn run(self) -> Result<(), anyhow::Error> {
-        let t0 = std::time::Instant::now();
         let target: Label = self.target.into();
         debug!("Host: {}", guess_host_triple::guess_host_triple().unwrap());
         debug!("Target: {}", &target.to_string());
@@ -58,11 +57,6 @@ impl BuildGoal {
         print!("🔨 Building {}...", name);
         io::stdout().flush().unwrap();
 
-        runner.execute(&target)?;
-
-        let t1 = t0.elapsed().as_millis();
-        println!("\x1B[1000D\x1B[K\r⚡ done in {}ms", t1);
-
-        Ok(())
+        runner.execute(&target).map(|_| ())
     }
 }

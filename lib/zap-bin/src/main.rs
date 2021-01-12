@@ -21,6 +21,8 @@ struct Zap {
 
 impl Zap {
     async fn run(self) {
+        let t0 = std::time::Instant::now();
+
         env_logger::Builder::new()
             .filter_level(log::LevelFilter::Info)
             .format_module_path(false)
@@ -31,7 +33,10 @@ impl Zap {
         match cmd.run().await {
             Ok(()) => (),
             Err(err) => error!("{:?}", &err),
-        }
+        };
+
+        let t1 = t0.elapsed().as_millis();
+        println!("\x1B[1000D\x1B[K\r⚡ done in {}ms", t1);
     }
 }
 

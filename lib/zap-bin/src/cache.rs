@@ -1,3 +1,5 @@
+use anyhow::Context;
+use std::path::PathBuf;
 use structopt::StructOpt;
 use zap_core::*;
 
@@ -13,19 +15,51 @@ pub enum CacheGoal {
 NOTE: if this fixes your build, this is a bug. Please report it!
 ")]
     Purge,
+
+    #[structopt(help = r"Clear a single target.
+
+NOTE: if this fixes your build, this is a bug. Please report it!
+")]
+    Clear {
+        #[structopt(help = r"The target to clean.
+
+Must be a single target.
+")]
+        target: String,
+    },
 }
 
 impl CacheGoal {
     pub async fn run(self) -> Result<(), anyhow::Error> {
-        let t0 = std::time::Instant::now();
-
         let config = ZapConfig::new()?;
 
-        std::fs::remove_dir_all(config.cache_root)?;
+        match self {
+            CacheGoal::Purge => std::fs::remove_dir_all(config.cache_root)
+                .context("Could not remove entire Zap cache"),
+            CacheGoal::Clear { target } => {
+                let target: Label = target.into();
+                let mut zap = ZapWorker::new(config)?;
+                zap.load(&PathBuf::from(&".")).await?;
+                zap.build_dep_graph()?;
+                let dep_graph = &mut zap.dep_graph.scoped(&target)?.seal(
+                    &zap.action_map,
+                    &zap.output_map,
+                    &mut zap.bs_ctx,
+                    &zap.config.cache_root,
+                )?;
 
-        let t1 = t0.elapsed().as_millis();
-        println!("\x1B[1000D\x1B[K\r⚡ done in {}ms", t1);
+                let node = dep_graph.find_node(&target).context(format!(
+                    "Target {} was not found in the Build Graph",
+                    target.to_string()
+                ))?;
 
-        Ok(())
+                let cache_entry = zap.config.cache_root.join(node.hash());
+
+                std::fs::remove_dir_all(&cache_entry).context(format!(
+                    "Could not remove cached target: {}",
+                    target.to_string()
+                ))
+            }
+        }
     }
 }
