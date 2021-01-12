@@ -6,8 +6,10 @@ pub mod dep_graph;
 pub mod label;
 pub mod rule;
 pub mod rule_config;
+pub mod rules;
 pub mod target;
 pub mod toolchain;
+pub mod toolchains;
 pub mod workspace;
 
 pub use action::*;

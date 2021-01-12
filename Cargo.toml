@@ -4,6 +4,4 @@ members = [
   "lib/zap-build-engine",
   "lib/zap-buildscript",
   "lib/zap-core",
-  "lib/zap-toolchains",
-  "lib/zap-rules",
 ]
