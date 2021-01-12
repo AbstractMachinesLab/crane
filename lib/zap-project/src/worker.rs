@@ -75,7 +75,7 @@ impl ZapWorker {
 
     async fn load_default_toolchains(&mut self) -> Result<(), anyhow::Error> {
         let mgr = (*self.toolchain_manager).read().unwrap();
-        for (name, src) in zap_toolchains::TOOLCHAINS.iter() {
+        for (name, src) in zap_core::toolchains::TOOLCHAINS.iter() {
             mgr.load_from_str(&name, &src, &mut self.bs_ctx).await?;
         }
         Ok(())
@@ -91,7 +91,7 @@ impl ZapWorker {
 
     async fn load_default_rules(&mut self) -> Result<(), anyhow::Error> {
         let mgr = (*self.rule_manager).read().unwrap();
-        for (name, src) in zap_rules::RULES.iter() {
+        for (name, src) in zap_core::rules::RULES.iter() {
             mgr.load_from_str(&name, &src, &mut self.bs_ctx).await?;
         }
         Ok(())

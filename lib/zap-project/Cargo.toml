@@ -9,8 +9,6 @@ edition = "2018"
 [dependencies]
 zap-core = { path = "../zap-core", version = "0.4.0" }
 zap-buildscript = { path = "../zap-buildscript", version = "0.4.0" }
-zap-toolchains = { path = "../zap-toolchains", version = "0.4.0" }
-zap-rules = { path = "../zap-rules", version = "0.4.0" }
 
 anyhow = "1.0"
 dashmap = "4.0"
