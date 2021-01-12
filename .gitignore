@@ -1,5 +1,4 @@
 /target
-.zap
 spec/*.toolbox
 .cmo
 .cmi

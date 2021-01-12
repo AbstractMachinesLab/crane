@@ -97,6 +97,13 @@ impl Label {
         }
     }
 
+    pub fn is_relative(&self) -> bool {
+        match self {
+            Label::Relative { .. } => true,
+            _ => false,
+        }
+    }
+
     pub fn is_absolute(&self) -> bool {
         match self {
             Label::Absolute { .. } | Label::Wildcard => true,
@@ -104,10 +111,10 @@ impl Label {
         }
     }
 
-    pub fn canonicalize(self, path: &PathBuf) -> Label {
+    pub fn canonicalize(&self, path: &PathBuf) -> Label {
         match self {
             Label::Relative { name } => Label::Absolute {
-                name,
+                name: name.clone(),
                 path: if path.starts_with("./") {
                     path.strip_prefix("./")
                         .unwrap_or_else(|_| {
@@ -121,7 +128,7 @@ impl Label {
                     path.clone()
                 },
             },
-            _ => self,
+            _ => self.clone(),
         }
     }
 }

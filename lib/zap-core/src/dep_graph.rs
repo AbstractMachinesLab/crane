@@ -58,7 +58,11 @@ impl DepGraph {
             let node = dag.node_weight(*node_idx).unwrap();
             debug!("{:?} depends on:", node.label());
             for label in node.target.deps().iter().cloned() {
-                let dep = nodes.get(&label);
+                let dep = if label.is_relative() {
+                    nodes.get(&label.canonicalize(&node.target.label().path()))
+                } else {
+                    nodes.get(&label)
+                };
                 debug!("-> {:?} ({:?})", &label, &dep);
                 if let Some(dep) = dep {
                     let edge = (*dep, *node_idx);

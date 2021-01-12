@@ -5,4 +5,4 @@ deps = [ "//a:lib", "//b:lib" ]
 [[archive]]
 name = "my_archive"
 srcs = []
-deps = [ "//a:lib", "//b:lib" ]
+deps = [ ":lib", "//a:lib" ]

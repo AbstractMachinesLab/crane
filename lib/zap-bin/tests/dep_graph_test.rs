@@ -68,8 +68,8 @@ async fn build_dependency_graph_from_workspace() {
             PathBuf::from("//").join("b").to_str().unwrap(),
             "lib"
         ),
-        ":caramel".to_string(),
-        ":erlang".to_string(),
+        "//zap.build/test/toolchains:caramel".to_string(),
+        "//zap.build/toolchains:erlang".to_string(),
     ];
     expected.sort();
 
@@ -109,7 +109,7 @@ async fn build_dependency_graph_from_workspace_and_scope() {
             PathBuf::from("//").join("b").to_str().unwrap(),
             "lib"
         ),
-        ":erlang".to_string(),
+        "//zap.build/toolchains:erlang".to_string(),
     ];
     expected.sort();
 

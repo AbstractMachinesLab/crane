@@ -313,7 +313,10 @@ impl ZapWorker {
                 &rule_spec["toolchains"]
             ))?
             .iter()
-            .map(|t| Label::new(&t.to_string()))
+            .map(|t| {
+                let string = t.as_str().unwrap();
+                Label::new(string)
+            })
             .collect();
 
         let rule = Rule::new(
