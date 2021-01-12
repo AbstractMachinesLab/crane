@@ -1,3 +1,18 @@
 [[erlang_library]]
 name = "lib"
 deps = [ "//a:lib" ]
+
+[[erlang_application]]
+name = "b_app"
+config = "b.app.src"
+deps = [ ":lib" ]
+
+[[otp_release]]
+name = "my_release"
+config = "sys.config"
+deps = [ ":b_app", "//a:a_app" ]
+
+[[archive]]
+name = "rel"
+srcs = []
+deps = [":my_release"]
