@@ -1,5 +1,5 @@
 [package]
-name = "zap-bin"
+name = "zap-build"
 version = "0.4.0"
 authors = ["Leandro Ostera <leandro@ostera.io>"]
 edition = "2018"
@@ -9,9 +9,9 @@ name = "zap"
 path = "src/main.rs"
 
 [dependencies]
-zap-build-engine = { path = "../zap-build-engine" }
-zap-core = { path = "../zap-core" }
-zap-project = { path = "../zap-project" }
+zap-build-engine = { path = "../zap-build-engine", version = "0.4.0" }
+zap-core = { path = "../zap-core", version = "0.4.0" }
+zap-project = { path = "../zap-project", version = "0.4.0" }
 
 anyhow = "1.0"
 chrono = "0.4"

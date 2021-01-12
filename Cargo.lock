@@ -2555,7 +2555,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "zap-bin"
+name = "zap-build"
 version = "0.4.0"
 dependencies = [
  "anyhow",
@@ -2641,8 +2641,8 @@ dependencies = [
 
 [[package]]
 name = "zap-rules"
-version = "0.1.0"
+version = "0.4.0"
 
 [[package]]
 name = "zap-toolchains"
-version = "0.1.0"
+version = "0.4.0"

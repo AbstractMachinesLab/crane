@@ -5,7 +5,7 @@ authors = ["Leandro Ostera <leandro@ostera.io>"]
 edition = "2018"
 
 [dependencies]
-zap-buildscript = { path = "../zap-buildscript" }
+zap-buildscript = { path = "../zap-buildscript", version = "0.4.0" }
 
 anyhow = "1.0"
 chrono = "0.4"
