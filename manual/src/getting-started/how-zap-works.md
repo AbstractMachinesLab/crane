@@ -10,13 +10,14 @@ These are mirroring concepts that the Bazel build tool has already proven to
 work at scale, but they are coloured with the flavors of Dune, that provides an
 instant set up.
 
-They are 5:
+They are 6:
 
 * Workspace
 * Package
 * Target
 * Rule
 * Toolchain
+* Action
 
 
 ### Workspace
@@ -128,3 +129,10 @@ specific language toolchain, so instead we deal with this at the Rule level.
 
 All rules define what toolchains they rely on, and Zap will build and cache
 them like any other target.
+
+### Action
+
+Every rule creates a series of Actions that Zap needs to carry out. These
+actions can be to execute a program, copy a file, or write a new file.
+
+It is these actions that actually make rules _do work_.

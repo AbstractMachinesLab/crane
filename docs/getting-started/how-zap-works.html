@@ -180,13 +180,14 @@ understand how to use Zap more effectively.</p>
 <p>These are mirroring concepts that the Bazel build tool has already proven to
 work at scale, but they are coloured with the flavors of Dune, that provides an
 instant set up.</p>
-<p>They are 5:</p>
+<p>They are 6:</p>
 <ul>
 <li>Workspace</li>
 <li>Package</li>
 <li>Target</li>
 <li>Rule</li>
 <li>Toolchain</li>
+<li>Action</li>
 </ul>
 <h3><a class="header" href="#workspace" id="workspace">Workspace</a></h3>
 <p>This is the dir in your filesystem with all of your project(s) source code.
@@ -272,6 +273,10 @@ Elixir rules need a working Elixir installation.</p>
 specific language toolchain, so instead we deal with this at the Rule level.</p>
 <p>All rules define what toolchains they rely on, and Zap will build and cache
 them like any other target.</p>
+<h3><a class="header" href="#action" id="action">Action</a></h3>
+<p>Every rule creates a series of Actions that Zap needs to carry out. These
+actions can be to execute a program, copy a file, or write a new file.</p>
+<p>It is these actions that actually make rules <em>do work</em>.</p>
 
                     </main>
 

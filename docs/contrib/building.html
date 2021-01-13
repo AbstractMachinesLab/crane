@@ -171,6 +171,35 @@
                 <div id="content" class="content">
                     <main>
                         <h1><a class="header" href="#building-from-source" id="building-from-source">Building from Source</a></h1>
+<p>Zap is built with Rust, so it needs a working installation of the Rust toolchain.
+If you are using <code>rustup</code>, the <code>stable</code> toolchain should suffice.</p>
+<p>Additionally, we use <code>make</code>, since it makes our CI steps pretty minimal.</p>
+<h3><a class="header" href="#getting-started" id="getting-started">Getting Started</a></h3>
+<p>The next scripts show how to set up Zap and create a release:</p>
+<pre><code class="language-sh"># install rust first
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# clone the repository
+git clone git@github.com:AbstractMachinesLab/zap.git
+cd zap
+
+# install all required dependencies
+make setup
+
+# compile projects and runs the tests
+make test
+
+# installs project from sources
+make install
+</code></pre>
+<h3><a class="header" href="#common-tasks" id="common-tasks">Common Tasks</a></h3>
+<p>To bootstrap the repository, you can run <code>make setup build</code>.</p>
+<p>To compile the manual, you can run <code>make manual</code>.</p>
+<p>To run all the tests, you can run <code>make test</code>.</p>
+<p>To install the local version, you can run <code>make install</code>.</p>
+<p>To format all the code, you can run <code>make fmt</code>.</p>
+<p>To create a release of Zap, you can run <code>make release</code>, or <code>make release.win</code> on
+Windows.</p>
 
                     </main>
 

@@ -1,9 +1,25 @@
 # Installation
 
-Since Zap is a single binary, you can download it from Github, put it in your
-PATH and be up and running.
+Zap works on macOS, Linux, and Windows. It is a single binary, and it has no
+external dependencies.
 
-In the future we'll provide your favorite package manager as well as a release
-script that will download the appropriate binary for you.
+### Using a package manager
 
-In the meantime, you can [download it from Github](https://github.com/AbstractMachinesLab/zap/releases/#user-content-assets)
+Using Cargo (Windows, macOS, Linux):
+
+```sh
+cargo install zap-build
+```
+
+### Manual binary installation
+
+You can manuall install Zap as well on Windows, macOS, or Linux by downloading
+the zipped release from Github:
+[github.com/AbstractMachines/zap/releases](https://github.com/AbstractMachinesLab/zap/releases/#user-content-assets).
+
+### Install from Sources
+
+Check the [Building from Source](/contrib/building.md) section for up to
+date instructions.
+
+If you have Rust and the source code of Zap, you can install it by running `make install`.
