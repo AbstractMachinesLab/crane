@@ -5,7 +5,7 @@ external dependencies.
 
 ### Using a package manager
 
-Using Cargo (Windows, macOS, Linux):
+If you are a **Rust programmer**, Zap can be installed with `cargo`.
 
 ```sh
 cargo install zap-build
