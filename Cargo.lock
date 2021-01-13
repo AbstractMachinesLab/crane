@@ -2561,8 +2561,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "zap-bin"
-version = "0.4.0"
+name = "zap-build"
+version = "0.4.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2579,7 +2579,7 @@ dependencies = [
 
 [[package]]
 name = "zap-build-engine"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2594,7 +2594,7 @@ dependencies = [
 
 [[package]]
 name = "zap-buildscript"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2607,7 +2607,7 @@ dependencies = [
 
 [[package]]
 name = "zap-core"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "anyhow",
  "chrono",

@@ -1,18 +1,20 @@
 [package]
 name = "zap-core"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Leandro Ostera <leandro@ostera.io>"]
+description = "A simple, fast, and correct build system for modern polyglot teams"
+license = "Apache-2.0"
 edition = "2018"
 
 [dependencies]
-zap-buildscript = { path = "../zap-buildscript", version = "0.4.0" }
+zap-buildscript = { path = "../zap-buildscript", version = "0.4.1" }
 
 anyhow = "1.0"
 chrono = "0.4"
 log = "0.4"
 
 crossbeam = "0.8"
-daggy = "*"
+daggy = "0.7"
 dashmap = "4.0"
 deno_core = "0.75"
 directories = "3.0"

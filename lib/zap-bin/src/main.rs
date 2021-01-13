@@ -1,12 +1,12 @@
 use log::*;
 use structopt::StructOpt;
-use zap_bin::*;
+use zap_build::*;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(
     name = "zap",
     setting = structopt::clap::AppSettings::ColoredHelp,
-    about = "A multilanguage, incremental, scalable build system"
+    about = "A simple, fast, and correct build system for modern polyglot teams"
 )]
 struct Zap {
     #[structopt(short = "v", long = "verbose", help = "turn on verbosity")]
