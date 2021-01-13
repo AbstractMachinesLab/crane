@@ -23,6 +23,13 @@ impl Zap {
     async fn run(self) {
         let t0 = std::time::Instant::now();
 
+        human_panic::setup_panic!(Metadata {
+            name: "zap".into(),
+            version: env!("CARGO_PKG_VERSION").into(),
+            authors: "Leandro Ostera <leandro@abstractmachines.dev>".into(),
+            homepage: "https://zap.build".into(),
+        });
+
         env_logger::Builder::new()
             .filter_level(log::LevelFilter::Info)
             .format_module_path(false)
