@@ -6,7 +6,8 @@
   - [First steps](./getting-started/first-steps.md)
   - [How Zap Works](./getting-started/how-zap-works.md)
 
-- [CHANGELOG](./changelog/v0.4.0.md)
+- [CHANGELOG](./changelog/v0.4.1.md)
+  - [v0.4.1](./changelog/v0.4.1.md)
   - [v0.4.0](./changelog/v0.4.0.md)
 
 --------------------------------------------------------------------------------

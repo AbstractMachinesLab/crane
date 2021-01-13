@@ -2,17 +2,18 @@
 
 ⚡ Zap is a build system built for the modern polyglot teams.
 
-It's built on Deno and Rust.
+It's built on [deno 🦕](https://deno.land) and [rust 🦀](https://rust-lang.org).
 
-Check out the [CHANGELOG](./changelog/v0.4.0.md) to see what's new.
+Check out the [CHANGELOG](./changelog/v0.4.1.md) to see what's new.
 
 ## Features
 
-* Fast by default. Every step of the build is cached and reused.
 * Ships only a single executable.
-* Designed to be extended. New rules and toolchains can be written quickly and
-  easily in Javascript.
+* Fast by default. Every step of every build is globally cached and reused.
+* Designed to be extended. Custom rules and toolchains can be written quickly
+  and easily in Javascript.
 * Automatically manages language installations per project for you.
+* Easy to get started.
 
 ## Philosophy
 
@@ -22,7 +23,8 @@ Monorepos are great for large polyglot codebases, but the tooling to work
 efficiently with them is either ecosystem specific (Dune, Lerna), or requires a
 large effort upfront (Bazel, Pants, Buck).
 
-Zap aims to be a drop-in solution.
+Zap aims to be a drop-in solution, so it embraces well-known ecosystem
+expectations and conventions to make it as easy as possible to get started.
 
 ## Goals
 
@@ -31,4 +33,3 @@ Zap aims to be a drop-in solution.
   * manage language and dependency versions per project
   * build, test, and distribute polyglot projects
 * Never hear "it works on my machine" again
-* Extending it with Toolchains and Rules should be easy
