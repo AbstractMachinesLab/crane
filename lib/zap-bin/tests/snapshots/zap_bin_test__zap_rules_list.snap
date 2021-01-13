@@ -1,0 +1,10 @@
+---
+source: lib/zap-bin/tests/zap_bin_test.rs
+expression: "run(&[\"zap\", \"rules\", \"list\"])"
+---
+Loaded Rules: 
+* Tar @ archive
+* ErlApp @ erlang_application
+* ErlLibrary @ erlang_library
+* OtpRel @ otp_release
+

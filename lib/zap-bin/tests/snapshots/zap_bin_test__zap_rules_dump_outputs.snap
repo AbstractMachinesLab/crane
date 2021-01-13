@@ -1,0 +1,20 @@
+---
+source: lib/zap-bin/tests/zap_bin_test.rs
+expression: "run(&[\"zap\", \"rules\", \"dump-outputs\", \"//...\"])"
+---
+a/a.beam
+a/h.hrl
+b/b.beam
+b/c/c.beam
+b/c/my_archive.tar.gz
+b/ebin/b.app
+b/ebin/b.beam
+a/ebin/a.app
+a/ebin/a.beam
+b/release-my_release/releases/0.0.0/sys.config
+b/release-my_release/lib/b_app-0.0.0/ebin/b.app
+b/release-my_release/lib/b_app-0.0.0/ebin/b.beam
+b/release-my_release/lib/a_app-0.0.0/ebin/a.app
+b/release-my_release/lib/a_app-0.0.0/ebin/a.beam
+b/rel.tar.gz
+

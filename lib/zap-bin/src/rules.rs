@@ -1,5 +1,4 @@
 use anyhow::*;
-use log::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use zap_core::*;
@@ -53,9 +52,11 @@ impl RulesGoal {
 
     fn list_rules(&self, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
         let rule_manager = zap.rule_manager();
-        info!("Loaded Rules: ");
-        for rule in rule_manager.read().unwrap().rules() {
-            info!("* {} @ {}", rule.mnemonic(), rule.name().to_string());
+        println!("Loaded Rules: ");
+        let mut rules = rule_manager.read().unwrap().rules();
+        rules.sort_by_key(|r| r.name().to_string());
+        for rule in rules {
+            println!("* {} @ {}", rule.mnemonic(), rule.name().to_string());
         }
         Ok(())
     }

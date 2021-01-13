@@ -30,7 +30,7 @@ install:
 
 .PHONY: setup
 setup:
-	cargo install cargo-strip mdbook
+	cargo install cargo-strip cargo-insta mdbook 
 
 .PHONY: clean
 clean:

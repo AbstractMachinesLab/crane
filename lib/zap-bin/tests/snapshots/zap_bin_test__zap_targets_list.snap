@@ -1,0 +1,15 @@
+---
+source: lib/zap-bin/tests/zap_bin_test.rs
+expression: "run(&[\"zap\", \"targets\", \"list\"])"
+---
+//a:a_app
+//a:lib
+//b/c:lib
+//b/c:my_archive
+//b:b_app
+//b:lib
+//b:my_release
+//b:rel
+//zap.build/test/toolchains:caramel
+//zap.build/toolchains:erlang
+

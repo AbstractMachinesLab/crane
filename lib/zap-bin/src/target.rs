@@ -5,7 +5,7 @@ use zap_core::*;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(
-    name = "target",
+    name = "targets",
     setting = structopt::clap::AppSettings::ColoredHelp,
     about = "managing targets"
 )]
@@ -37,7 +37,9 @@ impl TargetGoal {
 
     fn list_targets(&self, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
         let dep_graph = &mut zap.dep_graph;
-        for target in dep_graph.target_names() {
+        let mut targets = dep_graph.target_names();
+        targets.sort();
+        for target in targets {
             println!("{}", target);
         }
         Ok(())

@@ -1,0 +1,20 @@
+---
+source: lib/zap-bin/tests/zap_bin_test.rs
+expression: "run(&[\"zap\", \"workspace\", \"info\"])"
+---
+Name: "sample_project"
+Workspace Root: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project"
+
+Global Zap Directories:
+* Cache: "/home/ostera/.cache/zap/_user_ostera/cache"
+* Rules: "/home/ostera/.config/zap/rules"
+* Toolchains: "/home/ostera/.config/zap/toolchains"
+
+Local Zap Directories:
+* Outputs: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project/.zap/outputs"
+* Rules: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project/.zap/rules"
+* Sandbox: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project/.zap/sandbox"
+* Toolchains: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project/.zap/toolchains"
+
+# of Targets: 0
+

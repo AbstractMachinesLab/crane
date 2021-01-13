@@ -23,3 +23,8 @@ log = "0.4"
 structopt = "0.3"
 termcolor = "1.1"
 tokio = { version = "1", features = ["full"] }
+
+[dev-dependencies]
+insta = "1.5"
+assert_cmd = "1.0"
+dir-diff = "0.3"

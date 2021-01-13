@@ -1,0 +1,10 @@
+---
+source: lib/zap-bin/tests/zap_bin_test.rs
+expression: "run(&[\"zap\", \"toolchains\", \"list-available\"])"
+---
+Available Toolchains: 
+* :clojerl
+* :deno
+* :docker
+* :elixir
+

@@ -1,0 +1,21 @@
+---
+source: lib/zap-bin/tests/zap_bin_test.rs
+expression: "run(&[\"zap\", \"rules\", \"dump-actions\", \"//...\"])"
+---
+Exec(ExecAction { cmd: "/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/otp_build", args: ["all"], cwd: Some("/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1") })
+Exec(ExecAction { cmd: "/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/bin/erlc", args: ["-b", "beam", "-Wall", "-I", "a", "-o", "a", "--", "a/a.erl"], cwd: None })
+Exec(ExecAction { cmd: "/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/bin/erlc", args: ["-b", "beam", "-Wall", "-I", "a", "-pa", "a", "-o", "b", "--", "b/b.erl"], cwd: None })
+Exec(ExecAction { cmd: "/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/bin/erlc", args: ["-b", "beam", "-Wall", "-I", "a", "-pa", "a", "-pa", "b", "-o", "b/c", "--", "b/c/c.erl"], cwd: None })
+Exec(ExecAction { cmd: "tar", args: ["czfh", "b/c/my_archive.tar.gz", "b/c/c.beam", "a/a.beam", "a/h.hrl"], cwd: None })
+Copy(CopyAction { src: "b/b.app.src", dst: "b/ebin/b.app" })
+Copy(CopyAction { src: "b/b.beam", dst: "b/ebin/b.beam" })
+Copy(CopyAction { src: "a/a.app.src", dst: "a/ebin/a.app" })
+Copy(CopyAction { src: "a/a.beam", dst: "a/ebin/a.beam" })
+Copy(CopyAction { src: "b/sys.config", dst: "b/release-my_release/releases/0.0.0/sys.config" })
+WriteFile(WriteFileAction { contents: "% Release generated with Zap.\n{release,\n  {my_release, 0.0.0},\n  {erts, undefined},\n  [{b_app, \"0.0.0\"},\n   {a_app, \"0.0.0\"},\n   {erlang, \"0.0.0\"}]}.\n  ", dst: "b/release-my_release/releases/0.0.0/my_release.rel" })
+Copy(CopyAction { src: "b/ebin/b.app", dst: "b/release-my_release/lib/b_app-0.0.0/ebin/b.app" })
+Copy(CopyAction { src: "b/ebin/b.beam", dst: "b/release-my_release/lib/b_app-0.0.0/ebin/b.beam" })
+Copy(CopyAction { src: "a/ebin/a.app", dst: "b/release-my_release/lib/a_app-0.0.0/ebin/a.app" })
+Copy(CopyAction { src: "a/ebin/a.beam", dst: "b/release-my_release/lib/a_app-0.0.0/ebin/a.beam" })
+Exec(ExecAction { cmd: "tar", args: ["czfh", "b/rel.tar.gz", "b/release-my_release/releases/0.0.0/sys.config", "b/release-my_release/lib/b_app-0.0.0/ebin/b.app", "b/release-my_release/lib/b_app-0.0.0/ebin/b.beam", "b/release-my_release/lib/a_app-0.0.0/ebin/a.app", "b/release-my_release/lib/a_app-0.0.0/ebin/a.beam"], cwd: None })
+

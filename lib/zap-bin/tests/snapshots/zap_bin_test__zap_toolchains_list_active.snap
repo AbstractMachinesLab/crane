@@ -1,0 +1,8 @@
+---
+source: lib/zap-bin/tests/zap_bin_test.rs
+expression: "run(&[\"zap\", \"toolchains\", \"list-active\"])"
+---
+Active Toolchains: 
+* //zap.build/test/toolchains:caramel
+* //zap.build/toolchains:erlang
+

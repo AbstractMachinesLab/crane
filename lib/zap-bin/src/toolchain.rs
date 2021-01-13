@@ -5,7 +5,7 @@ use zap_core::*;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(
-    name = "toolchain",
+    name = "toolchains",
     setting = structopt::clap::AppSettings::ColoredHelp,
     about = "manage language toolchains"
 )]
@@ -47,7 +47,9 @@ impl ToolchainGoal {
 
     pub fn list_archives(&self, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
         let toolchain_manager = zap.toolchain_manager();
-        let archives = toolchain_manager.read().unwrap().archives();
+        let mut archives = toolchain_manager.read().unwrap().archives();
+
+        archives.sort_by_key(|a| a.name().to_string());
 
         if archives.is_empty() {
             println!("No archives configured.");
@@ -70,14 +72,22 @@ impl ToolchainGoal {
 
     pub fn list_available_toolchains(&self, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
         let toolchain_manager = zap.toolchain_manager();
-        let toolchains = toolchain_manager.read().unwrap().available_toolchains();
+        let mut toolchains: Vec<String> = toolchain_manager
+            .read()
+            .unwrap()
+            .available_toolchains()
+            .iter()
+            .map(|t| t.to_string())
+            .collect();
+
+        toolchains.sort();
 
         if toolchains.is_empty() {
             println!("No available toolchains.");
         } else {
             println!("Available Toolchains: ");
             for toolchain in toolchains {
-                println!(r#"* {}"#, toolchain.to_string());
+                println!(r#"* {}"#, toolchain);
             }
         }
         Ok(())
@@ -85,14 +95,22 @@ impl ToolchainGoal {
 
     pub fn list_active_toolchains(&self, zap: &mut ZapWorker) -> Result<(), anyhow::Error> {
         let toolchain_manager = zap.toolchain_manager();
-        let toolchains = toolchain_manager.read().unwrap().active_toolchains();
+        let mut toolchains: Vec<String> = toolchain_manager
+            .read()
+            .unwrap()
+            .active_toolchains()
+            .iter()
+            .map(|t| t.label().to_string())
+            .collect();
+
+        toolchains.sort();
 
         if toolchains.is_empty() {
             println!("No active toolchains.");
         } else {
             println!("Active Toolchains: ");
             for toolchain in toolchains {
-                println!(r#"* {}"#, toolchain.label().to_string());
+                println!(r#"* {}"#, toolchain);
             }
         }
         Ok(())

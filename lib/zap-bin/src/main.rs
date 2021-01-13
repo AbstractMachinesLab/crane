@@ -36,7 +36,9 @@ impl Zap {
         };
 
         let t1 = t0.elapsed().as_millis();
-        println!("\x1B[1000D\x1B[K\r⚡ done in {}ms", t1);
+        if !self.quiet {
+            println!("\x1B[1000D\x1B[K\r⚡ done in {}ms", t1);
+        }
     }
 }
 
@@ -44,10 +46,10 @@ impl Zap {
 enum Goal {
     Build(BuildGoal),
     Cache(CacheGoal),
-    Depgraph(DepGraphGoal),
+    DepGraph(DepGraphGoal),
     Rules(RulesGoal),
-    Target(TargetGoal),
-    Toolchain(ToolchainGoal),
+    Targets(TargetGoal),
+    Toolchains(ToolchainGoal),
     Workspace(WorkspaceGoal),
     // Clean(CleanGoal),
     // Deps(DepsGoal),
@@ -64,10 +66,10 @@ impl Goal {
         match self {
             Goal::Build(x) => x.run().await,
             Goal::Cache(x) => x.run().await,
-            Goal::Depgraph(x) => x.run().await,
+            Goal::DepGraph(x) => x.run().await,
             Goal::Rules(x) => x.run().await,
-            Goal::Target(x) => x.run().await,
-            Goal::Toolchain(x) => x.run().await,
+            Goal::Targets(x) => x.run().await,
+            Goal::Toolchains(x) => x.run().await,
             Goal::Workspace(x) => x.run().await,
             // Goal::Clean(x) => x.run(),
             // Goal::Deps(x) => x.run(),
