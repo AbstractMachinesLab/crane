@@ -1,0 +1,5 @@
+---
+source: lib/zap-bin/tests/zap_bin_test.rs
+expression: "run(&[\"zap\", \"build\"])"
+---
+🔨 Building workspace...
