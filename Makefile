@@ -14,6 +14,12 @@ test:
 		--no-fail-fast \
 		--tests
 
+.PHONY: integration_test
+test.integration:
+	cargo test \
+		--no-fail-fast -- \
+		--ignored
+
 .PHONY: release.win
 release.win: ZAP_EXE=zap.exe
 release.win: release

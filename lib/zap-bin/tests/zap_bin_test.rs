@@ -21,56 +21,67 @@ fn run(parts: &[&str]) -> String {
 }
 
 #[test]
+#[ignore]
 pub fn zap_workspace_info() {
     insta::assert_snapshot!(run(&["zap", "workspace", "info"]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_toolchains_list_active() {
     insta::assert_snapshot!(run(&["zap", "toolchains", "list-active"]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_toolchains_list_archives() {
     insta::assert_snapshot!(run(&["zap", "toolchains", "list-archives"]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_toolchains_list_available() {
     insta::assert_snapshot!(run(&["zap", "toolchains", "list-available"]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_targets_list() {
     insta::assert_snapshot!(run(&["zap", "targets", "list"]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_rules_list() {
     insta::assert_snapshot!(run(&["zap", "rules", "list"]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_rules_dump_actions() {
     insta::assert_snapshot!(run(&["zap", "rules", "dump-actions", "//..."]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_rules_dump_outputs() {
     insta::assert_snapshot!(run(&["zap", "rules", "dump-outputs", "//..."]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_dep_graph_print() {
     // insta::assert_snapshot!(run(&["zap", "dep-graph", "print", "//..."]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_cache_clear() {
     // insta::assert_snapshot!(run(&["zap", "cache", "clear", "//a:lib"]))
 }
 
 #[test]
+#[ignore]
 pub fn zap_build() {
     insta::assert_snapshot!(run(&["zap"]));
     insta::assert_snapshot!(run(&["zap", "build"]));

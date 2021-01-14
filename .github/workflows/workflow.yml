@@ -127,6 +127,10 @@ jobs:
       - name: Run tests
         run: make test
 
+      - name: Run integration tests on Linux
+        if: ${{ success() && startsWith(runner.os, 'Linux') }}
+        run: make test.integration
+
       - name: Check code formatting
         if: ${{ success() && startsWith(runner.os, 'Linux') }}
         run: make fmt
