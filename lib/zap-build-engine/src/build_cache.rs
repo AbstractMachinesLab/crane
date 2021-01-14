@@ -1,6 +1,6 @@
 use super::Sandbox;
 use anyhow::Context;
-use log::debug;
+use log::*;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use zap_core::{ComputedTarget, Label, ZapConfig};
@@ -82,23 +82,24 @@ impl BuildCache {
         node: &ComputedTarget,
         dst: &PathBuf,
     ) -> Result<(), anyhow::Error> {
+        trace!("Promoting outputs for {}", node.target.label().to_string());
         let hash = node.hash();
         let hash_path = self.root.join(&hash);
 
-        let mut outputs = vec![];
-        for entry in std::fs::read_dir(hash_path)? {
-            let path = entry?.path();
-            outputs.push(path);
+        let mut paths: HashMap<PathBuf, ()> = HashMap::new();
+        let mut outs: HashMap<PathBuf, PathBuf> = HashMap::new();
+        for out in node.outs() {
+            paths.insert(dst.join(&out).parent().unwrap().to_path_buf(), ());
+            outs.insert(hash_path.join(&out), dst.join(&out).to_path_buf());
         }
 
-        let mut opts = fs_extra::dir::CopyOptions::new();
-        opts.skip_exist = true;
-        opts.overwrite = true;
-        opts.copy_inside = true;
-
-        fs_extra::copy_items(&outputs, dst, &opts)
-            .map(|_| ())
-            .context("Could not promote outputs from the cache")
+        for (path, _) in paths {
+            std::fs::create_dir_all(&path)?;
+        }
+        for (src, dst) in outs {
+            std::fs::copy(&src, &dst)?;
+        }
+        Ok(())
     }
 
     pub fn absolute_path_by_hash(&self, hash: &str) -> PathBuf {

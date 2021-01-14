@@ -135,24 +135,11 @@ impl ComputedTarget {
         })
     }
 
-    pub fn execute(&self) -> Result<(), anyhow::Error> {
-        for action in self.actions() {
-            action.run()?
-        }
-        Ok(())
-    }
-
-    pub fn seal(
-        &mut self,
-        deps: &[Dependency],
-        action_map: &DashMap<Label, Vec<Action>>,
-        output_map: &DashMap<Label, Vec<PathBuf>>,
-        bs_ctx: &mut BuildScript,
+    pub fn execute(
+        &self,
         archive_root: &PathBuf,
+        cache_root: &PathBuf,
     ) -> Result<(), anyhow::Error> {
-        let label = self.target.label().clone();
-        trace!("Sealing Computed Target {:?}", label.to_string());
-
         if let Some(archive) = &self.target.archive() {
             trace!("Target has an archive, preparing...");
 
@@ -162,7 +149,7 @@ impl ComputedTarget {
             if !archive.is_cached(&archive_root)? {
                 archive.download(&archive_root)?;
                 match archive.checksum(&archive_root) {
-                    Ok(_) => archive.unpack(&archive_root),
+                    Ok(_) => archive.unpack(&archive_root, &cache_root),
                     Err(e) => {
                         archive.clean(&archive_root)?;
                         Err(e)
@@ -170,6 +157,23 @@ impl ComputedTarget {
                 }?
             }
         }
+
+        for action in self.actions() {
+            action.run()?
+        }
+
+        Ok(())
+    }
+
+    pub fn seal(
+        &mut self,
+        deps: &[Dependency],
+        action_map: &DashMap<Label, Vec<Action>>,
+        output_map: &DashMap<Label, Vec<PathBuf>>,
+        bs_ctx: &mut BuildScript,
+    ) -> Result<(), anyhow::Error> {
+        let label = self.target.label().clone();
+        trace!("Sealing Computed Target {:?}", label.to_string());
 
         let config: serde_json::Value = self.target.config().clone().into();
 

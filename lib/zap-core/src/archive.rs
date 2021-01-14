@@ -61,9 +61,7 @@ impl Archive {
     }
 
     pub fn unarchived_root(&self) -> PathBuf {
-        self.cache_root
-            .join(format!("{}-{}", self.name(), self.hash()))
-            .join(self.prefix())
+        self.cache_root.join(self.hash()).join(self.prefix())
     }
 
     pub fn sha1(&self) -> &str {
@@ -205,9 +203,18 @@ sha1 = "{found_sha}"
         }
     }
 
-    pub fn unpack(&self, final_dir: &PathBuf) -> Result<(), anyhow::Error> {
+    pub fn unpack(&self, archive_dir: &PathBuf, final_dir: &PathBuf) -> Result<(), anyhow::Error> {
+        let final_dir = final_dir.join(self.hash());
+
+        std::fs::create_dir_all(&final_dir)?;
+
         let tar = Command::new("tar")
-            .args(&["xzf", "toolchain.tar.gz"])
+            .args(&[
+                "xzf",
+                std::fs::canonicalize(archive_dir.join("toolchain.tar.gz"))?
+                    .to_str()
+                    .unwrap(),
+            ])
             .current_dir(&final_dir)
             .output()
             .context("Could not run tar")?;

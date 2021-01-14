@@ -3,7 +3,7 @@ use anyhow::{anyhow, Context};
 use log::*;
 use std::collections::HashSet;
 use std::path::PathBuf;
-use zap_core::{ComputedTarget, Workspace};
+use zap_core::*;
 
 /// A build Sandbox.
 ///
@@ -40,6 +40,8 @@ pub struct Sandbox<'a> {
     outputs: Vec<PathBuf>,
 
     status: ValidationStatus,
+
+    config: ZapConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -55,7 +57,11 @@ pub enum ValidationStatus {
 }
 
 impl<'a> Sandbox<'a> {
-    pub fn for_node(workspace: &Workspace, node: &'a ComputedTarget) -> Sandbox<'a> {
+    pub fn for_node(
+        config: ZapConfig,
+        workspace: &Workspace,
+        node: &'a ComputedTarget,
+    ) -> Sandbox<'a> {
         let root = workspace.sandbox_root().join(node.hash());
         let outputs_root = workspace.local_outputs_root.clone();
         Sandbox {
@@ -65,6 +71,7 @@ impl<'a> Sandbox<'a> {
             root,
             outputs_root,
             status: ValidationStatus::Pending,
+            config,
         }
     }
 
@@ -359,7 +366,8 @@ impl<'a> Sandbox<'a> {
         self.enter_sandbox()?;
 
         debug!("Executing build rule...");
-        self.node.execute()?;
+        self.node
+            .execute(&self.config.archive_root, &self.config.cache_root)?;
         debug!("Build rule executed successfully.");
 
         self.exit_sandbox(working_directory)?;

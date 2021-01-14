@@ -67,7 +67,6 @@ impl RulesGoal {
             &zap.action_map,
             &zap.output_map,
             &mut zap.bs_ctx,
-            &zap.config.cache_root,
         )?;
 
         for computed_target in dep_graph.targets() {
@@ -85,7 +84,6 @@ impl RulesGoal {
             &zap.action_map,
             &zap.output_map,
             &mut zap.bs_ctx,
-            &zap.config.cache_root,
         )?;
 
         for computed_target in dep_graph.targets() {

@@ -5,9 +5,10 @@ use std::path::PathBuf;
 #[derive(Debug, Clone)]
 pub struct ZapConfig {
     project_dirs: ProjectDirs,
+    pub archive_root: PathBuf,
+    pub cache_root: PathBuf,
     pub rules_root: PathBuf,
     pub toolchains_root: PathBuf,
-    pub cache_root: PathBuf,
 }
 
 impl ZapConfig {
@@ -32,16 +33,19 @@ impl ZapConfig {
 
         let user_root = cache_dir.join(format!("_user_{}", whoami::username()));
         let cache_root = user_root.join("cache");
+        let archive_root = user_root.join("archive");
 
         std::fs::create_dir_all(&rules_root)?;
         std::fs::create_dir_all(&toolchains_root)?;
         std::fs::create_dir_all(&cache_root)?;
+        std::fs::create_dir_all(&archive_root)?;
 
         Ok(ZapConfig {
+            archive_root,
+            cache_root,
             project_dirs,
             rules_root,
             toolchains_root,
-            cache_root,
         })
     }
 }

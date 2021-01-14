@@ -157,13 +157,12 @@ impl DepGraph {
         action_map: &DashMap<Label, Vec<Action>>,
         output_map: &DashMap<Label, Vec<PathBuf>>,
         bs_ctx: &mut BuildScript,
-        archive_root: &PathBuf,
     ) -> Result<&ComputedTarget, anyhow::Error> {
         let node_index = *self
             .nodes
             .get(label)
             .context(format!("Could not find node with label: {:?}", label))?;
-        self.seal_target(node_index, action_map, output_map, bs_ctx, archive_root)
+        self.seal_target(node_index, action_map, output_map, bs_ctx)
     }
 
     pub fn seal_target(
@@ -172,7 +171,6 @@ impl DepGraph {
         action_map: &DashMap<Label, Vec<Action>>,
         output_map: &DashMap<Label, Vec<PathBuf>>,
         mut bs_ctx: &mut BuildScript,
-        archive_root: &PathBuf,
     ) -> Result<&ComputedTarget, anyhow::Error> {
         let labels = self._inner_graph[node_index].target.deps();
 
@@ -182,13 +180,7 @@ impl DepGraph {
             .map(|computed_target| computed_target.as_dep())
             .collect();
 
-        self._inner_graph[node_index].seal(
-            &deps,
-            &action_map,
-            &output_map,
-            &mut bs_ctx,
-            &archive_root,
-        )?;
+        self._inner_graph[node_index].seal(&deps, &action_map, &output_map, &mut bs_ctx)?;
 
         Ok(&self._inner_graph[node_index])
     }
@@ -198,11 +190,10 @@ impl DepGraph {
         action_map: &DashMap<Label, Vec<Action>>,
         output_map: &DashMap<Label, Vec<PathBuf>>,
         mut bs_ctx: &mut BuildScript,
-        archive_root: &PathBuf,
     ) -> Result<&mut DepGraph, anyhow::Error> {
         let mut walker = petgraph::visit::Topo::new(&self._inner_graph);
         while let Some(idx) = walker.next(&self._inner_graph) {
-            self.seal_target(idx, action_map, output_map, &mut bs_ctx, &archive_root)?;
+            self.seal_target(idx, action_map, output_map, &mut bs_ctx)?;
         }
 
         Ok(self)

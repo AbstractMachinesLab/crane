@@ -66,7 +66,6 @@ impl BuildRunner {
                 &self.action_map,
                 &self.output_map,
                 &mut self.bs_ctx,
-                &self.config.cache_root,
             )?;
 
             let name = node.label().clone();
@@ -80,7 +79,7 @@ impl BuildRunner {
                     continue;
                 }
                 CacheHitType::Local => {
-                    debug!("Skipping {}. Nothing to do.", name.to_string());
+                    debug!("Skipping {}, but promoting outputs.", name.to_string());
                     self.build_cache
                         .promote_outputs(&node, &self.workspace.local_outputs_root)?;
                     continue;
@@ -91,7 +90,7 @@ impl BuildRunner {
             }
 
             let result = if node.target.is_local() {
-                let mut sandbox = Sandbox::for_node(&self.workspace, &node);
+                let mut sandbox = Sandbox::for_node(self.config.clone(), &self.workspace, &node);
                 match sandbox.run(&self.build_cache)? {
                     ValidationStatus::Valid => {
                         self.build_cache.save(&sandbox)?;
@@ -122,7 +121,7 @@ impl BuildRunner {
                 }
             } else {
                 debug!("Building global target...");
-                node.execute()
+                node.execute(&self.config.archive_root, &self.config.cache_root)
             };
 
             /*

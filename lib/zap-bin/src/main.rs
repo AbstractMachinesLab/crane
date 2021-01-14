@@ -32,6 +32,7 @@ impl Zap {
 
         env_logger::Builder::new()
             .filter_level(log::LevelFilter::Info)
+            .format_timestamp_micros()
             .format_module_path(false)
             .parse_env("ZAP_LOG")
             .try_init()

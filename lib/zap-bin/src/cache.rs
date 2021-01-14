@@ -34,8 +34,12 @@ impl CacheGoal {
         let config = ZapConfig::new()?;
 
         match self {
-            CacheGoal::Purge => std::fs::remove_dir_all(config.cache_root)
-                .context("Could not remove entire Zap cache"),
+            CacheGoal::Purge => {
+                std::fs::remove_dir_all(config.archive_root)
+                    .context("Could not remove entire Zap cache")?;
+                std::fs::remove_dir_all(config.cache_root)
+                    .context("Could not remove entire Zap cache")
+            }
             CacheGoal::Clear { target } => {
                 let target: Label = target.into();
                 let mut zap = ZapWorker::new(config)?;
@@ -45,7 +49,6 @@ impl CacheGoal {
                     &zap.action_map,
                     &zap.output_map,
                     &mut zap.bs_ctx,
-                    &zap.config.cache_root,
                 )?;
 
                 let node = dep_graph.find_node(&target).context(format!(
