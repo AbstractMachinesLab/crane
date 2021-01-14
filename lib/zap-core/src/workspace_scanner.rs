@@ -1,9 +1,9 @@
 use super::{parsers, Buildfile, RuleManager, ToolchainManager, ZAPFILE};
+use super::{Workspace, WORKSPACE};
 use anyhow::Context;
 use log::*;
 use std::fs;
 use std::path::PathBuf;
-use super::{Workspace, WORKSPACE};
 
 pub struct WorkspaceScanner {}
 
@@ -12,10 +12,9 @@ impl WorkspaceScanner {
         root: &PathBuf,
         toolchain_manager: &ToolchainManager,
     ) -> Result<Workspace, anyhow::Error> {
-        let cwd = fs::canonicalize(&root)?;
-        debug!("Scanning workspace at: {:?}", cwd);
+        debug!("Scanning workspace at: {:?}", root);
 
-        let workspace_file = WorkspaceScanner::find_workspace_file_upwards(&cwd)?;
+        let workspace_file = WorkspaceScanner::find_workspace_file_upwards(&root)?;
         let workspace_root = &workspace_file
             .parent()
             .context("Could not get parent dir for the workspace file path")?

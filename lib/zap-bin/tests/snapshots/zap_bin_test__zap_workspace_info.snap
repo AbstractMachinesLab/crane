@@ -3,18 +3,18 @@ source: lib/zap-bin/tests/zap_bin_test.rs
 expression: "run(&[\"zap\", \"workspace\", \"info\"])"
 ---
 Name: "sample_project"
-Workspace Root: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project"
+Workspace Root: "."
 
 Global Zap Directories:
-* Cache: "/home/ostera/.cache/zap/_user_ostera/cache"
-* Rules: "/home/ostera/.config/zap/rules"
-* Toolchains: "/home/ostera/.config/zap/toolchains"
+* Cache: "../_zap_home/cache/_user_ostera/cache"
+* Rules: "../_zap_home/rules"
+* Toolchains: "../_zap_home/toolchains"
 
 Local Zap Directories:
-* Outputs: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project/.zap/outputs"
-* Rules: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project/.zap/rules"
-* Sandbox: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project/.zap/sandbox"
-* Toolchains: "/home/ostera/repos/github.com/AbstractMachinesLab/zap/lib/zap-bin/tests/sample_project/.zap/toolchains"
+* Outputs: "./.zap/outputs"
+* Rules: "./.zap/rules"
+* Sandbox: "./.zap/sandbox"
+* Toolchains: "./.zap/toolchains"
 
 # of Targets: 0
 

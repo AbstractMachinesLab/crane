@@ -2,10 +2,10 @@
 source: lib/zap-bin/tests/zap_bin_test.rs
 expression: "run(&[\"zap\", \"rules\", \"dump-actions\", \"//...\"])"
 ---
-Exec(ExecAction { cmd: "/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/otp_build", args: ["all"], cwd: Some("/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1") })
-Exec(ExecAction { cmd: "/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/bin/erlc", args: ["-b", "beam", "-Wall", "-I", "a", "-o", "a", "--", "a/a.erl"], cwd: None })
-Exec(ExecAction { cmd: "/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/bin/erlc", args: ["-b", "beam", "-Wall", "-I", "a", "-pa", "a", "-o", "b", "--", "b/b.erl"], cwd: None })
-Exec(ExecAction { cmd: "/home/ostera/.cache/zap/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/bin/erlc", args: ["-b", "beam", "-Wall", "-I", "a", "-pa", "a", "-pa", "b", "-o", "b/c", "--", "b/c/c.erl"], cwd: None })
+Exec(ExecAction { cmd: "../_zap_home/cache/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/otp_build", args: ["all"], cwd: Some("../_zap_home/cache/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1") })
+Exec(ExecAction { cmd: "../_zap_home/cache/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/bin/erlc", args: ["-b", "beam", "-Wall", "-I", "a", "-o", "a", "--", "a/a.erl"], cwd: None })
+Exec(ExecAction { cmd: "../_zap_home/cache/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/bin/erlc", args: ["-b", "beam", "-Wall", "-I", "a", "-pa", "a", "-o", "b", "--", "b/b.erl"], cwd: None })
+Exec(ExecAction { cmd: "../_zap_home/cache/_user_ostera/cache/erlang-7f51df795b26097cd333f22f80212f39362ee7c2/otp-OTP-23.2.1/bin/erlc", args: ["-b", "beam", "-Wall", "-I", "a", "-pa", "a", "-pa", "b", "-o", "b/c", "--", "b/c/c.erl"], cwd: None })
 Exec(ExecAction { cmd: "tar", args: ["czfh", "b/c/my_archive.tar.gz", "b/c/c.beam", "a/a.beam", "a/h.hrl"], cwd: None })
 Copy(CopyAction { src: "b/b.app.src", dst: "b/ebin/b.app" })
 Copy(CopyAction { src: "b/b.beam", dst: "b/ebin/b.beam" })

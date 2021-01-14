@@ -27,10 +27,7 @@ async fn it_reads_the_project_from_a_relative_path() {
 
     let workspace = zap.workspace;
     assert_eq!("sample_project", workspace.name());
-    assert_eq!(
-        std::fs::canonicalize(root).unwrap().to_str(),
-        workspace.root().to_str()
-    );
+    assert_eq!(root.to_str(), workspace.root().to_str());
     assert_eq!(8, workspace.targets().len());
 }
 
