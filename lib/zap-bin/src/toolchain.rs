@@ -33,8 +33,7 @@ pub enum ToolchainGoal {
 }
 
 impl ToolchainGoal {
-    pub async fn run(self) -> Result<(), anyhow::Error> {
-        let config = ZapConfig::new()?;
+    pub async fn run(self, config: ZapConfig) -> Result<(), anyhow::Error> {
         let mut zap = ZapWorker::new(config)?;
         zap.load(&PathBuf::from(&".")).await?;
 

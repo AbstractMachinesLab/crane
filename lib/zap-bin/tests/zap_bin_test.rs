@@ -7,9 +7,10 @@ fn run(parts: &[&str]) -> String {
     let mut cmd = Command::cargo_bin(parts[0]).unwrap();
     cmd.env("RUST_BACKTRACE", "1");
     cmd.env("ZAP_LOG", "info");
-    cmd.env("ZAP_HOME", "../_zap_home");
     cmd.current_dir(std::fs::canonicalize(PathBuf::from("./tests/sample_project")).unwrap());
     cmd.arg("--quiet");
+    cmd.args(&["--user", "zap-runner"]);
+    cmd.args(&["--zap-home", "../_zap_home"]);
     for arg in &parts[1..] {
         cmd.arg(arg);
     }

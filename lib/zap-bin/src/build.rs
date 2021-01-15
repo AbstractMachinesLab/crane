@@ -36,12 +36,11 @@ impl BuildGoal {
         }
     }
 
-    pub async fn run(self) -> Result<(), anyhow::Error> {
+    pub async fn run(self, config: ZapConfig) -> Result<(), anyhow::Error> {
         let target: Label = self.target.into();
         debug!("Host: {}", guess_host_triple::guess_host_triple().unwrap());
         debug!("Target: {}", &target.to_string());
 
-        let config = ZapConfig::new()?;
         let mut zap = ZapWorker::new(config)?;
         zap.load(&PathBuf::from(&".")).await?;
         zap.build_dep_graph()?;

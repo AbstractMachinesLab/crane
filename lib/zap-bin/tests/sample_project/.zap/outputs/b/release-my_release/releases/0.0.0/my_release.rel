@@ -1,8 +1,0 @@
-% Release generated with Zap.
-{release,
-  {my_release, 0.0.0},
-  {erts, undefined},
-  [{b_app, "0.0.0"},
-   {a_app, "0.0.0"},
-   {erlang, "0.0.0"}]}.
-  

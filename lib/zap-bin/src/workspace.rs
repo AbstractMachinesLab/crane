@@ -19,10 +19,9 @@ pub enum WorkspaceGoal {
 }
 
 impl WorkspaceGoal {
-    pub async fn run(self) -> Result<(), anyhow::Error> {
+    pub async fn run(self, config: ZapConfig) -> Result<(), anyhow::Error> {
         match self {
             WorkspaceGoal::Info => {
-                let config = ZapConfig::new()?;
                 let mut zap = ZapWorker::new(config)?;
                 zap.load(&PathBuf::from(&".")).await?;
                 let workspace = zap.workspace();

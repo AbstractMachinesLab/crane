@@ -5,7 +5,7 @@ use zap_core::*;
 async fn it_reads_the_project_from_an_absolute_path() {
     let root = std::fs::canonicalize(PathBuf::from(&"./tests/sample_project")).unwrap();
 
-    let config = ZapConfig::new().unwrap();
+    let config = ZapConfig::new(None, None).unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
     zap.build_dep_graph().unwrap();
@@ -20,7 +20,7 @@ async fn it_reads_the_project_from_an_absolute_path() {
 async fn it_reads_the_project_from_a_relative_path() {
     let root = PathBuf::from(&"./tests/sample_project");
 
-    let config = ZapConfig::new().unwrap();
+    let config = ZapConfig::new(None, None).unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
     zap.build_dep_graph().unwrap();
@@ -35,7 +35,7 @@ async fn it_reads_the_project_from_a_relative_path() {
 async fn build_dependency_graph_from_workspace() {
     let root = PathBuf::from(&"./tests/sample_project");
 
-    let config = ZapConfig::new().unwrap();
+    let config = ZapConfig::new(None, None).unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
     zap.build_dep_graph().unwrap();
@@ -76,7 +76,7 @@ async fn build_dependency_graph_from_workspace() {
 async fn build_dependency_graph_from_workspace_and_scope() {
     let root = PathBuf::from(&"./tests/sample_project");
 
-    let config = ZapConfig::new().unwrap();
+    let config = ZapConfig::new(None, None).unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
     zap.build_dep_graph().unwrap();
@@ -117,7 +117,7 @@ async fn build_dependency_graph_from_workspace_and_scope() {
 async fn configure_toolchain_manager_when_reading_workspace() {
     let root = std::fs::canonicalize(PathBuf::from(&"./tests/sample_project")).unwrap();
 
-    let config = ZapConfig::new().unwrap();
+    let config = ZapConfig::new(None, None).unwrap();
     let mut zap = ZapWorker::new(config).unwrap();
     zap.load(&root).await.unwrap();
     zap.build_dep_graph().unwrap();

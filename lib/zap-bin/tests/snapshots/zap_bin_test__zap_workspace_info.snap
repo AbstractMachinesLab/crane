@@ -6,7 +6,7 @@ Name: "sample_project"
 Workspace Root: "."
 
 Global Zap Directories:
-* Cache: "../_zap_home/cache/_user_ostera/cache"
+* Cache: "../_zap_home/cache/_user_zap-runner/cache"
 * Rules: "../_zap_home/rules"
 * Toolchains: "../_zap_home/toolchains"
 

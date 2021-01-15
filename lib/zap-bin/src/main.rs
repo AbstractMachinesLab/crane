@@ -1,6 +1,8 @@
 use log::*;
+use std::convert::TryInto;
 use structopt::StructOpt;
 use zap_build::*;
+use zap_core::*;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(
@@ -9,14 +11,26 @@ use zap_build::*;
     about = "A simple, fast, and correct build system for modern polyglot teams"
 )]
 struct Zap {
+    #[structopt(subcommand, help = "the command to run")]
+    cmd: Option<Goal>,
+
     #[structopt(short = "v", long = "verbose", help = "turn on verbosity")]
     verbose: bool,
 
     #[structopt(short = "q", long = "quiet", help = "turn off all logs")]
     quiet: bool,
 
-    #[structopt(subcommand, help = "the command to run")]
-    cmd: Option<Goal>,
+    #[structopt(
+        long = "user",
+        help = "the user running this command. This will default to $USER"
+    )]
+    user: Option<String>,
+
+    #[structopt(
+        long = "zap-home",
+        help = "the root directory for the Zap global configuration"
+    )]
+    zap_home: Option<String>,
 }
 
 impl Zap {
@@ -37,8 +51,14 @@ impl Zap {
             .parse_env("ZAP_LOG")
             .try_init()
             .unwrap();
+
+        let config = match self.clone().try_into() {
+            Ok(config) => config,
+            Err(err) => panic!("{:?}", &err),
+        };
+
         let cmd = self.cmd.unwrap_or_else(|| Goal::Build(BuildGoal::all()));
-        match cmd.run().await {
+        match cmd.run(config).await {
             Ok(()) => (),
             Err(err) => error!("{:?}", &err),
         };
@@ -47,6 +67,13 @@ impl Zap {
         if !self.quiet {
             println!("\x1B[1000D\x1B[K\r⚡ done in {}ms", t1);
         }
+    }
+}
+
+impl TryInto<ZapConfig> for Zap {
+    type Error = anyhow::Error;
+    fn try_into(self) -> Result<ZapConfig, anyhow::Error> {
+        ZapConfig::new(self.zap_home.clone(), self.user.clone())
     }
 }
 
@@ -70,15 +97,15 @@ enum Goal {
 }
 
 impl Goal {
-    async fn run(self) -> Result<(), anyhow::Error> {
+    async fn run(self, config: ZapConfig) -> Result<(), anyhow::Error> {
         match self {
-            Goal::Build(x) => x.run().await,
-            Goal::Cache(x) => x.run().await,
-            Goal::DepGraph(x) => x.run().await,
-            Goal::Rules(x) => x.run().await,
-            Goal::Targets(x) => x.run().await,
-            Goal::Toolchains(x) => x.run().await,
-            Goal::Workspace(x) => x.run().await,
+            Goal::Build(x) => x.run(config).await,
+            Goal::Cache(x) => x.run(config).await,
+            Goal::DepGraph(x) => x.run(config).await,
+            Goal::Rules(x) => x.run(config).await,
+            Goal::Targets(x) => x.run(config).await,
+            Goal::Toolchains(x) => x.run(config).await,
+            Goal::Workspace(x) => x.run(config).await,
             // Goal::Clean(x) => x.run(),
             // Goal::Deps(x) => x.run(),
             // Goal::Fmt(x) => x.run(),

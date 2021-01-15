@@ -30,9 +30,7 @@ Must be a single target.
 }
 
 impl CacheGoal {
-    pub async fn run(self) -> Result<(), anyhow::Error> {
-        let config = ZapConfig::new()?;
-
+    pub async fn run(self, config: ZapConfig) -> Result<(), anyhow::Error> {
         match self {
             CacheGoal::Purge => {
                 std::fs::remove_dir_all(config.archive_root)
