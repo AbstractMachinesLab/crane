@@ -26,7 +26,7 @@ https://github.com/AbstractMachinesLab/zap/actions?query=branch%3Amain
 2. Make sure all the version numbers have been bumped
 
 ```
-sed -i /version/${OLD_VERSION}/${NEW_VERSION}/g $(rg "\[package\]" -l)
+sed -i '/version/s/${OLD_VERSION}/${NEW_VERSION}/g' $(rg "\[package\]" -l)
 ```
 
 3. Write a changelog entry in the manual at `./manual/src/changelog/${NEW_VERSION}`

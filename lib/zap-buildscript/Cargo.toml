@@ -1,6 +1,6 @@
 [package]
 name = "zap-buildscript"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Leandro Ostera <leandro@ostera.io>"]
 description = "A simple, fast, and correct build system for modern polyglot teams"
 license = "Apache-2.0"

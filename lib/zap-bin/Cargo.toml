@@ -1,6 +1,6 @@
 [package]
 name = "zap-build"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Leandro Ostera <leandro@ostera.io>"]
 description = "A simple, fast, and correct build system for modern polyglot teams"
 license = "Apache-2.0"
@@ -11,8 +11,8 @@ name = "zap"
 path = "src/main.rs"
 
 [dependencies]
-zap-build-engine = { path = "../zap-build-engine", version = "0.4.1" }
-zap-core = { path = "../zap-core", version = "0.4.1" }
+zap-build-engine = { path = "../zap-build-engine", version = "0.4.2" }
+zap-core = { path = "../zap-core", version = "0.4.2" }
 
 anyhow = "1.0"
 human-panic = "1.0"
