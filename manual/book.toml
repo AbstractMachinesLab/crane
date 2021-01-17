@@ -11,7 +11,7 @@ src = "src"
 
 [output.html]
 cname = "zap.build"
-google-measurement-id = "G-JXXV25JQD2"
+google-analytics = "G-JXXV25JQD2"
 
 default-theme = "light"
 preferred-dark-theme = "ayu"
