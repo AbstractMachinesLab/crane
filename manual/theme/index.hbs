@@ -1,6 +1,23 @@
 <!DOCTYPE HTML>
 <html lang="{{ language }}" class="sidebar-visible no-js {{ default_theme }}">
     <head>
+        {{#if google_analytics}}
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{google_analytics}}"></script>
+        <script>
+          var localAddrs = ["localhost", "127.0.0.1", ""];
+
+          // make sure we don't activate google analytics if the developer is
+          // inspecting the book locally...
+          if (localAddrs.indexOf(document.location.hostname) === -1) {
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '{{google_analytics}}');
+          }
+        </script>
+        {{/if}}
+
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
         <title>{{ title }}</title>
@@ -54,22 +71,6 @@
         <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
         {{/if}}
 
-        {{#if google_analytics}}
-        <!-- Global site tag (gtag.js) - Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id={{google_analytics}}"></script>
-        <script>
-          var localAddrs = ["localhost", "127.0.0.1", ""];
-
-          // make sure we don't activate google analytics if the developer is
-          // inspecting the book locally...
-          if (localAddrs.indexOf(document.location.hostname) === -1) {
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '{{google_analytics}}');
-          }
-        </script>
-        {{/if}}
     </head>
     <body>
         <!-- Provide site root to javascript -->

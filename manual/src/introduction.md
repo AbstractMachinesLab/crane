@@ -2,7 +2,8 @@
 
 ⚡ Zap is a build system built for the modern polyglot teams.
 
-It's built on [deno 🦕](https://deno.land) and [rust 🦀](https://rust-lang.org).
+It's built on [Deno 🦕](https://deno.land) and [Rust 🦀](https://rust-lang.org),
+and maintained by [Abstract Machines](https://github.com/AbstractMachinesLab).
 
 Check out the [CHANGELOG](./changelog/v0.4.1.md) to see what's new.
 
